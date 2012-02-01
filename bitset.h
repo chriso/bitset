@@ -31,14 +31,15 @@ typedef struct bitset_op_ {
 #define BITSET_IS_LITERAL_WORD(word) (((word) & 0x80000000) == 0)
 
 #define BITSET_GET_COLOUR(word) ((word) & 0x40000000)
-#define BITSET_SET_COLOUR(word, col) ((word) | ((col) << 30))
+#define BITSET_SET_COLOUR(word) ((word) | 0x40000000)
+#define BITSET_UNSET_COLOUR(word) ((word) & 0xBF000000)
 
 #define BITSET_GET_LENGTH(word) ((word) & 0x01FFFFFF)
 #define BITSET_SET_LENGTH(word, len) ((word) | (len))
 
 #define BITSET_GET_POSITION(word) (((word) & 0x3E000000) >> 25)
-#define BITSET_SET_POSITION(word, pos) ((word) | ((len) << 25))
-#define BITSET_CLEAR_POSITION(word) ((word) & 0xC1FFFFFF)
+#define BITSET_SET_POSITION(word, pos) ((word) | ((pos) << 25))
+#define BITSET_UNSET_POSITION(word) ((word) & 0xC1FFFFFF)
 
 #define BITSET_MAX(a, b) ((a) > (b) ? (a) : (b));
 

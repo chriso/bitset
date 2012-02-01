@@ -314,16 +314,18 @@ void test_suite_macros() {
     test_bool("Testing literal word is identified correctly 3\n", true, BITSET_IS_LITERAL_WORD(0x40367127));
     test_bool("Test the colour bit is identified correctly 1\n", true, BITSET_GET_COLOUR(0xC0000000));
     test_bool("Test the colour bit is identified correctly 2\n", false, BITSET_GET_COLOUR(0x20123217));
+
     test_ulong("Test fill length is extracted correctly 1\n", 3, BITSET_GET_LENGTH(0x00000003));
     test_ulong("Test fill length is extracted correctly 2\n", 0x01FFFFFF, BITSET_GET_LENGTH(0xFFFFFFFF));
     test_ulong("Test position is extracted correctly 1\n", 1, BITSET_GET_POSITION(0x02000000));
     test_ulong("Test position is extracted correctly 2\n", 31, BITSET_GET_POSITION(0x3E000000));
 
-    //TODO
-    //Test set colour
-    //Test set length
-    //Test set position
-    //Test clear position
+    test_ulong("Test set colour 1\n", 0xC0000000, BITSET_SET_COLOUR(0x80000000));
+    test_ulong("Test set colour 2\n", 0x80000000, BITSET_UNSET_COLOUR(0xC0000000));
+    test_ulong("Test set length 1\n", 0x00000001, BITSET_SET_LENGTH(0x00000000, 1));
+    test_ulong("Test set length 2\n", 0x0001E240, BITSET_SET_LENGTH(0x00000000, 123456));
+    test_ulong("Test set position 1\n", 0x3E000000, BITSET_SET_POSITION(0x00000000, 31));
+    test_ulong("Test clear position 1\n", 0x00000000, BITSET_UNSET_POSITION(0x3E000000));
 }
 
 void test_suite_get() {
