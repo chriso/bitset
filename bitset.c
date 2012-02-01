@@ -36,87 +36,6 @@ P = if the word proceeding the span contains only 1 bit, this 5-bit length
     holds the position of the bit from the right
 */
 
-bool bitset_get(bitset *b, unsigned long bit) {
-    if (!b->length) {
-        return false;
-    }
-
-    uint32_t word, *words = b->words;
-    unsigned long word_offset = bit / 31;
-    unsigned short position;
-
-    for (unsigned i = 0; i < b->length; i++) {
-        word = words[i];
-        if (BITSET_IS_FILL_WORD(word)) {
-            word_offset -= BITSET_GET_LENGTH(word);
-            if (word_offset < 0) {
-                return BITSET_GET_COLOUR(word);
-            } else if (!word_offset) {
-                position = BITSET_GET_POSITION(word);
-                if (position && (1 << position) == word) {
-                    return !BITSET_GET_COLOUR(word);
-                }
-            }
-        } else {
-            return word & (0x80000000 >> (bit % 31));
-        }
-    }
-    return false;
-}
-
-void test_suite_get() {
-    bitset *b = bitset_new();
-    for (unsigned i = 0; i < 32; i++)
-        test_bool("Testing initial bits are unset\n", false, bitset_get(b, i));
-    bitset_free(b);
-
-    //TODO
-    //Test multiple fill words in a row
-    //Test literals
-    //Test case where bit falls in a clean span
-    //Test clean span case with different colour
-    //Test using the position - on case
-    //Test using the position - off case
-    //Test position being opposite of colour
-}
-
-unsigned long bitset_count(bitset *b) {
-    unsigned long count = 0;
-    uint32_t word, *words = b->words;
-    for (unsigned i = 0; i < b->length; i++) {
-        word = words[i];
-        if (BITSET_IS_FILL_WORD(word)) {
-            if (BITSET_GET_POSITION(word)) {
-                if (BITSET_GET_COLOUR(word)) {
-                    count += 30;
-                } else {
-                    count += 1;
-                }
-            } else if (BITSET_GET_COLOUR(word)) {
-                count += BITSET_GET_LENGTH(word) * 31;
-            }
-        } else {
-            word &= 0x7FFFFFFF;
-            //Popcount the word and add to count..
-        }
-    }
-    return count;
-}
-
-void test_suite_count() {
-    bitset *b = bitset_new();
-    test_ulong("Testing pop count of empty set\n", 0, bitset_count(b));
-    bitset_free(b);
-
-    //TODO
-    //Test pop count of fill + literal
-    //Test pop count of fills of 1's
-    //Test pop count of fills of 0's
-    //Test pop count of fill + position where colour = 0
-    //Test pop count of fill + position where colour = 1
-    //Test pop count of chains of fill + literals
-}
-
 bool bitset_set(bitset *b, unsigned long bit, bool value) {
     //TODO
     return false;
@@ -124,6 +43,14 @@ bool bitset_set(bitset *b, unsigned long bit, bool value) {
 
 void test_suite_set() {
     //TODO
+}
+
+unsigned long bitset_ffs(bitset *b) {
+    if (!b->length) {
+        return 0;
+    }
+    //TODO
+    return 0;
 }
 
 /**
@@ -241,6 +168,69 @@ bitset *bitset_copy(bitset *b) {
     return replica;
 }
 
+bool bitset_get(bitset *b, unsigned long bit) {
+    if (!b->length) {
+        return false;
+    }
+
+    uint32_t word, *words = b->words;
+    long word_offset = bit / 31;
+    unsigned short position;
+
+    for (unsigned i = 0; i < b->length; i++) {
+        word = words[i];
+        if (BITSET_IS_FILL_WORD(word)) {
+            word_offset -= BITSET_GET_LENGTH(word);
+            if (word_offset < 0) {
+                return BITSET_GET_COLOUR(word);
+            } else if (!word_offset) {
+                position = BITSET_GET_POSITION(word);
+                if (position) {
+                    if (position - 1 == bit % 31) {
+                        return !BITSET_GET_COLOUR(word);
+                    } else if (BITSET_GET_COLOUR(word)) {
+                        return true;
+                    }
+                    word_offset--;
+                }
+            }
+        } else {
+            return word & (0x80000000 >> ((bit % 31) + 1));
+        }
+    }
+    return false;
+}
+
+//http://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation
+//http://www.strchr.com/crc32_popcnt
+
+unsigned long bitset_count(bitset *b) {
+    unsigned long count = 0;
+    uint32_t word, *words = b->words;
+    for (unsigned i = 0; i < b->length; i++) {
+        word = words[i];
+        if (BITSET_IS_FILL_WORD(word)) {
+            if (BITSET_GET_POSITION(word)) {
+                if (BITSET_GET_COLOUR(word)) {
+                    count += BITSET_GET_LENGTH(word) * 31;
+                    count += 30;
+                } else {
+                    count += 1;
+                }
+            } else if (BITSET_GET_COLOUR(word)) {
+                count += BITSET_GET_LENGTH(word) * 31;
+            }
+        } else {
+            word &= 0x7FFFFFFF;
+            word -= (word >> 1) & 0x55555555;
+            word = (word & 0x33333333) + ((word >> 2) & 0x33333333);
+            word = (word + (word >> 4)) & 0x0F0F0F0F;
+            count += (word * 0x01010101) >> 24;
+        }
+    }
+    return count;
+}
+
 /**
  * Test utils
  * ----------------------------------------------------------------------------
@@ -334,5 +324,103 @@ void test_suite_macros() {
     //Test set length
     //Test set position
     //Test clear position
+}
+
+void test_suite_get() {
+    bitset *b = bitset_new();
+    for (unsigned i = 0; i < 32; i++)
+        test_bool("Testing initial bits are unset\n", false, bitset_get(b, i));
+    bitset_free(b);
+
+    uint32_t p1[] = { 0x80000000, 0x00000001 };
+    b = bitset_new_array(2, p1);
+    test_bool("Testing get in the first literal 1\n", true, bitset_get(b, 30));
+    test_bool("Testing get in the first literal 2\n", false, bitset_get(b, 31));
+    bitset_free(b);
+
+    uint32_t p2[] = { 0x80000000, 0x40000000 };
+    b = bitset_new_array(2, p2);
+    test_bool("Testing get in the first literal 3\n", true, bitset_get(b, 0));
+    test_bool("Testing get in the first literal 4\n", false, bitset_get(b, 1));
+    bitset_free(b);
+
+    uint32_t p3[] = { 0x80000001, 0x40000000 };
+    b = bitset_new_array(2, p3);
+    test_bool("Testing get in the first literal with offset 1\n", false, bitset_get(b, 1));
+    test_bool("Testing get in the first literal with offset 2\n", true, bitset_get(b, 31));
+    bitset_free(b);
+
+    uint32_t p4[] = { 0x80000001, 0x80000001, 0x40000000 };
+    b = bitset_new_array(3, p4);
+    test_bool("Testing get in the first literal with offset 4\n", false, bitset_get(b, 0));
+    test_bool("Testing get in the first literal with offset 5\n", false, bitset_get(b, 31));
+    test_bool("Testing get in the first literal with offset 6\n", true, bitset_get(b, 62));
+    bitset_free(b);
+
+    uint32_t p5[] = { 0x82000001 };
+    b = bitset_new_array(1, p5);
+    test_bool("Testing get with position following a fill 1\n", false, bitset_get(b, 0));
+    test_bool("Testing get with position following a fill 2\n", true, bitset_get(b, 31));
+    test_bool("Testing get with position following a fill 3\n", false, bitset_get(b, 32));
+    bitset_free(b);
+
+    uint32_t p6[] = { 0xC2000001 };
+    b = bitset_new_array(1, p6);
+    test_bool("Testing get with position following a fill 4\n", true, bitset_get(b, 0));
+    test_bool("Testing get with position following a fill 5\n", true, bitset_get(b, 30));
+    test_bool("Testing get with position following a fill 6\n", false, bitset_get(b, 31));
+    test_bool("Testing get with position following a fill 7\n", true, bitset_get(b, 32));
+    bitset_free(b);
+}
+
+void test_suite_count() {
+    bitset *b = bitset_new();
+    test_ulong("Testing pop count of empty set\n", 0, bitset_count(b));
+    bitset_free(b);
+
+    uint32_t p1[] = { 0x80000000, 0x00000001 };
+    b = bitset_new_array(2, p1);
+    test_ulong("Testing pop count of single literal 1\n", 1, bitset_count(b));
+    bitset_free(b);
+
+    uint32_t p2[] = { 0x80000000, 0x11111111 };
+    b = bitset_new_array(2, p2);
+    test_ulong("Testing pop count of single literal 2\n", 8, bitset_count(b));
+    bitset_free(b);
+
+    uint32_t p3[] = { 0x80000001 };
+    b = bitset_new_array(1, p3);
+    test_ulong("Testing pop count of single fill 1\n", 0, bitset_count(b));
+    bitset_free(b);
+
+    uint32_t p4[] = { 0xC0000001 };
+    b = bitset_new_array(1, p4);
+    test_ulong("Testing pop count of single fill 2\n", 31, bitset_count(b));
+    bitset_free(b);
+
+    uint32_t p5[] = { 0xC0000002 };
+    b = bitset_new_array(1, p5);
+    test_ulong("Testing pop count of single fill 3\n", 62, bitset_count(b));
+    bitset_free(b);
+
+    uint32_t p6[] = { 0xC0000001, 0xC0000001 };
+    b = bitset_new_array(2, p6);
+    test_ulong("Testing pop count of double fill 1\n", 62, bitset_count(b));
+    bitset_free(b);
+
+    uint32_t p7[] = { 0x80000010, 0xC0000001 };
+    b = bitset_new_array(2, p7);
+    test_ulong("Testing pop count of double fill 2\n", 31, bitset_count(b));
+    bitset_free(b);
+
+    uint32_t p8[] = { 0x8C000011 };
+    b = bitset_new_array(1, p8);
+    test_ulong("Testing pop count of fill with position 1\n", 1, bitset_count(b));
+    bitset_free(b);
+
+    uint32_t p9[] = { 0xCC000001 };
+    b = bitset_new_array(1, p9);
+    test_ulong("Testing pop count of fill with position 2\n", 61, bitset_count(b));
+    bitset_free(b);
 }
 
