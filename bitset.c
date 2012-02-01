@@ -14,6 +14,7 @@ void test_suite_get();
 void test_suite_set();
 void test_suite_count();
 void test_suite_operation();
+void test_suite_ffs();
 
 void test_bool(char *, bool, bool);
 void test_ulong(char *, unsigned long, unsigned long);
@@ -33,15 +34,68 @@ X = 31 uncompressed bits
 L = a 25-bit length representing a span of "clean" words (all 1's or all 0's)
 C = the span's colour (whether it's all 1's or 0's)
 P = if the word proceeding the span contains only 1 bit, this 5-bit length
-    holds the position of the bit from the right
+    can be used to determine which bit is set (0x80000000 >> position)
 */
 
 bool bitset_set(bitset *b, unsigned long bit, bool value) {
-    //TODO
+    unsigned long word_offset = bit / 31;
+    if (!b->length) {
+        if (!value) {
+            return false;
+        }
+        if (word_offset >= (1 << 26)) {
+            //TODO Work out how many fill bytes are required
+            fprintf(stderr, "Fill chains are unimplemented\n");
+            exit(1);
+        } else if (word_offset) {
+            bitset_resize(b, 1);
+            *b->words = BITSET_CREATE_FILL(word_offset, bit % 31);
+        } else {
+            bitset_resize(b, 1);
+            *b->words = BITSET_CREATE_LITERAL(bit % 31);
+        }
+        return false;
+    }
+
+
+
     return false;
 }
 
 void test_suite_set() {
+    bitset *b = bitset_new();
+    test_bool("Testing set on empty set 1\n", false, bitset_set(b, 0, true));
+    test_bool("Testing set on empty set 2\n", true, bitset_get(b, 0));
+    test_bool("Testing set on empty set 3\n", false, bitset_get(b, 1));
+    bitset_free(b);
+
+    b = bitset_new();
+    test_bool("Testing unset on empty set 1\n", false, bitset_set(b, 100, false));
+    test_ulong("Testing unset on empty set doesn't create it\n", 0, b->length);
+    bitset_free(b);
+
+    b = bitset_new();
+    test_bool("Testing set on empty set 4\n", false, bitset_set(b, 31, true));
+    test_bool("Testing set on empty set 5\n", true, bitset_get(b, 31));
+    bitset_free(b);
+
+    //Test append
+    //Test case where bit is in literal (set)
+    //Test case where bit is in literal (unset)
+    //Test append where set requires break of 0-colour fill position
+    //Test append where unset requires break of 1-colour fill position
+    //Test even partition of fill span
+    //Test partition of fill span where fill span shrinks to zero on left
+    //Test partition of fill span where fill span shrinks to zero on right
+
+    /*
+    uint32_t p1[] = { 0x80000000, 0x00000001 };
+    b = bitset_new_array(2, p1);
+    test_bool("Testing get in the first literal 1\n", true, bitset_get(b, 30));
+    test_bool("Testing get in the first literal 2\n", false, bitset_get(b, 31));
+    bitset_free(b);
+    */
+
     //TODO
 }
 
@@ -51,6 +105,10 @@ unsigned long bitset_ffs(bitset *b) {
     }
     //TODO
     return 0;
+}
+
+void test_suite_ffs() {
+    //TODO
 }
 
 /**
@@ -151,6 +209,7 @@ void bitset_resize(bitset *b, unsigned length) {
         if (!b->words) {
             BITSET_OOM;
         }
+        b->length = length;
     }
 }
 
@@ -191,7 +250,6 @@ bool bitset_get(bitset *b, unsigned long bit) {
                     } else if (BITSET_GET_COLOUR(word)) {
                         return true;
                     }
-                    word_offset--;
                 }
             }
         } else {
@@ -303,6 +361,8 @@ int main(int argc, char **argv) {
     test_suite_count();
     printf("Testing operations\n");
     test_suite_operation();
+    printf("Testing ffs\n");
+    test_suite_ffs();
 }
 
 void test_suite_macros() {
