@@ -18,7 +18,7 @@ void test_suite_ffs();
 
 void test_bool(char *, bool, bool);
 void test_ulong(char *, unsigned long, unsigned long);
-bool test_bitset(bitset *, unsigned, uint32_t *);
+bool test_bitset(char *, bitset *, unsigned, uint32_t *);
 void bitset_dump(bitset *);
 
 /*
@@ -38,26 +38,66 @@ P = if the word proceeding the span contains only 1 bit, this 5-bit length
 */
 
 bool bitset_set(bitset *b, unsigned long bit, bool value) {
-    unsigned long word_offset = bit / 31;
-    if (!b->length) {
-        if (!value) {
-            return false;
+    long word_offset = bit / 31;
+
+    printf("\nSetting bit %ld in word %ld in bitset of size %u\n", bit % 31, word_offset, b->length);
+
+    if (b->length) {
+        uint32_t word, *words = b->words;
+        unsigned short position;
+
+        for (unsigned i = 0; i < b->length; i++) {
+            word = words[i];
+            printf("At word %d\n", i);
+            if (BITSET_IS_FILL_WORD(word)) {
+                word_offset -= BITSET_GET_LENGTH(word);
+                printf("At fill, word_offset is now %ld\n", word_offset);
+                if (word_offset < 0) {
+                    //Partition into 2
+                    return BITSET_GET_COLOUR(word);
+                }
+                position = BITSET_GET_POSITION(word);
+                if (position) {
+                    printf("Found position bit at %d\n", position);
+                    if (!word_offset) {
+                        if (position - 1 == bit % 31) {
+                            printf("Bit is position!\n");
+                            //Bit is the actual position bit, set or unset
+                            return true;
+                        } else if (BITSET_GET_COLOUR(word)) {
+                            //Bit isn't the position bit, insert a new fill after it
+                            return true;
+                        }
+                    }
+                    word_offset--;
+                }
+            } else {
+                uint32_t mask = BITSET_GET_LITERAL_MASK(bit);
+                bool previous = word & mask;
+                printf("At literal %x, applying mask of %x\n", word, mask);
+                if (value) {
+                    b->words[i] |= mask;
+                } else {
+                    b->words[i] &= ~mask;
+                }
+                return previous;
+            }
         }
-        if (word_offset >= (1 << 26)) {
-            //TODO Work out how many fill bytes are required
-            fprintf(stderr, "Fill chains are unimplemented\n");
-            exit(1);
-        } else if (word_offset) {
-            bitset_resize(b, 1);
-            *b->words = BITSET_CREATE_FILL(word_offset, bit % 31);
-        } else {
-            bitset_resize(b, 1);
-            *b->words = BITSET_CREATE_LITERAL(bit % 31);
-        }
-        return false;
+
     }
 
+    printf("Outside ofset loop, word_offset = %lu\n", word_offset);
 
+    if (!value) {
+        return false;
+    } else if (word_offset > BITSET_MAX_LENGTH) {
+        //TODO Work out how many fill bytes are required
+        fprintf(stderr, "Fill chains are unimplemented\n");
+        exit(1);
+    } else {
+        bitset_resize(b, b->length + 1);
+        b->words[b->length - 1] = BITSET_CREATE_FILL(word_offset, bit);
+    }
 
     return false;
 }
@@ -79,24 +119,41 @@ void test_suite_set() {
     test_bool("Testing set on empty set 5\n", true, bitset_get(b, 31));
     bitset_free(b);
 
-    //Test append
-    //Test case where bit is in literal (set)
-    //Test case where bit is in literal (unset)
+    uint32_t p1[] = { 0x80000001 };
+    b = bitset_new_array(1, p1);
+    test_bool("Testing append after fill 1\n", false, bitset_set(b, 93, true));
+    uint32_t e1[] = { 0x80000001, 0x82000002 };
+    test_bitset("Testing append after fill 2", b, 2, e1);
+    bitset_free(b);
+
+    uint32_t p2[] = { 0x82000001 };
+    b = bitset_new_array(1, p2);
+    test_bool("Testing append after fill 3\n", false, bitset_set(b, 93, true));
+    uint32_t e2[] = { 0x82000001, 0x82000001 };
+    test_bitset("Testing append after fill 4", b, 2, e2);
+    bitset_free(b);
+
+    uint32_t p3[] = { 0x80000000, 0x00000000 };
+    b = bitset_new_array(2, p3);
+    test_bool("Testing set in literal 1\n", false, bitset_set(b, 32, true));
+    test_bool("Testing set in literal 2\n", false, bitset_set(b, 38, true));
+    test_bool("Testing set in literal 3\n", false, bitset_set(b, 45, true));
+    test_bool("Testing set in literal 4\n", false, bitset_set(b, 55, true));
+    test_bool("Testing set in literal 5\n", false, bitset_set(b, 61, true));
+    uint32_t e3[] = { 0x80000000, 0x20810041 };
+    test_bitset("Testing set in literal 6", b, 2, e3);
+    test_bool("Testing set in literal 7\n", true, bitset_set(b, 61, false));
+    uint32_t e4[] = { 0x80000000, 0x20810040 };
+    test_bitset("Testing set in literal 8", b, 2, e4);
+    bitset_free(b);
+
     //Test append where set requires break of 0-colour fill position
     //Test append where unset requires break of 1-colour fill position
     //Test even partition of fill span
     //Test partition of fill span where fill span shrinks to zero on left
     //Test partition of fill span where fill span shrinks to zero on right
-
-    /*
-    uint32_t p1[] = { 0x80000000, 0x00000001 };
-    b = bitset_new_array(2, p1);
-    test_bool("Testing get in the first literal 1\n", true, bitset_get(b, 30));
-    test_bool("Testing get in the first literal 2\n", false, bitset_get(b, 31));
-    bitset_free(b);
-    */
-
-    //TODO
+    //Test append >= 2^25
+    //Test partition of multi fill chain
 }
 
 unsigned long bitset_ffs(bitset *b) {
@@ -316,7 +373,7 @@ TEST_DEFINE(bool, bool, "%d");
 TEST_DEFINE(str, char *, "%s");
 TEST_DEFINE(hex, int, "%#x");
 
-bool test_bitset(bitset *b, unsigned length, uint32_t *expected) {
+bool test_bitset(char *title, bitset *b, unsigned length, uint32_t *expected) {
     bool mismatch = length != b->length;
     if (!mismatch) {
         for (unsigned i = 0; i < length; i++) {
@@ -328,7 +385,7 @@ bool test_bitset(bitset *b, unsigned length, uint32_t *expected) {
     }
     if (mismatch) {
         unsigned length_max = BITSET_MAX(b->length, length);
-        printf("\x1B[31mBitset mismatch\x1B[0m\n");
+        printf("\x1B[31m%s\x1B[0m\n", title);
         for (unsigned i = 0; i < length_max; i++) {
             printf("  \x1B[36m%3d.\x1B[0m ", i);
             if (i < b->length) {

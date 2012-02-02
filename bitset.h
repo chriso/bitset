@@ -41,10 +41,14 @@ typedef struct bitset_op_ {
 #define BITSET_SET_POSITION(word, pos) ((word) | ((pos) << 25))
 #define BITSET_UNSET_POSITION(word) ((word) & 0xC1FFFFFF)
 
-#define BITSET_CREATE_FILL(len, pos) ((0x80000000 | (((pos) + 1) << 25)) | (len))
+#define BITSET_CREATE_FILL(len, pos) ((0x80000000 | (((pos % 31) + 1) << 25)) | (len))
 #define BITSET_CREATE_LITERAL(bit) (0x40000000 >> (bit))
 
 #define BITSET_MAX(a, b) ((a) > (b) ? (a) : (b));
+
+#define BITSET_GET_LITERAL_MASK(bit) (0x80000000 >> ((bit % 31) + 1))
+
+#define BITSET_MAX_LENGTH (0x01FFFFFF)
 
 /**
  * Allow a custom malloc library.
