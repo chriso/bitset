@@ -84,6 +84,7 @@ bitset *bitset_copy(bitset *);
 bool bitset_get(bitset *, unsigned long);
 unsigned long bitset_count(bitset *);
 bool bitset_set(bitset *, unsigned long, bool);
+unsigned long bitset_fls(bitset *);
 bitset_op *bitset_operation_new();
 void bitset_operation_free(bitset_op *);
 void bitset_operation_add(bitset_op *, bitset *, enum bitset_operation);

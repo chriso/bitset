@@ -21,6 +21,11 @@ void test_ulong(char *, unsigned long, unsigned long);
 bool test_bitset(char *, bitset *, unsigned, uint32_t *);
 void bitset_dump(bitset *);
 
+struct bitset_list {
+    int value;
+    struct bitset_list *next;
+};
+
 /*
 The bitset structure uses PLWAH compression to encode runs of identical bits.
 
@@ -39,42 +44,71 @@ P = if the word proceeding the span contains only 1 bit, this 5-bit length
 
 bool bitset_set(bitset *b, unsigned long bit, bool value) {
     long word_offset = bit / 31;
-
-    printf("\nSetting bit %ld in word %ld in bitset of size %u\n", bit % 31, word_offset, b->length);
+    bit %= 31;
 
     if (b->length) {
         uint32_t word, *words = b->words;
+        unsigned long fill_length;
         unsigned short position;
 
         for (unsigned i = 0; i < b->length; i++) {
             word = words[i];
-            printf("At word %d\n", i);
             if (BITSET_IS_FILL_WORD(word)) {
-                word_offset -= BITSET_GET_LENGTH(word);
-                printf("At fill, word_offset is now %ld\n", word_offset);
-                if (word_offset < 0) {
-                    //Partition into 2
-                    return BITSET_GET_COLOUR(word);
-                }
                 position = BITSET_GET_POSITION(word);
+                fill_length = BITSET_GET_LENGTH(word);
+
+                if (word_offset == fill_length - 1) {
+                    if (position) {
+                        bitset_resize(b, b->length + 1);
+                        if (i < b->length - 1) {
+                            memmove(b->words+i+2, b->words+i+1, sizeof(uint32_t) * (b->length - i - 1));
+                        }
+                        b->words[i] = BITSET_CREATE_LITERAL(bit);
+                        b->words[i+1] = BITSET_CREATE_LITERAL(position - 1);
+                    } else {
+                        b->words[i] = BITSET_CREATE_LITERAL(bit);
+                    }
+                    return false;
+                } else if (word_offset < fill_length) {
+                    bitset_resize(b, b->length + 1);
+                    if (i < b->length - 1) {
+                        memmove(b->words+i+2, b->words+i+1, sizeof(uint32_t) * (b->length - i - 1));
+                    }
+                    b->words[i] = BITSET_CREATE_FILL(word_offset, bit);
+                    b->words[i+1] = BITSET_CREATE_FILL(fill_length - word_offset - 1, position - 1);
+                    return false;
+                }
+
+                word_offset -= fill_length;
+
                 if (position) {
-                    printf("Found position bit at %d\n", position);
                     if (!word_offset) {
-                        if (position - 1 == bit % 31) {
-                            printf("Bit is position!\n");
-                            //Bit is the actual position bit, set or unset
-                            return true;
-                        } else if (BITSET_GET_COLOUR(word)) {
-                            //Bit isn't the position bit, insert a new fill after it
-                            return true;
+                        if (position - 1 == bit) {
+                            if (!value || BITSET_GET_COLOUR(word)) {
+                                b->words[i] = BITSET_UNSET_POSITION(word);
+                            }
+                            return !BITSET_GET_COLOUR(word);
+                        } else {
+                            bitset_resize(b, b->length + 1);
+                            if (i < b->length - 1) {
+                                memmove(b->words+i+2, b->words+i+1, sizeof(uint32_t) * (b->length - i - 1));
+                            }
+                            b->words[i] = BITSET_UNSET_POSITION(word);
+                            uint32_t literal = 0;
+                            literal |= BITSET_GET_LITERAL_MASK(position - 1);
+                            literal |= BITSET_GET_LITERAL_MASK(bit);
+                            b->words[i+1] = literal;
+                            return false;
                         }
                     }
                     word_offset--;
+                } else if (!word_offset) {
+                    b->words[0] = BITSET_SET_POSITION(word, bit + 1);
+                    return false;
                 }
             } else {
                 uint32_t mask = BITSET_GET_LITERAL_MASK(bit);
                 bool previous = word & mask;
-                printf("At literal %x, applying mask of %x\n", word, mask);
                 if (value) {
                     b->words[i] |= mask;
                 } else {
@@ -86,17 +120,14 @@ bool bitset_set(bitset *b, unsigned long bit, bool value) {
 
     }
 
-    printf("Outside ofset loop, word_offset = %lu\n", word_offset);
-
-    if (!value) {
-        return false;
-    } else if (word_offset > BITSET_MAX_LENGTH) {
-        //TODO Work out how many fill bytes are required
-        fprintf(stderr, "Fill chains are unimplemented\n");
-        exit(1);
-    } else {
-        bitset_resize(b, b->length + 1);
-        b->words[b->length - 1] = BITSET_CREATE_FILL(word_offset, bit);
+    if (value) {
+        if (word_offset > BITSET_MAX_LENGTH) {
+            fprintf(stderr, "Fill chains are unimplemented\n");
+            exit(1);
+        } else {
+            bitset_resize(b, b->length + 1);
+            b->words[b->length - 1] = BITSET_CREATE_FILL(word_offset, bit);
+        }
     }
 
     return false;
@@ -147,25 +178,85 @@ void test_suite_set() {
     test_bitset("Testing set in literal 8", b, 2, e4);
     bitset_free(b);
 
-    //Test append where set requires break of 0-colour fill position
-    //Test append where unset requires break of 1-colour fill position
-    //Test even partition of fill span
-    //Test partition of fill span where fill span shrinks to zero on left
-    //Test partition of fill span where fill span shrinks to zero on right
-    //Test append >= 2^25
-    //Test partition of multi fill chain
-}
+    uint32_t p5[] = { 0x82000001 };
+    b = bitset_new_array(1, p5);
+    test_bool("Testing partition of fill 1\n", false, bitset_set(b, 32, true));
+    uint32_t e5[] = { 0x80000001, 0x60000000 };
+    test_bitset("Testing partition of fill 2", b, 2, e5);
+    bitset_free(b);
 
-unsigned long bitset_ffs(bitset *b) {
-    if (!b->length) {
-        return 0;
+    uint32_t p6[] = { 0x82000001, 0x82000001 };
+    b = bitset_new_array(2, p6);
+    test_bool("Testing partition of fill 3\n", false, bitset_set(b, 32, true));
+    uint32_t e6[] = { 0x80000001, 0x60000000, 0x82000001 };
+    test_bitset("Testing partition of fill 4", b, 3, e6);
+    bitset_free(b);
+
+    uint32_t p7[] = { 0x80000001 };
+    b = bitset_new_array(1, p7);
+    test_bool("Testing partition of fill 5\n", false, bitset_set(b, 31, true));
+    uint32_t e7[] = { 0x82000001 };
+    test_bitset("Testing partition of fill 6", b, 1, e7);
+    bitset_free(b);
+
+    uint32_t p8[] = { 0x82000001, 0x86000001 };
+    b = bitset_new_array(2, p8);
+    test_bool("Testing partition of fill 7\n", false, bitset_set(b, 0, true));
+    uint32_t e8[] = { 0x40000000, 0x40000000, 0x86000001 };
+    test_bitset("Testing partition of fill 7", b, 3, e8);
+    bitset_free(b);
+
+    uint32_t p9[] = { 0x82000003, 0x86000001 };
+    b = bitset_new_array(2, p9);
+    test_bool("Testing partition of fill 8\n", false, bitset_set(b, 32, true));
+    uint32_t e9[] = { 0x84000001, 0x82000001, 0x86000001 };
+    test_bitset("Testing partition of fill 9", b, 3, e9);
+    bitset_free(b);
+
+    uint32_t p10[] = { 0x80000001, 0x82000001 };
+    b = bitset_new_array(2, p10);
+    test_bool("Testing partition of fill 10\n", false, bitset_set(b, 1, true));
+    uint32_t e10[] = { 0x20000000, 0x82000001 };
+    test_bitset("Testing partition of fill 11", b, 2, e10);
+    bitset_free(b);
+
+    uint32_t p11[] = { 0x82000001 };
+    b = bitset_new_array(1, p11);
+    test_bool("Testing setting position bit 1\n", true, bitset_set(b, 31, true));
+    test_bitset("Testing setting position bit 2", b, 1, p11);
+    uint32_t e11[] = { 0x80000001 };
+    test_bool("Testing setting position bit 3\n", true, bitset_set(b, 31, false));
+    test_bitset("Testing setting position bit 4", b, 1, e11);
+    bitset_free(b);
+
+    /* Stress test:
+    unsigned int max = 2000, num = 1500;
+    b = bitset_new();
+    srand(time(NULL));
+    struct bitset_list *head = malloc(sizeof(struct bitset_list)), *next = head;
+    for (int i = 0; i < num; i++) {
+        next->value = rand() % max;
+        next->next = malloc(sizeof(struct bitset_list));
+        bitset_set(b, next->value, true);
+        next = next->next;
+        next->next = NULL;
     }
-    //TODO
-    return 0;
-}
+    next = head;
+    while (next->next) {
+        test_bool("Checking stress test bits were set", true, bitset_get(b, next->value));
+        head = next;
+        next = next->next;
+        free(head);
+    }
+    free(next);
+    bitset_free(b);
+    */
 
-void test_suite_ffs() {
-    //TODO
+    //Test setting & unsetting the position bit of a 1-colour fill word
+    //Test append where bit becomes position in 1-colour fill
+    //Test append where unset requires break of 1-colour fill position
+    //Test partition where 1-colour position has to be split out
+    //Test append >= 2^25
 }
 
 /**
@@ -344,6 +435,28 @@ unsigned long bitset_count(bitset *b) {
         }
     }
     return count;
+}
+
+unsigned long bitset_fls(bitset *b) {
+    unsigned long offset = 0;
+    unsigned short position;
+    uint32_t word;
+    for (unsigned i = 0; i < b->length; i++) {
+        word = b->words[i];
+        if (BITSET_IS_FILL_WORD(word)) {
+            offset += BITSET_GET_LENGTH(word);
+            if (BITSET_GET_COLOUR(word)) {
+                return offset * 31;
+            }
+            position = BITSET_GET_POSITION(word);
+            if (position) {
+                return offset * 31 + position - 1;
+            }
+        } else {
+            return offset * 31 + (31 - flsl(word));
+        }
+    }
+    return 0;
 }
 
 /**
@@ -542,4 +655,26 @@ void test_suite_count() {
     test_ulong("Testing pop count of fill with position 2\n", 61, bitset_count(b));
     bitset_free(b);
 }
+
+void test_suite_ffs() {
+    bitset *b = bitset_new();
+    bitset_set(b, 1000, true);
+    test_ulong("Test find first set 1", 1000, bitset_fls(b));
+    bitset_set(b, 300, true);
+    test_ulong("Test find first set 2", 300, bitset_fls(b));
+    bitset_set(b, 299, true);
+    test_ulong("Test find first set 3", 299, bitset_fls(b));
+    bitset_set(b, 298, true);
+    test_ulong("Test find first set 4", 298, bitset_fls(b));
+    bitset_set(b, 290, true);
+    test_ulong("Test find first set 5", 290, bitset_fls(b));
+    bitset_set(b, 240, true);
+    test_ulong("Test find first set 6", 240, bitset_fls(b));
+    bitset_set(b, 12, true);
+    test_ulong("Test find first set 7", 12, bitset_fls(b));
+    bitset_set(b, 3, true);
+    test_ulong("Test find first set 8", 3, bitset_fls(b));
+    bitset_free(b);
+}
+
 
