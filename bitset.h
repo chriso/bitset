@@ -17,10 +17,17 @@ enum bitset_operation {
     BITSET_ANDNOT
 };
 
+typedef struct bitset_op_step_ {
+    bitset *b;
+    enum bitset_operation operation;
+    //
+} bitset_op_step;
+
 typedef struct bitset_op_ {
-    bitset **bitsets;
-    enum bitset_operation *ops;
+    bitset *initial;
+    bitset_op_step **steps;
     unsigned length;
+    unsigned max;
 } bitset_op;
 
 /**
@@ -49,6 +56,16 @@ typedef struct bitset_op_ {
 #define BITSET_GET_LITERAL_MASK(bit) (0x80000000 >> ((bit % 31) + 1))
 
 #define BITSET_MAX_LENGTH (0x01FFFFFF)
+
+//http://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation
+//http://www.strchr.com/crc32_popcnt
+
+#define BITSET_POP_COUNT(count, word) \
+    word &= 0x7FFFFFFF; \
+    word -= (word >> 1) & 0x55555555; \
+    word = (word & 0x33333333) + ((word >> 2) & 0x33333333); \
+    word = (word + (word >> 4)) & 0x0F0F0F0F; \
+    count += (word * 0x01010101) >> 24;
 
 /**
  * Allow a custom malloc library.
@@ -89,7 +106,7 @@ bitset_op *bitset_operation_new();
 void bitset_operation_free(bitset_op *);
 void bitset_operation_add(bitset_op *, bitset *, enum bitset_operation);
 bitset *bitset_operation_exec(bitset_op *);
-long bitset_operation_count(bitset_op *);
+unsigned long bitset_operation_count(bitset_op *);
 
 #endif
 
