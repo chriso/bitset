@@ -1,12 +1,10 @@
-//&>/dev/null;x="${0%.*}";[ ! "/tmp/$x" -ot "$0" ]||(rm -f "/tmp/$x";gcc -Wall -DNDEBUG -O3 -std=c99 -o "/tmp/$x" bitset.c "$0")&&"/tmp/$x" $*;exit
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
 
-#include "bitset.h"
+#include "../src/bitset.h"
 #include "test.h"
 
 void bitset_dump(bitset *b) {
