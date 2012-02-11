@@ -1,9 +1,21 @@
 #ifndef BITSET_H_
 #define BITSET_H_
 
-/**
- * The bitset types and operations.
- */
+/*
+The bitset structure uses PLWAH compression to encode runs of identical bits.
+
+The encoding is based on two types of 32-bit words which can be identified
+by whether the MSB is set:
+
+Literal word: 0XXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+   Fill word: 1CPPPPPL LLLLLLLL LLLLLLLL LLLLLLLL
+
+X = 31 uncompressed bits
+L = a 25-bit length representing a span of "clean" words (all 1's or all 0's)
+C = the span's colour (whether it's all 1's or 0's)
+P = if the word proceeding the span contains only 1 bit, this 5-bit length
+    can be used to determine which bit is set (0x80000000 >> position)
+*/
 
 typedef struct bitset_ {
     uint32_t *words;
@@ -72,21 +84,14 @@ typedef struct bitset_op_ {
  */
 
 #ifndef BITSET_MALLOC
+
 #define BITSET_MALLOC malloc
-#endif
-
-#ifndef BITSET_REALLOC
 #define BITSET_REALLOC realloc
-#endif
-
-#ifndef BITSET_FREE
 #define BITSET_FREE free
-#endif
-
-#ifndef BITSET_OOM
 #define BITSET_OOM \
     fprintf(stderr, "Out of memory\n"); \
     exit(1)
+
 #endif
 
 /**

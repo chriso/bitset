@@ -6,22 +6,6 @@
 
 #include "bitset.h"
 
-/*
-The bitset structure uses PLWAH compression to encode runs of identical bits.
-
-The encoding is based on two types of 32-bit words which can be identified
-by whether the MSB is set:
-
-Literal word: 0XXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-   Fill word: 1CPPPPPL LLLLLLLL LLLLLLLL LLLLLLLL
-
-X = 31 uncompressed bits
-L = a 25-bit length representing a span of "clean" words (all 1's or all 0's)
-C = the span's colour (whether it's all 1's or 0's)
-P = if the word proceeding the span contains only 1 bit, this 5-bit length
-    can be used to determine which bit is set (0x80000000 >> position)
-*/
-
 bitset *bitset_new() {
     bitset *b = (bitset *) BITSET_MALLOC(sizeof(bitset));
     if (!b) {
@@ -264,11 +248,6 @@ bool bitset_set(bitset *b, unsigned long bit, bool value) {
 
     return false;
 }
-
-/**
- * Bitset operations.
- * ----------------------------------------------------------------------------
- */
 
 bitset_op *bitset_operation_new(bitset *initial) {
     bitset_op *ops = (bitset_op *) BITSET_MALLOC(sizeof(bitset_op));
