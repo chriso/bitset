@@ -23,7 +23,7 @@ P = if the word proceeding the span contains only 1 bit, this 5-bit length
 */
 
 bitset *bitset_new() {
-    bitset *b = BITSET_MALLOC(sizeof(bitset));
+    bitset *b = (bitset *) BITSET_MALLOC(sizeof(bitset));
     if (!b) {
         BITSET_OOM;
     }
@@ -32,11 +32,11 @@ bitset *bitset_new() {
 }
 
 bitset *bitset_new_array(unsigned length, uint32_t *words) {
-    bitset *b = BITSET_MALLOC(sizeof(bitset));
+    bitset *b = (bitset *) BITSET_MALLOC(sizeof(bitset));
     if (!b) {
         BITSET_OOM;
     }
-    b->words = BITSET_MALLOC(length * sizeof(uint32_t));
+    b->words = (uint32_t *) BITSET_MALLOC(length * sizeof(uint32_t));
     if (!b->words) {
         BITSET_OOM;
     }
@@ -55,9 +55,9 @@ void bitset_free(bitset *b) {
 void bitset_resize(bitset *b, unsigned length) {
     if (length > b->length) {
         if (!b->length) {
-            b->words = BITSET_MALLOC(sizeof(uint32_t) * length);
+            b->words = (uint32_t *) BITSET_MALLOC(sizeof(uint32_t) * length);
         } else {
-            b->words = BITSET_REALLOC(b->words, sizeof(uint32_t) * length);
+            b->words = (uint32_t *) BITSET_REALLOC(b->words, sizeof(uint32_t) * length);
         }
         if (!b->words) {
             BITSET_OOM;
@@ -67,11 +67,11 @@ void bitset_resize(bitset *b, unsigned length) {
 }
 
 bitset *bitset_copy(bitset *b) {
-    bitset *replica = BITSET_MALLOC(sizeof(bitset));
+    bitset *replica = (bitset *) BITSET_MALLOC(sizeof(bitset));
     if (!replica) {
         BITSET_OOM;
     }
-    replica->words = BITSET_MALLOC(sizeof(unsigned) * b->length);
+    replica->words = (uint32_t *) BITSET_MALLOC(sizeof(uint32_t) * b->length);
     if (!replica->words) {
         BITSET_OOM;
     }
@@ -271,7 +271,7 @@ bool bitset_set(bitset *b, unsigned long bit, bool value) {
  */
 
 bitset_op *bitset_operation_new(bitset *initial) {
-    bitset_op *ops = BITSET_MALLOC(sizeof(bitset_op));
+    bitset_op *ops = (bitset_op *) BITSET_MALLOC(sizeof(bitset_op));
     if (!ops) {
         BITSET_OOM;
     }
@@ -289,7 +289,7 @@ void bitset_operation_free(bitset_op *ops) {
 }
 
 void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
-    bitset_op_step *step = BITSET_MALLOC(sizeof(bitset_op_step));
+    bitset_op_step *step = (bitset_op_step *) BITSET_MALLOC(sizeof(bitset_op_step));
     if (!step) {
         BITSET_OOM;
     }
@@ -297,9 +297,9 @@ void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
     step->operation = op;
     if (ops->length % 2 == 0) {
         if (!ops->length) {
-            ops->steps = BITSET_MALLOC(sizeof(bitset_op_step *) * 2);
+            ops->steps = (bitset_op_step **) BITSET_MALLOC(sizeof(bitset_op_step *) * 2);
         } else {
-            ops->steps = BITSET_REALLOC(ops->steps, sizeof(bitset_op_step *) * ops->length * 2);
+            ops->steps = (bitset_op_step **) BITSET_REALLOC(ops->steps, sizeof(bitset_op_step *) * ops->length * 2);
         }
         if (!ops->steps) {
             BITSET_OOM;
