@@ -12,7 +12,7 @@ bitset *bitset_new() {
     if (!b) {
         BITSET_OOM;
     }
-    b->length = 0;
+    b->length = b->size = 0;
     return b;
 }
 
@@ -26,7 +26,7 @@ bitset *bitset_new_array(unsigned length, uint32_t *words) {
         BITSET_OOM;
     }
     memcpy(b->words, words, length * sizeof(uint32_t));
-    b->length = length;
+    b->length = b->size = length;
     return b;
 }
 
@@ -38,17 +38,22 @@ void bitset_free(bitset *b) {
 }
 
 void bitset_resize(bitset *b, unsigned length) {
-    if (length > b->length) {
+    unsigned next_size;
+    BITSET_NEXT_POW2(next_size, length);
+
+    if (next_size > b->size) {
         if (!b->length) {
-            b->words = (uint32_t *) BITSET_MALLOC(sizeof(uint32_t) * length);
+            b->words = (uint32_t *) BITSET_MALLOC(sizeof(uint32_t) * next_size);
         } else {
-            b->words = (uint32_t *) BITSET_REALLOC(b->words, sizeof(uint32_t) * length);
+            b->words = (uint32_t *) BITSET_REALLOC(b->words, sizeof(uint32_t) * next_size);
         }
         if (!b->words) {
             BITSET_OOM;
         }
-        b->length = length;
+        b->size = next_size;
     }
+
+    b->length = length;
 }
 
 bitset *bitset_copy(bitset *b) {

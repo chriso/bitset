@@ -474,11 +474,11 @@ void test_suite_set() {
 
 void test_suite_stress() {
     bitset *b = bitset_new();
-    unsigned int max = 100000000, num = 1000;
+    unsigned int max = 100000000, num = 10000;
     unsigned *bits = malloc(sizeof(unsigned) * num);
     srand(time(NULL));
     for (unsigned i = 0; i < num; i++) {
-        bits[i] = rand() % max;
+        //bits[i] = rand() % max;
         bits[i] = i;
         bitset_set(b, bits[i], true);
     }

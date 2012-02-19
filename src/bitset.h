@@ -73,6 +73,16 @@ typedef struct bitset_op_ {
 
 #define BITSET_MAX_LENGTH (0x01FFFFFF)
 
+#define BITSET_NEXT_POW2(dest, src) \
+    dest = src; \
+    dest--; \
+    dest |= dest >> 1; \
+    dest |= dest >> 2; \
+    dest |= dest >> 4; \
+    dest |= dest >> 8; \
+    dest |= dest >> 16; \
+    dest++;
+
 //http://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation
 //http://www.strchr.com/crc32_popcnt
 
