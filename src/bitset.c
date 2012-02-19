@@ -38,10 +38,10 @@ void bitset_free(bitset *b) {
 }
 
 void bitset_resize(bitset *b, unsigned length) {
-    unsigned next_size;
-    BITSET_NEXT_POW2(next_size, length);
+    if (length > b->size) {
+        unsigned next_size;
+        BITSET_NEXT_POW2(next_size, length);
 
-    if (next_size > b->size) {
         if (!b->length) {
             b->words = (uint32_t *) BITSET_MALLOC(sizeof(uint32_t) * next_size);
         } else {
