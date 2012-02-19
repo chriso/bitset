@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+#include <limits.h>
 
 #include "bitset.h"
 
@@ -71,6 +72,7 @@ bool bitset_get(bitset *b, unsigned long bit) {
 
     uint32_t word, *words = b->words;
     long word_offset = bit / 31;
+    bit %= 31;
     unsigned short position;
 
     for (unsigned i = 0; i < b->length; i++) {
@@ -82,7 +84,7 @@ bool bitset_get(bitset *b, unsigned long bit) {
                 return BITSET_GET_COLOUR(word);
             } else if (position) {
                 if (!word_offset) {
-                    if (position - 1 == bit % 31) {
+                    if (position - 1 == bit) {
                         return !BITSET_GET_COLOUR(word);
                     } else if (BITSET_GET_COLOUR(word)) {
                         return true;
@@ -91,7 +93,7 @@ bool bitset_get(bitset *b, unsigned long bit) {
                 word_offset--;
             }
         } else if (!word_offset--) {
-            return word & (0x80000000 >> ((bit % 31) + 1));
+            return word & (0x80000000 >> (bit + 1));
         }
     }
     return false;
@@ -255,7 +257,6 @@ bitset_op *bitset_operation_new(bitset *initial) {
         BITSET_OOM;
     }
     ops->initial = initial;
-    ops->max = initial->length;
     ops->length = 0;
     return ops;
 }
@@ -274,6 +275,8 @@ void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
     }
     step->b = b;
     step->operation = op;
+    step->pos = 0;
+    step->word_offset = step->prev_offset = 0;
     if (ops->length % 2 == 0) {
         if (!ops->length) {
             ops->steps = (bitset_op_step **) BITSET_MALLOC(sizeof(bitset_op_step *) * 2);
@@ -284,60 +287,138 @@ void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
             BITSET_OOM;
         }
     }
-    ops->max = BITSET_MAX(ops->max, b->length);
     ops->steps[ops->length++] = step;
 }
 
 bitset *bitset_operation_exec(bitset_op *ops) {
+    //TODO
     return NULL;
 }
 
 unsigned long bitset_operation_count(bitset_op *op) {
-    //Iterate through primary
-    //Keep a status var for each bitset
-    //   actual position, i
-    //   word_offset? or maybe just current fill length
+    unsigned long count = 0, len, word_offset = 0, fill_len;
+    unsigned long shortest_offset, last_shortest = LONG_MAX, next_offset = 0;
+    uint32_t word, word2, current_word, *words;
+    bitset_op_step *step;
+    bool complete = false, initial_complete = false;
+    unsigned short position;
 
-    unsigned long count = 0, len = op->initial->length;
-    uint32_t word, *words = op->initial->words;
-    bitset *next;
-    enum bitset_operation operation;
+    len = op->initial->length;
+    words = op->initial->words;
 
-    for (unsigned i = 0; i < op->max; i++) {
+    for (unsigned i = 0; !complete; i++) {
         if (i < len) {
             word = words[i];
-        } else {
-            word = 0;
-        }
-
-        if (BITSET_IS_FILL_WORD(word)) {
-            //Need to compare fill length with other bitsets..
-
-        }
-
-        for (unsigned j = 0; j < op->length; j++) {
-            next = op->steps[j]->b;
-            operation = op->steps[j]->operation;
-
-            //TODO
-        }
-
-        /*
-        if (BITSET_IS_FILL_WORD(word)) {
-            if (BITSET_GET_POSITION(word)) {
-                if (BITSET_GET_COLOUR(word)) {
-                    count += BITSET_GET_LENGTH(word) * 31;
-                    count += 30;
+            if (BITSET_IS_FILL_WORD(word)) {
+                fill_len = BITSET_GET_LENGTH(word);
+                position = BITSET_GET_POSITION(word);
+                word_offset += fill_len;
+                if (position) {
+                    word_offset++;
+                    word = BITSET_CREATE_LITERAL(position - 1);
                 } else {
-                    count += 1;
+                    word = 0;
                 }
-            } else if (BITSET_GET_COLOUR(word)) {
-                count += BITSET_GET_LENGTH(word) * 31;
+            } else {
+                fill_len = 0;
+                word_offset++;
             }
         } else {
-            BITSET_POP_COUNT(count, word);
+            word = 0;
+            complete = true;
+            initial_complete = true;
+            if (next_offset) {
+                word_offset = next_offset;
+            }
         }
-        */
+
+        while (true) {
+
+            current_word = word;
+            last_shortest = shortest_offset;
+            shortest_offset = LONG_MAX - 1;
+
+            for (unsigned j = 0; j < op->length; j++) {
+                step = op->steps[j];
+
+                if (last_shortest && step->word_offset == last_shortest) {
+                    step->pos++;
+                    step->prev_offset = step->word_offset;
+                } else {
+                    step->word_offset = step->prev_offset;
+                }
+
+                if (step->pos < step->b->length) {
+                    step->current_word = step->b->words[step->pos];
+                    complete = false;
+
+                    if (BITSET_IS_FILL_WORD(step->current_word)) {
+                        step->word_offset += BITSET_GET_LENGTH(step->current_word);
+                        position = BITSET_GET_POSITION(step->current_word);
+                        if (position) {
+                            step->word_offset++;
+                            step->current_word = BITSET_CREATE_LITERAL(position - 1);
+                        } else {
+                            step->current_word = 0;
+                        }
+                    } else {
+                        step->word_offset++;
+                    }
+                } else {
+                    step->current_word = 0;
+                    complete = complete && true;
+                    step->word_offset = LONG_MAX;
+                }
+
+                if (step->word_offset < shortest_offset && step->word_offset != word_offset) {
+                    shortest_offset = step->word_offset;
+                }
+            }
+
+            next_offset = shortest_offset;
+
+            if (shortest_offset >= word_offset) {
+                current_word = word;
+                shortest_offset = word_offset;
+            } else {
+                current_word = 0;
+            }
+
+            for (unsigned j = 0; j < op->length; j++) {
+                step = op->steps[j];
+
+                if (step->word_offset > shortest_offset) {
+                    word2 = 0;
+                } else {
+                    word2 = step->current_word;
+                }
+
+                switch (step->operation) {
+                    case BITSET_AND:
+                        current_word &= word2;
+                        break;
+                    case BITSET_OR:
+                        current_word |= word2;
+                        break;
+                    case BITSET_XOR:
+                        current_word ^= word2;
+                        break;
+                    case BITSET_ANDNOT:
+                        current_word &= ~word2;
+                        break;
+                }
+            }
+
+            BITSET_POP_COUNT(count, current_word);
+
+            if (next_offset > word_offset || complete) {
+                break;
+            }
+        }
+
+        if (initial_complete && shortest_offset > word_offset) {
+            word_offset = shortest_offset;
+        }
     }
 
     return count;

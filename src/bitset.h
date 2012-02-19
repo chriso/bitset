@@ -20,6 +20,7 @@ P = if the word proceeding the span contains only 1 bit, this 5-bit length
 typedef struct bitset_ {
     uint32_t *words;
     unsigned length;
+    unsigned size;
 } bitset;
 
 enum bitset_operation {
@@ -32,14 +33,16 @@ enum bitset_operation {
 typedef struct bitset_op_step_ {
     bitset *b;
     enum bitset_operation operation;
-    //
+    unsigned pos;
+    unsigned long word_offset;
+    unsigned long prev_offset;
+    uint32_t current_word;
 } bitset_op_step;
 
 typedef struct bitset_op_ {
     bitset *initial;
     bitset_op_step **steps;
     unsigned length;
-    unsigned max;
 } bitset_op;
 
 /**
@@ -64,6 +67,7 @@ typedef struct bitset_op_ {
 #define BITSET_CREATE_LITERAL(bit) (0x40000000 >> (bit))
 
 #define BITSET_MAX(a, b) ((a) > (b) ? (a) : (b));
+#define BITSET_MIN(a, b) ((a) < (b) ? (a) : (b));
 
 #define BITSET_GET_LITERAL_MASK(bit) (0x80000000 >> ((bit % 31) + 1))
 
@@ -112,6 +116,8 @@ void bitset_operation_free(bitset_op *);
 void bitset_operation_add(bitset_op *, bitset *, enum bitset_operation);
 bitset *bitset_operation_exec(bitset_op *);
 unsigned long bitset_operation_count(bitset_op *);
+
+
 
 #endif
 

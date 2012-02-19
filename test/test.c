@@ -479,10 +479,15 @@ void test_suite_stress() {
     srand(time(NULL));
     for (unsigned i = 0; i < num; i++) {
         bits[i] = rand() % max;
+        bits[i] = i;
         bitset_set(b, bits[i], true);
     }
     for (unsigned i = 0; i < num; i++) {
         test_bool("Checking stress test bits were set", true, bitset_get(b, bits[i]));
+    }
+    volatile unsigned j = 0;
+    for (unsigned i = 0; i < 86400; i++) {
+        j = bitset_count(b);
     }
     free(bits);
     bitset_free(b);
@@ -492,28 +497,93 @@ void test_suite_operation() {
     bitset_op *ops;
     bitset *b1, *b2, *b3;
 
+
     b1 = bitset_new();
     bitset_set(b1, 10, true);
     b2 = bitset_new();
-    bitset_set(b2, 100, true);
+    bitset_set(b2, 20, true);
     b3 = bitset_new();
     bitset_set(b3, 12, true);
     ops = bitset_operation_new(b1);
-
     test_int("Checking initial operation length is zero\n", 0, ops->length);
     test_bool("Checking primary bitset is added\n", true, bitset_get(ops->initial, 10));
     bitset_operation_add(ops, b2, BITSET_OR);
     test_int("Checking op length increases\n", 1, ops->length);
-    test_int("Checking op max length is stored\n", 1, ops->max);
     bitset_operation_add(ops, b3, BITSET_OR);
     test_int("Checking op length increases\n", 2, ops->length);
-    test_bool("Checking bitset was added correctly\n", true, bitset_get(ops->steps[0]->b, 100));
+    test_bool("Checking bitset was added correctly\n", true, bitset_get(ops->steps[0]->b, 20));
     test_int("Checking op was added correctly\n", BITSET_OR, ops->steps[0]->operation);
     test_bool("Checking bitset was added correctly\n", true, bitset_get(ops->steps[1]->b, 12));
     test_int("Checking op was added correctly\n", BITSET_OR, ops->steps[1]->operation);
-
     test_ulong("Checking operation count 1\n", 3, bitset_operation_count(ops));
+    bitset_operation_free(ops);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b3);
 
+    b1 = bitset_new();
+    b2 = bitset_new();
+    b3 = bitset_new();
+    bitset_set(b1, 1000, true);
+    bitset_set(b2, 100, true);
+    bitset_set(b3, 20, true);
+    ops = bitset_operation_new(b1);
+    bitset_operation_add(ops, b2, BITSET_OR);
+    bitset_operation_add(ops, b3, BITSET_OR);
+    test_ulong("Checking operation count 2\n", 3, bitset_operation_count(ops));
+    bitset_operation_free(ops);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b3);
+
+    b1 = bitset_new();
+    b2 = bitset_new();
+    b3 = bitset_new();
+    bitset_set(b1, 102, true);
+    bitset_set(b1, 10000, true);
+    bitset_set(b2, 100, true);
+    bitset_set(b3, 20, true);
+    bitset_set(b3, 101, true);
+    bitset_set(b3, 20000, true);
+    ops = bitset_operation_new(b1);
+    bitset_operation_add(ops, b2, BITSET_OR);
+    bitset_operation_add(ops, b3, BITSET_OR);
+    test_ulong("Checking operation count 3\n", 6, bitset_operation_count(ops));
+    bitset_operation_free(ops);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b3);
+
+    b1 = bitset_new();
+    b2 = bitset_new();
+    b3 = bitset_new();
+    bitset_set(b1, 101, true);
+    bitset_set(b1, 8000, true);
+    bitset_set(b2, 100, true);
+    bitset_set(b3, 20, true);
+    bitset_set(b3, 101, true);
+    bitset_set(b3, 8001, true);
+    ops = bitset_operation_new(b1);
+    bitset_operation_add(ops, b2, BITSET_OR);
+    bitset_operation_add(ops, b3, BITSET_OR);
+    test_ulong("Checking operation count 4\n", 5, bitset_operation_count(ops));
+    bitset_operation_free(ops);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b3);
+
+    b1 = bitset_new();
+    b2 = bitset_new();
+    b3 = bitset_new();
+    bitset_set(b1, 101, true);
+    bitset_set(b1, 102, true);
+    bitset_set(b2, 1000, true);
+    bitset_set(b3, 101, true);
+    bitset_set(b3, 1000, true);
+    ops = bitset_operation_new(b1);
+    bitset_operation_add(ops, b2, BITSET_OR);
+    bitset_operation_add(ops, b3, BITSET_AND);
+    test_ulong("Checking operation count 5\n", 2, bitset_operation_count(ops));
     bitset_operation_free(ops);
     bitset_free(b1);
     bitset_free(b2);
