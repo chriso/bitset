@@ -600,10 +600,6 @@ void test_suite_operation() {
     bitset_operation_add(ops, b2, BITSET_OR);
     bitset_operation_add(ops, b3, BITSET_OR);
     b4 = bitset_operation_exec(ops);
-    bitset_dump(b4);
-    for (unsigned i = 0; i <= 1500; i++) {
-        if (bitset_get(b4, i)) printf("%d is set\n", i);
-    }
     test_ulong("Checking operation exec 1\n", 5, bitset_count(b4));
     test_bool("Checking operation exec get 1\n", true, bitset_get(b4, 1000));
     test_bool("Checking operation exec get 2\n", true, bitset_get(b4, 100));
