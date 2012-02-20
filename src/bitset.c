@@ -8,22 +8,22 @@
 #include "bitset.h"
 
 bitset *bitset_new() {
-    bitset *b = (bitset *) BITSET_MALLOC(sizeof(bitset));
+    bitset *b = (bitset *) malloc(sizeof(bitset));
     if (!b) {
-        BITSET_OOM;
+        bitset_oom();
     }
     b->length = b->size = 0;
     return b;
 }
 
 bitset *bitset_new_array(unsigned length, uint32_t *words) {
-    bitset *b = (bitset *) BITSET_MALLOC(sizeof(bitset));
+    bitset *b = (bitset *) malloc(sizeof(bitset));
     if (!b) {
-        BITSET_OOM;
+        bitset_oom();
     }
-    b->words = (uint32_t *) BITSET_MALLOC(length * sizeof(uint32_t));
+    b->words = (uint32_t *) malloc(length * sizeof(uint32_t));
     if (!b->words) {
-        BITSET_OOM;
+        bitset_oom();
     }
     memcpy(b->words, words, length * sizeof(uint32_t));
     b->length = b->size = length;
@@ -32,9 +32,9 @@ bitset *bitset_new_array(unsigned length, uint32_t *words) {
 
 void bitset_free(bitset *b) {
     if (b->length) {
-        BITSET_FREE(b->words);
+        free(b->words);
     }
-    BITSET_FREE(b);
+    free(b);
 }
 
 void bitset_resize(bitset *b, unsigned length) {
@@ -43,12 +43,12 @@ void bitset_resize(bitset *b, unsigned length) {
         BITSET_NEXT_POW2(next_size, length);
 
         if (!b->length) {
-            b->words = (uint32_t *) BITSET_MALLOC(sizeof(uint32_t) * next_size);
+            b->words = (uint32_t *) malloc(sizeof(uint32_t) * next_size);
         } else {
-            b->words = (uint32_t *) BITSET_REALLOC(b->words, sizeof(uint32_t) * next_size);
+            b->words = (uint32_t *) realloc(b->words, sizeof(uint32_t) * next_size);
         }
         if (!b->words) {
-            BITSET_OOM;
+            bitset_oom();
         }
         b->size = next_size;
     }
@@ -57,13 +57,13 @@ void bitset_resize(bitset *b, unsigned length) {
 }
 
 bitset *bitset_copy(bitset *b) {
-    bitset *replica = (bitset *) BITSET_MALLOC(sizeof(bitset));
+    bitset *replica = (bitset *) malloc(sizeof(bitset));
     if (!replica) {
-        BITSET_OOM;
+        bitset_oom();
     }
-    replica->words = (uint32_t *) BITSET_MALLOC(sizeof(uint32_t) * b->length);
+    replica->words = (uint32_t *) malloc(sizeof(uint32_t) * b->length);
     if (!replica->words) {
-        BITSET_OOM;
+        bitset_oom();
     }
     memcpy(replica->words, b->words, b->length * sizeof(uint32_t));
     replica->length = b->length;
@@ -257,9 +257,9 @@ bool bitset_set(bitset *b, unsigned long bit, bool value) {
 }
 
 bitset_op *bitset_operation_new(bitset *initial) {
-    bitset_op *ops = (bitset_op *) BITSET_MALLOC(sizeof(bitset_op));
+    bitset_op *ops = (bitset_op *) malloc(sizeof(bitset_op));
     if (!ops) {
-        BITSET_OOM;
+        bitset_oom();
     }
     ops->length = 0;
     bitset_operation_add(ops, initial, BITSET_OR);
@@ -268,26 +268,26 @@ bitset_op *bitset_operation_new(bitset *initial) {
 
 void bitset_operation_free(bitset_op *ops) {
     if (ops->length) {
-        BITSET_FREE(ops->steps);
+        free(ops->steps);
     }
-    BITSET_FREE(ops);
+    free(ops);
 }
 
 void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
-    bitset_op_step *step = (bitset_op_step *) BITSET_MALLOC(sizeof(bitset_op_step));
+    bitset_op_step *step = (bitset_op_step *) malloc(sizeof(bitset_op_step));
     if (!step) {
-        BITSET_OOM;
+        bitset_oom();
     }
     step->b = b;
     step->operation = op;
     if (ops->length % 2 == 0) {
         if (!ops->length) {
-            ops->steps = (bitset_op_step **) BITSET_MALLOC(sizeof(bitset_op_step *) * 2);
+            ops->steps = (bitset_op_step **) malloc(sizeof(bitset_op_step *) * 2);
         } else {
-            ops->steps = (bitset_op_step **) BITSET_REALLOC(ops->steps, sizeof(bitset_op_step *) * ops->length * 2);
+            ops->steps = (bitset_op_step **) realloc(ops->steps, sizeof(bitset_op_step *) * ops->length * 2);
         }
         if (!ops->steps) {
-            BITSET_OOM;
+            bitset_oom();
         }
     }
     ops->steps[ops->length++] = step;
@@ -345,9 +345,9 @@ bitset_op_hash *bitset_operation_iter(bitset_op *op) {
                 case BITSET_OR:
                     HASH_FIND(hh, words, &word_offset, sizeof(unsigned long), current);
                     if (!current) {
-                        current = (bitset_op_hash *) BITSET_MALLOC(sizeof(bitset_op_hash));
+                        current = (bitset_op_hash *) malloc(sizeof(bitset_op_hash));
                         if (!current) {
-                            BITSET_OOM;
+                            bitset_oom();
                         }
                         current->offset = word_offset;
                         current->word = fill;
@@ -362,9 +362,9 @@ bitset_op_hash *bitset_operation_iter(bitset_op *op) {
                         word &= current->word;
                     }
                     if (word) {
-                        tmp = (bitset_op_hash *) BITSET_MALLOC(sizeof(bitset_op_hash));
+                        tmp = (bitset_op_hash *) malloc(sizeof(bitset_op_hash));
                         if (!tmp) {
-                            BITSET_OOM;
+                            bitset_oom();
                         }
                         tmp->offset = word_offset;
                         tmp->word = word;

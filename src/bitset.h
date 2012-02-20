@@ -100,17 +100,11 @@ typedef struct bitset_op_hash_ {
 #endif
 
 /**
- * Allow for a custom malloc library.
+ * Custom out of memory behaviour.
  */
 
-#ifndef BITSET_MALLOC
-#define BITSET_MALLOC malloc
-#define BITSET_REALLOC realloc
-#define BITSET_FREE free
-#endif
-
-#ifndef BITSET_OOM
-#define BITSET_OOM \
+#ifndef bitset_oom
+#define bitset_oom() \
     fprintf(stderr, "Out of memory\n"); \
     exit(1)
 #endif
