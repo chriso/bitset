@@ -1,6 +1,8 @@
 #ifndef BITSET_H_
 #define BITSET_H_
 
+#include "uthash.h"
+
 /*
 The bitset structure uses PLWAH compression to encode runs of identical bits.
 
@@ -34,17 +36,18 @@ enum bitset_operation {
 typedef struct bitset_op_step_ {
     bitset *b;
     enum bitset_operation operation;
-    unsigned pos;
-    unsigned long word_offset;
-    unsigned long prev_offset;
-    uint32_t current_word;
 } bitset_op_step;
 
 typedef struct bitset_op_ {
-    bitset *initial;
     bitset_op_step **steps;
     unsigned length;
 } bitset_op;
+
+typedef struct bitset_op_hash_ {
+    unsigned long offset;
+    uint32_t word;
+    UT_hash_handle hh;
+} bitset_op_hash;
 
 /**
  * PLWAH compression macros for 32-bit words.
@@ -130,8 +133,7 @@ void bitset_operation_free(bitset_op *);
 void bitset_operation_add(bitset_op *, bitset *, enum bitset_operation);
 bitset *bitset_operation_exec(bitset_op *);
 unsigned long bitset_operation_count(bitset_op *);
-
-
+bitset_op_hash *bitset_operation_iter(bitset_op *);
 
 #endif
 

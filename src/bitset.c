@@ -261,8 +261,8 @@ bitset_op *bitset_operation_new(bitset *initial) {
     if (!ops) {
         BITSET_OOM;
     }
-    ops->initial = initial;
     ops->length = 0;
+    bitset_operation_add(ops, initial, BITSET_OR);
     return ops;
 }
 
@@ -280,8 +280,6 @@ void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
     }
     step->b = b;
     step->operation = op;
-    step->pos = 0;
-    step->word_offset = step->prev_offset = 0;
     if (ops->length % 2 == 0) {
         if (!ops->length) {
             ops->steps = (bitset_op_step **) BITSET_MALLOC(sizeof(bitset_op_step *) * 2);
@@ -295,140 +293,101 @@ void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
     ops->steps[ops->length++] = step;
 }
 
-bitset *bitset_operation_exec(bitset_op *ops) {
-    //TODO
-    return NULL;
+bitset *bitset_operation_exec(bitset_op *op) {
+    bitset *result = bitset_new();
+    bitset_op_hash *current, *tmp, *words = bitset_operation_iter(op);
+    //TODO: Sort
+    HASH_ITER(hh, words, current, tmp) {
+        //TODO: Add to the result bitset
+        free(current);
+    }
+    return result;
 }
 
 unsigned long bitset_operation_count(bitset_op *op) {
-    unsigned long count = 0, len, word_offset = 0, fill_len;
-    unsigned long shortest_offset, last_shortest = LONG_MAX, next_offset = 0;
-    uint32_t word, word2, current_word, *words;
+    unsigned long count = 0;
+    bitset_op_hash *current, *tmp, *words = bitset_operation_iter(op);
+    HASH_ITER(hh, words, current, tmp) {
+        BITSET_POP_COUNT(count, current->word);
+        free(current);
+    }
+    return count;
+}
+
+bitset_op_hash *bitset_operation_iter(bitset_op *op) {
+    unsigned long word_offset;
+    uint32_t fill = 0;
     bitset_op_step *step;
-    bool complete = false, initial_complete = false;
+    uint32_t word;
     unsigned short position;
+    bitset_op_hash *words = NULL, *current, *tmp, *and_words = NULL;
 
-    len = op->initial->length;
-    words = op->initial->words;
+    for (unsigned i = 0; i < op->length; i++) {
 
-    for (unsigned i = 0; !complete; i++) {
-        if (i < len) {
-            word = words[i];
+        step = op->steps[i];
+        word_offset = 0;
+
+        for (unsigned j = 0; j < step->b->length; j++) {
+            word = step->b->words[j];
+
             if (BITSET_IS_FILL_WORD(word)) {
-                fill_len = BITSET_GET_LENGTH(word);
+                word_offset += BITSET_GET_LENGTH(word);
                 position = BITSET_GET_POSITION(word);
-                word_offset += fill_len;
-                if (position) {
-                    word_offset++;
-                    word = BITSET_CREATE_LITERAL(position - 1);
-                } else {
-                    word = 0;
+                if (!position) {
+                    continue;
                 }
-            } else {
-                fill_len = 0;
-                word_offset++;
+                word = BITSET_CREATE_LITERAL(position - 1);
             }
-        } else {
-            word = 0;
-            complete = true;
-            initial_complete = true;
-            if (next_offset) {
-                word_offset = next_offset;
-            }
-        }
 
-        while (true) {
+            word_offset++;
 
-            current_word = word;
-            last_shortest = shortest_offset;
-            shortest_offset = LONG_MAX - 1;
-
-            for (unsigned j = 0; j < op->length; j++) {
-                step = op->steps[j];
-
-                if (last_shortest && step->word_offset == last_shortest) {
-                    step->pos++;
-                    step->prev_offset = step->word_offset;
-                } else {
-                    step->word_offset = step->prev_offset;
-                }
-
-                if (step->pos < step->b->length) {
-                    step->current_word = step->b->words[step->pos];
-                    complete = false;
-
-                    if (BITSET_IS_FILL_WORD(step->current_word)) {
-                        step->word_offset += BITSET_GET_LENGTH(step->current_word);
-                        position = BITSET_GET_POSITION(step->current_word);
-                        if (position) {
-                            step->word_offset++;
-                            step->current_word = BITSET_CREATE_LITERAL(position - 1);
-                        } else {
-                            step->current_word = 0;
+            switch (step->operation) {
+                case BITSET_OR:
+                    HASH_FIND(hh, words, &word_offset, sizeof(unsigned long), current);
+                    if (!current) {
+                        current = (bitset_op_hash *) BITSET_MALLOC(sizeof(bitset_op_hash));
+                        if (!current) {
+                            BITSET_OOM;
                         }
-                    } else {
-                        step->word_offset++;
+                        current->offset = word_offset;
+                        current->word = fill;
+                        HASH_ADD(hh, words, offset, sizeof(unsigned long), current);
                     }
-                } else {
-                    step->current_word = 0;
-                    complete = complete && true;
-                    step->word_offset = LONG_MAX;
-                }
-
-                if (step->word_offset < shortest_offset && step->word_offset != word_offset) {
-                    shortest_offset = step->word_offset;
-                }
-            }
-
-            next_offset = shortest_offset;
-
-            if (shortest_offset >= word_offset) {
-                current_word = word;
-                shortest_offset = word_offset;
-            } else {
-                current_word = 0;
-            }
-
-            for (unsigned j = 0; j < op->length; j++) {
-                step = op->steps[j];
-
-                if (step->word_offset > shortest_offset) {
-                    word2 = 0;
-                } else {
-                    word2 = step->current_word;
-                }
-
-                switch (step->operation) {
-                    case BITSET_AND:
-                        current_word &= word2;
-                        break;
-                    case BITSET_OR:
-                        current_word |= word2;
-                        break;
-                    case BITSET_XOR:
-                        current_word ^= word2;
-                        break;
-                    case BITSET_ANDNOT:
-                        current_word &= ~word2;
-                        break;
-                    case BITSET_ORNOT:
-                        current_word |= ~word2;
-                        break;
-                }
-            }
-
-            BITSET_POP_COUNT(count, current_word);
-
-            if (next_offset > word_offset || complete) {
-                break;
+                    current->word |= word;
+                    break;
+                case BITSET_AND:
+                    HASH_FIND(hh, words, &word_offset, sizeof(unsigned long), current);
+                    if (current) {
+                        current->word &= word;
+                        word &= current->word;
+                    }
+                    if (word) {
+                        tmp = (bitset_op_hash *) BITSET_MALLOC(sizeof(bitset_op_hash));
+                        if (!tmp) {
+                            BITSET_OOM;
+                        }
+                        tmp->offset = word_offset;
+                        tmp->word = word;
+                        HASH_ADD(hh, and_words, offset, sizeof(unsigned long), tmp);
+                    }
+                    break;
+                case BITSET_XOR:
+                case BITSET_ANDNOT:
+                case BITSET_ORNOT:
+                    fprintf(stderr, "bitset error: this operationn is unimplemented\n");
+                    exit(1);
             }
         }
 
-        if (initial_complete && shortest_offset > word_offset) {
-            word_offset = shortest_offset;
+        if (step->operation == BITSET_AND) {
+            HASH_ITER(hh, words, current, tmp) {
+                free(current);
+            }
+            words = and_words;
+            and_words = NULL;
         }
     }
 
-    return count;
+    return words;
 }
 
