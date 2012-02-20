@@ -27,7 +27,8 @@ enum bitset_operation {
     BITSET_AND,
     BITSET_OR,
     BITSET_XOR,
-    BITSET_ANDNOT
+    BITSET_ANDNOT,
+    BITSET_ORNOT
 };
 
 typedef struct bitset_op_step_ {
@@ -83,15 +84,17 @@ typedef struct bitset_op_ {
     dest |= dest >> 16; \
     dest++;
 
-//http://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation
-//http://www.strchr.com/crc32_popcnt
-
+#if defined(__SSE4_1__) && defined(BITSET_HARDWARE_POPCNT)
+#define BITSET_POP_COUNT(count, word) \
+    count += __builtin_popcount(word);
+#else
 #define BITSET_POP_COUNT(count, word) \
     word &= 0x7FFFFFFF; \
     word -= (word >> 1) & 0x55555555; \
     word = (word & 0x33333333) + ((word >> 2) & 0x33333333); \
     word = (word + (word >> 4)) & 0x0F0F0F0F; \
     count += (word * 0x01010101) >> 24;
+#endif
 
 /**
  * Allow a custom malloc library.
@@ -121,7 +124,7 @@ bool bitset_get(bitset *, unsigned long);
 unsigned long bitset_count(bitset *);
 bool bitset_set(bitset *, unsigned long, bool);
 unsigned long bitset_fls(bitset *);
-bitset_op *bitset_operation_new();
+bitset_op *bitset_operation_new(bitset *b);
 void bitset_operation_free(bitset_op *);
 void bitset_operation_add(bitset_op *, bitset *, enum bitset_operation);
 bitset *bitset_operation_exec(bitset_op *);
