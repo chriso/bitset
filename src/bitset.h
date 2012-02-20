@@ -97,18 +97,19 @@ typedef struct bitset_op_ {
 #endif
 
 /**
- * Allow a custom malloc library.
+ * Allow for a custom malloc library.
  */
 
 #ifndef BITSET_MALLOC
-
 #define BITSET_MALLOC malloc
 #define BITSET_REALLOC realloc
 #define BITSET_FREE free
+#endif
+
+#ifndef BITSET_OOM
 #define BITSET_OOM \
     fprintf(stderr, "Out of memory\n"); \
     exit(1)
-
 #endif
 
 /**
