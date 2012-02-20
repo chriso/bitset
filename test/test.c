@@ -495,8 +495,7 @@ void test_suite_stress() {
 
 void test_suite_operation() {
     bitset_op *ops;
-    bitset *b1, *b2, *b3;
-
+    bitset *b1, *b2, *b3, *b4;
 
     b1 = bitset_new();
     bitset_set(b1, 10, true);
@@ -588,5 +587,33 @@ void test_suite_operation() {
     bitset_free(b1);
     bitset_free(b2);
     bitset_free(b3);
+
+    b1 = bitset_new();
+    b2 = bitset_new();
+    b3 = bitset_new();
+    bitset_set(b1, 1000, true);
+    bitset_set(b2, 100, true);
+    bitset_set(b2, 105, true);
+    bitset_set(b2, 130, true);
+    bitset_set(b3, 20, true);
+    ops = bitset_operation_new(b1);
+    bitset_operation_add(ops, b2, BITSET_OR);
+    bitset_operation_add(ops, b3, BITSET_OR);
+    b4 = bitset_operation_exec(ops);
+    bitset_dump(b4);
+    for (unsigned i = 0; i <= 1500; i++) {
+        if (bitset_get(b4, i)) printf("%d is set\n", i);
+    }
+    test_ulong("Checking operation exec 1\n", 5, bitset_count(b4));
+    test_bool("Checking operation exec get 1\n", true, bitset_get(b4, 1000));
+    test_bool("Checking operation exec get 2\n", true, bitset_get(b4, 100));
+    test_bool("Checking operation exec get 3\n", true, bitset_get(b4, 105));
+    test_bool("Checking operation exec get 4\n", true, bitset_get(b4, 130));
+    test_bool("Checking operation exec get 5\n", true, bitset_get(b4, 20));
+    bitset_operation_free(ops);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b3);
+    bitset_free(b4);
 }
 

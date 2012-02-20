@@ -143,7 +143,7 @@ unsigned long bitset_fls(bitset *b) {
                 return offset * 31 + position - 1;
             }
         } else {
-            return offset * 31 + (31 - flsl(word));
+            return offset * 31 + (31 - fls(word));
         }
     }
     return 0;
@@ -241,7 +241,8 @@ bool bitset_set(bitset *b, unsigned long bit, bool value) {
 
     if (value) {
         if (word_offset > BITSET_MAX_LENGTH) {
-            fprintf(stderr, "Fill chains are unimplemented\n");
+            //TODO: Handle fills > 2^25
+            fprintf(stderr, "bitset error: fills of > 2^25 are unimplemented\n");
             exit(1);
         } else {
             bitset_resize(b, b->length + 1);
@@ -294,11 +295,30 @@ void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
 }
 
 bitset *bitset_operation_exec(bitset_op *op) {
+    unsigned pos = 0;
+    unsigned long word_offset = 0;
     bitset *result = bitset_new();
     bitset_op_hash *current, *tmp, *words = bitset_operation_iter(op);
-    //TODO: Sort
+
+    HASH_SORT(words, bitset_operation_sort);
+
     HASH_ITER(hh, words, current, tmp) {
-        //TODO: Add to the result bitset
+        if (current->offset - word_offset == 1) {
+            bitset_resize(result, result->length + 1);
+            result->words[pos++] = current->word;
+        } else {
+            //TODO: Handle fills > 2^25
+            if (BITSET_IS_POW2(current->word)) {
+                bitset_resize(result, result->length + 1);
+                result->words[pos++] = BITSET_CREATE_FILL(current->offset - word_offset - 1, 31 - fls(current->word));
+                current->offset++;
+            } else {
+                bitset_resize(result, result->length + 2);
+                result->words[pos++] = BITSET_CREATE_EMPTY_FILL(current->offset - word_offset - 1);
+                result->words[pos++] = current->word;
+            }
+        }
+        word_offset = current->offset;
         free(current);
     }
     return result;
@@ -374,6 +394,7 @@ bitset_op_hash *bitset_operation_iter(bitset_op *op) {
                 case BITSET_XOR:
                 case BITSET_ANDNOT:
                 case BITSET_ORNOT:
+                    //TODO: Implement these ops
                     fprintf(stderr, "bitset error: this operationn is unimplemented\n");
                     exit(1);
             }
@@ -389,5 +410,9 @@ bitset_op_hash *bitset_operation_iter(bitset_op *op) {
     }
 
     return words;
+}
+
+int bitset_operation_sort(bitset_op_hash *a, bitset_op_hash *b) {
+    return a->offset > b->offset ? 1 : -1;
 }
 

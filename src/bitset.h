@@ -68,6 +68,7 @@ typedef struct bitset_op_hash_ {
 #define BITSET_UNSET_POSITION(word) ((word) & 0xC1FFFFFF)
 
 #define BITSET_CREATE_FILL(len, pos) ((0x80000000 | (((pos % 31) + 1) << 25)) | (len))
+#define BITSET_CREATE_EMPTY_FILL(len) (0x80000000 | (len))
 #define BITSET_CREATE_LITERAL(bit) (0x40000000 >> (bit))
 
 #define BITSET_MAX(a, b) ((a) > (b) ? (a) : (b));
@@ -76,6 +77,8 @@ typedef struct bitset_op_hash_ {
 #define BITSET_GET_LITERAL_MASK(bit) (0x80000000 >> ((bit % 31) + 1))
 
 #define BITSET_MAX_LENGTH (0x01FFFFFF)
+
+#define BITSET_IS_POW2(word) ((word & (word - 1)) == 0)
 
 #define BITSET_NEXT_POW2(dest, src) \
     dest = src; \
@@ -125,6 +128,7 @@ unsigned long bitset_fls(bitset *);
 bitset_op *bitset_operation_new(bitset *b);
 void bitset_operation_free(bitset_op *);
 void bitset_operation_add(bitset_op *, bitset *, enum bitset_operation);
+int bitset_operation_sort(bitset_op_hash *, bitset_op_hash *);
 bitset *bitset_operation_exec(bitset_op *);
 unsigned long bitset_operation_count(bitset_op *);
 bitset_op_hash *bitset_operation_iter(bitset_op *);
