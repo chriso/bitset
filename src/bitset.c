@@ -411,6 +411,9 @@ unsigned long bitset_operation_count(bitset_op *op) {
                     case BITSET_ANDNOT:
                         current_word &= ~word2;
                         break;
+                    case BITSET_ORNOT:
+                        current_word |= ~word2;
+                        break;
                 }
             }
 
