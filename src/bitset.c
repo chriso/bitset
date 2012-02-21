@@ -30,6 +30,57 @@ bitset *bitset_new_array(unsigned length, uint32_t *words) {
     return b;
 }
 
+bitset *bitset_new_bits(unsigned length, unsigned long *bits) {
+    bitset *b = bitset_new();
+    if (!length) {
+        return b;
+    }
+    unsigned pos = 0, rem, next_rem;
+    unsigned long word_offset = 0, div, next_div;
+    qsort(bits, length, sizeof(unsigned long), bitset_new_bits_sort);
+    div = bits[0] / 31;
+    rem = bits[0] % 31;
+
+    if (length == 1) {
+        bitset_resize(b, 1);
+        b->words[0] = BITSET_CREATE_FILL(div, rem);
+        return b;
+    }
+
+    for (unsigned i = 1; i < length; i++) {
+        printf("%u: %lu\n", i, bits[i]);
+
+        next_div = bits[i] / 31;
+        next_rem = bits[i] % 31;
+
+        printf("Word offset is %ld\n", word_offset);
+        printf("%lu / %u vs. last %lu / %u\n", next_div, next_rem, div, rem);
+
+        if (next_div == div) {
+            if (!word_offset || (word_offset - 1) < next_div) {
+                bitset_resize(b, b->length + 1);
+                b->words[pos] = 0;
+                word_offset++;
+            }
+            b->words[pos] |= BITSET_CREATE_LITERAL(rem);
+        } else {
+            b->words[pos] |= BITSET_CREATE_LITERAL(rem);
+            pos++;
+            bitset_resize(b, b->length + 1);
+            b->words[pos] = BITSET_CREATE_FILL(div, rem);
+        }
+
+        div = next_div;
+        rem = next_rem;
+    }
+
+    for (unsigned i = 0; i < 20000; i++) {
+        if (bitset_get(b, i)) printf("%d is set!\n", i);
+    }
+
+    return b;
+}
+
 void bitset_free(bitset *b) {
     if (b->length) {
         free(b->words);
@@ -37,7 +88,7 @@ void bitset_free(bitset *b) {
     free(b);
 }
 
-void bitset_resize(bitset *b, unsigned length) {
+inline void bitset_resize(bitset *b, unsigned length) {
     if (length > b->size) {
         unsigned next_size;
         BITSET_NEXT_POW2(next_size, length);
@@ -391,11 +442,10 @@ bitset_op_hash *bitset_operation_iter(bitset_op *op) {
                         HASH_ADD(hh, and_words, offset, sizeof(unsigned long), tmp);
                     }
                     break;
-                case BITSET_XOR:
                 case BITSET_ANDNOT:
-                case BITSET_ORNOT:
+                case BITSET_XOR:
                     //TODO: Implement these ops
-                    fprintf(stderr, "bitset error: this operationn is unimplemented\n");
+                    fprintf(stderr, "bitset error: this operation is unimplemented\n");
                     exit(1);
             }
         }
@@ -414,5 +464,9 @@ bitset_op_hash *bitset_operation_iter(bitset_op *op) {
 
 int bitset_operation_sort(bitset_op_hash *a, bitset_op_hash *b) {
     return a->offset > b->offset ? 1 : -1;
+}
+
+int bitset_new_bits_sort(const void *a, const void *b) {
+    return *(unsigned long *)a - *(unsigned long *)b;
 }
 

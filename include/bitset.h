@@ -29,8 +29,7 @@ enum bitset_operation {
     BITSET_AND,
     BITSET_OR,
     BITSET_XOR,
-    BITSET_ANDNOT,
-    BITSET_ORNOT
+    BITSET_ANDNOT
 };
 
 typedef struct bitset_op_step_ {
@@ -120,6 +119,7 @@ bitset *bitset_new();
 void bitset_free(bitset *);
 void bitset_resize(bitset *, unsigned);
 bitset *bitset_new_array(unsigned, uint32_t *);
+bitset *bitset_new_bits(unsigned, unsigned long *);
 bitset *bitset_copy(bitset *);
 bool bitset_get(bitset *, unsigned long);
 unsigned long bitset_count(bitset *);
@@ -128,10 +128,11 @@ unsigned long bitset_fls(bitset *);
 bitset_op *bitset_operation_new(bitset *b);
 void bitset_operation_free(bitset_op *);
 void bitset_operation_add(bitset_op *, bitset *, enum bitset_operation);
-int bitset_operation_sort(bitset_op_hash *, bitset_op_hash *);
 bitset *bitset_operation_exec(bitset_op *);
 unsigned long bitset_operation_count(bitset_op *);
 bitset_op_hash *bitset_operation_iter(bitset_op *);
+int bitset_operation_sort(bitset_op_hash *, bitset_op_hash *);
+int bitset_new_bits_sort(const void *, const void *);
 
 #endif
 
