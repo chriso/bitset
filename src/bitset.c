@@ -285,7 +285,8 @@ void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
 
 bitset *bitset_operation_exec(bitset_op *op) {
     unsigned pos = 0;
-    unsigned long word_offset = 0;
+    unsigned long word_offset = 0, fills;
+    uint32_t fill = BITSET_CREATE_EMPTY_FILL(BITSET_MAX_LENGTH);
     bitset *result = bitset_new();
     bitset_op_hash *current, *tmp, *words = bitset_operation_iter(op);
 
@@ -296,11 +297,17 @@ bitset *bitset_operation_exec(bitset_op *op) {
             bitset_resize(result, result->length + 1);
             result->words[pos++] = current->word;
         } else {
-            //TODO: Handle fills > 2^25
+            if (current->offset - word_offset > BITSET_MAX_LENGTH) {
+                fills = (current->offset - word_offset) / BITSET_MAX_LENGTH;
+                bitset_resize(result, result->length + fills);
+                for (unsigned long i = 0; i < fills; i++) {
+                    result->words[pos++] = fill;
+                }
+                word_offset += fills * BITSET_MAX_LENGTH;
+            }
             if (BITSET_IS_POW2(current->word)) {
                 bitset_resize(result, result->length + 1);
                 result->words[pos++] = BITSET_CREATE_FILL(current->offset - word_offset - 1, 31 - fls(current->word));
-                current->offset++;
             } else {
                 bitset_resize(result, result->length + 2);
                 result->words[pos++] = BITSET_CREATE_EMPTY_FILL(current->offset - word_offset - 1);
@@ -381,15 +388,33 @@ bitset_op_hash *bitset_operation_iter(bitset_op *op) {
                     }
                     break;
                 case BITSET_ANDNOT:
+                    HASH_FIND(hh, words, &word_offset, sizeof(unsigned long), current);
+                    if (current) {
+                        current->word &= ~word;
+                        if (!current->word) {
+                            HASH_DEL(words, current);
+                        }
+                    }
+                    break;
                 case BITSET_XOR:
-                    //TODO: Implement these ops
-                    fprintf(stderr, "bitset error: this operation is unimplemented\n");
-                    exit(1);
+                    HASH_FIND(hh, words, &word_offset, sizeof(unsigned long), current);
+                    if (!current) {
+                        current = (bitset_op_hash *) malloc(sizeof(bitset_op_hash));
+                        if (!current) {
+                            bitset_oom();
+                        }
+                        current->offset = word_offset;
+                        current->word = fill;
+                        HASH_ADD(hh, words, offset, sizeof(unsigned long), current);
+                    }
+                    current->word ^= word;
+                    break;
             }
         }
 
         if (step->operation == BITSET_AND) {
             HASH_ITER(hh, words, current, tmp) {
+                HASH_DEL(words, current);
                 free(current);
             }
             words = and_words;
