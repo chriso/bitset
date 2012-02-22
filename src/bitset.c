@@ -84,7 +84,7 @@ bool bitset_get(bitset *b, unsigned long bit) {
                 word_offset--;
             }
         } else if (!word_offset--) {
-            return word & (0x80000000 >> (bit + 1));
+            return word & BITSET_CREATE_LITERAL(bit);
         }
     }
     return false;
