@@ -16,71 +16,6 @@ bitset *bitset_new() {
     return b;
 }
 
-bitset *bitset_new_array(unsigned length, uint32_t *words) {
-    bitset *b = (bitset *) malloc(sizeof(bitset));
-    if (!b) {
-        bitset_oom();
-    }
-    b->words = (uint32_t *) malloc(length * sizeof(uint32_t));
-    if (!b->words) {
-        bitset_oom();
-    }
-    memcpy(b->words, words, length * sizeof(uint32_t));
-    b->length = b->size = length;
-    return b;
-}
-
-bitset *bitset_new_bits(unsigned length, unsigned long *bits) {
-    bitset *b = bitset_new();
-    if (!length) {
-        return b;
-    }
-    unsigned pos = 0, rem, next_rem;
-    unsigned long word_offset = 0, div, next_div;
-    qsort(bits, length, sizeof(unsigned long), bitset_new_bits_sort);
-    div = bits[0] / 31;
-    rem = bits[0] % 31;
-
-    if (length == 1) {
-        bitset_resize(b, 1);
-        b->words[0] = BITSET_CREATE_FILL(div, rem);
-        return b;
-    }
-
-    for (unsigned i = 1; i < length; i++) {
-        printf("%u: %lu\n", i, bits[i]);
-
-        next_div = bits[i] / 31;
-        next_rem = bits[i] % 31;
-
-        printf("Word offset is %ld\n", word_offset);
-        printf("%lu / %u vs. last %lu / %u\n", next_div, next_rem, div, rem);
-
-        if (next_div == div) {
-            if (!word_offset || (word_offset - 1) < next_div) {
-                bitset_resize(b, b->length + 1);
-                b->words[pos] = 0;
-                word_offset++;
-            }
-            b->words[pos] |= BITSET_CREATE_LITERAL(rem);
-        } else {
-            b->words[pos] |= BITSET_CREATE_LITERAL(rem);
-            pos++;
-            bitset_resize(b, b->length + 1);
-            b->words[pos] = BITSET_CREATE_FILL(div, rem);
-        }
-
-        div = next_div;
-        rem = next_rem;
-    }
-
-    for (unsigned i = 0; i < 20000; i++) {
-        if (bitset_get(b, i)) printf("%d is set!\n", i);
-    }
-
-    return b;
-}
-
 void bitset_free(bitset *b) {
     if (b->length) {
         free(b->words);
@@ -292,16 +227,19 @@ bool bitset_set(bitset *b, unsigned long bit, bool value) {
 
     if (value) {
         if (word_offset > BITSET_MAX_LENGTH) {
-            //TODO: Handle fills > 2^25
-            fprintf(stderr, "bitset error: fills of > 2^25 are unimplemented\n");
-            exit(1);
-        } else {
-            bitset_resize(b, b->length + 1);
-            if (word_offset) {
-                b->words[b->length - 1] = BITSET_CREATE_FILL(word_offset, bit);
-            } else {
-                b->words[b->length - 1] = BITSET_CREATE_LITERAL(bit);
+            unsigned long fills = word_offset / BITSET_MAX_LENGTH;
+            word_offset %= BITSET_MAX_LENGTH;
+            bitset_resize(b, b->length + fills);
+            uint32_t fill = BITSET_CREATE_EMPTY_FILL(BITSET_MAX_LENGTH);
+            for (unsigned long i = 0; i < fills; i++) {
+                b->words[b->length - fills + i] = fill;
             }
+        }
+        bitset_resize(b, b->length + 1);
+        if (word_offset) {
+            b->words[b->length - 1] = BITSET_CREATE_FILL(word_offset, bit);
+        } else {
+            b->words[b->length - 1] = BITSET_CREATE_LITERAL(bit);
         }
     }
 
@@ -462,11 +400,97 @@ bitset_op_hash *bitset_operation_iter(bitset_op *op) {
     return words;
 }
 
+bitset *bitset_new_array(unsigned length, uint32_t *words) {
+    bitset *b = (bitset *) malloc(sizeof(bitset));
+    if (!b) {
+        bitset_oom();
+    }
+    b->words = (uint32_t *) malloc(length * sizeof(uint32_t));
+    if (!b->words) {
+        bitset_oom();
+    }
+    memcpy(b->words, words, length * sizeof(uint32_t));
+    b->length = b->size = length;
+    return b;
+}
+
+
+void bitset_dump(bitset *b) {
+    printf("\x1B[33mDumping bitset of size %d\x1B[0m\n", b->length);
+    for (unsigned i = 0; i < b->length; i++) {
+        printf("\x1B[36m%3d.\x1B[0m %-8x\n", i, b->words[i]);
+    }
+}
+
+bitset *bitset_new_bits(unsigned length, unsigned long *bits) {
+    bitset *b = bitset_new();
+    if (!length) {
+        return b;
+    }
+    unsigned pos = 0, rem, next_rem, i;
+    unsigned long word_offset = 0, div, next_div, fills;
+    uint32_t fill = BITSET_CREATE_EMPTY_FILL(BITSET_MAX_LENGTH);
+    qsort(bits, length, sizeof(unsigned long), bitset_new_bits_sort);
+    div = bits[0] / 31;
+    rem = bits[0] % 31;
+    bitset_resize(b, 1);
+    b->words[0] = 0;
+
+    for (i = 1; i < length; i++) {
+        next_div = bits[i] / 31;
+        next_rem = bits[i] % 31;
+
+        if (div == word_offset) {
+            b->words[pos] |= BITSET_CREATE_LITERAL(rem);
+            if (div != next_div) {
+                bitset_resize(b, b->length + 1);
+                b->words[++pos] = 0;
+                word_offset = div + 1;
+            }
+        } else {
+            bitset_resize(b, b->length + 1);
+            if (div == next_div) {
+                b->words[pos++] = BITSET_CREATE_EMPTY_FILL(div - word_offset);
+                b->words[pos] = BITSET_CREATE_LITERAL(rem);
+                word_offset = div;
+            } else {
+                b->words[pos++] = BITSET_CREATE_FILL(div - word_offset, rem);
+                b->words[pos] = 0;
+                word_offset = div + 1;
+            }
+        }
+
+        if (next_div - word_offset > BITSET_MAX_LENGTH) {
+            fills = (next_div - word_offset) / BITSET_MAX_LENGTH;
+            bitset_resize(b, b->length + fills);
+            for (unsigned long j = 0; j < fills; j++) {
+                b->words[pos++] = fill;
+            }
+            word_offset += fills * BITSET_MAX_LENGTH;
+        }
+
+        div = next_div;
+        rem = next_rem;
+    }
+
+    div = bits[i-2] / 31;
+    rem = bits[i-2] % 31;
+
+    if (div == next_div) {
+        b->words[pos] |= BITSET_CREATE_LITERAL(next_rem);
+    } else {
+        b->words[pos] = BITSET_CREATE_FILL(next_div - word_offset, next_rem);
+    }
+
+    return b;
+}
+
 int bitset_operation_sort(bitset_op_hash *a, bitset_op_hash *b) {
     return a->offset > b->offset ? 1 : -1;
 }
 
 int bitset_new_bits_sort(const void *a, const void *b) {
-    return *(unsigned long *)a - *(unsigned long *)b;
+    unsigned long al = *(unsigned long *)a, bl = *(unsigned long *)b;
+    return al > bl ? 1 : -1;
 }
 

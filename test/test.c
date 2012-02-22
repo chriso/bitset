@@ -464,12 +464,19 @@ void test_suite_set() {
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 24));
     bitset_free(b);
 
+    b = bitset_new(b);
+    bitset_set(b, 1, true);
+    bitset_set(b, 1000000000000, true);
+    test_bool("Testing set where a chain of fills is required 1\n", true, bitset_get(b, 1));
+    test_bool("Testing set where a chain of fills is required 2\n", true, bitset_get(b, 1000000000000));
+    test_ulong("Testing set where a chain of fills is required 3\n", 2, bitset_count(b));
+    bitset_free(b);
+
     //Test unsetting of position bit of 0-colour => fill_length++
     //Test setting & unsetting the position bit of a 1-colour fill word
     //Test append where bit becomes position in 1-colour fill
     //Test append where unset requires break of 1-colour fill position
     //Test partition where 1-colour position has to be split out
-    //Test append >= 2^25
 }
 
 void test_suite_stress() {
