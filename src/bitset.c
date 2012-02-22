@@ -414,14 +414,6 @@ bitset *bitset_new_array(unsigned length, uint32_t *words) {
     return b;
 }
 
-
-void bitset_dump(bitset *b) {
-    printf("\x1B[33mDumping bitset of size %d\x1B[0m\n", b->length);
-    for (unsigned i = 0; i < b->length; i++) {
-        printf("\x1B[36m%3d.\x1B[0m %-8x\n", i, b->words[i]);
-    }
-}
-
 bitset *bitset_new_bits(unsigned length, unsigned long *bits) {
     bitset *b = bitset_new();
     if (!length) {
