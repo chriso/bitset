@@ -258,6 +258,9 @@ bitset_op *bitset_operation_new(bitset *initial) {
 
 void bitset_operation_free(bitset_op *ops) {
     if (ops->length) {
+        for (unsigned i = 0; i < ops->length; i++) {
+            free(ops->steps[i]);
+        }
         free(ops->steps);
     }
     free(ops);
@@ -315,6 +318,7 @@ bitset *bitset_operation_exec(bitset_op *op) {
             }
         }
         word_offset = current->offset;
+        HASH_DEL(words, current);
         free(current);
     }
     return result;
@@ -325,6 +329,7 @@ unsigned long bitset_operation_count(bitset_op *op) {
     bitset_op_hash *current, *tmp, *words = bitset_operation_iter(op);
     HASH_ITER(hh, words, current, tmp) {
         BITSET_POP_COUNT(count, current->word);
+        HASH_DEL(words, current);
         free(current);
     }
     return count;
