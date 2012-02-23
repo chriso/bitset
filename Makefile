@@ -4,11 +4,11 @@ SOURCES=src/bitset.c test/test.c
 OBJ=$(SOURCES:.c=.o)
 
 bitset_test: $(OBJ)
-	$(CC) $(LDFLAGS) $(OBJ) -o $@
+	@$(CC) $(LDFLAGS) $(OBJ) -o $@
 	./$@
 
 .c.o:
-	$(CC) -c $(CFLAGS) -Iinclude $< -o $@
+	@$(CC) -c $(CFLAGS) -Iinclude $< -o $@
 
 clean:
 	@rm src/bitset.o test/test.o bitset_test
