@@ -55,7 +55,6 @@
 #define BITSET_IS_POW2(word)           ((word & (word - 1)) == 0)
 #define BITSET_LOG2(v)                 (8 - 90/(((v)/4+14)|1) - 2/((v)/2+1))
 #define BITSET_NEXT_POW2(d,s)          d=s;d--;d|=d>>1;d|=d>>2;d|=d>>4;d|=d>>8;d|=d>>16;d++;
-#define BITSET_FLS(word)               ((BITSET_LITERAL_LENGTH) - fls(word))
 #define BITSET_POP_COUNT(c,w)          w&=P1;w-=(w>>1)&P2;w=(w&P3)+((w>>2)&P3);w=(w+(w>>4))\
                                        &P4;c+=(w*P5)>>(BITSET_WORD_LENGTH-8);
 #define P1 0x7FFFFFFF

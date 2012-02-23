@@ -113,6 +113,25 @@ bitset_offset bitset_count(bitset *b) {
     return count;
 }
 
+static inline unsigned char bitset_word_fls(bitset_word word) {
+    static char table[64] = {
+        32, 31, 0, 16, 0, 30, 3, 0, 15, 0, 0, 0, 29, 10, 2, 0,
+        0, 0, 12, 14, 21, 0, 19, 0, 0, 28, 0, 25, 0, 9, 1, 0,
+        17, 0, 4, 0, 0, 0, 11, 0, 13, 22, 20, 0, 26, 0, 0, 18,
+        5, 0, 0, 23, 0, 27, 0, 6, 0, 24, 7, 0, 8, 0, 0, 0
+    };
+    word = word | (word >> 1);
+    word = word | (word >> 2);
+    word = word | (word >> 4);
+    word = word | (word >> 8);
+    word = word | (word >> 16);
+    word = (word << 3) - word;
+    word = (word << 8) - word;
+    word = (word << 8) - word;
+    word = (word << 8) - word;
+    return table[word >> 26] - 1;
+}
+
 bitset_offset bitset_fls(bitset *b) {
     bitset_offset offset = 0;
     unsigned char position;
@@ -129,7 +148,7 @@ bitset_offset bitset_fls(bitset *b) {
                 return offset * BITSET_LITERAL_LENGTH + position - 1;
             }
         } else {
-            return offset * BITSET_LITERAL_LENGTH + BITSET_FLS(word);
+            return offset * BITSET_LITERAL_LENGTH + bitset_word_fls(word);
         }
     }
     return 0;
@@ -494,7 +513,8 @@ bitset *bitset_operation_exec(bitset_op *op) {
             }
             if (BITSET_IS_POW2(current->word)) {
                 bitset_resize(result, result->length + 1);
-                result->words[pos++] = BITSET_CREATE_FILL(current->offset - word_offset - 1, BITSET_FLS(current->word));
+                result->words[pos++] = BITSET_CREATE_FILL(current->offset - word_offset - 1,
+                    bitset_word_fls(current->word));
             } else {
                 bitset_resize(result, result->length + 2);
                 result->words[pos++] = BITSET_CREATE_EMPTY_FILL(current->offset - word_offset - 1);
