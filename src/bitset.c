@@ -474,7 +474,6 @@ bitset *bitset_new_bits(unsigned length, bitset_offset *bits) {
     }
 
     div = bits[i-2] / BITSET_LITERAL_LENGTH;
-    rem = bits[i-2] % BITSET_LITERAL_LENGTH;
 
     if (div == next_div) {
         b->words[pos] |= BITSET_CREATE_LITERAL(next_rem);
