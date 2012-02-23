@@ -351,6 +351,7 @@ static inline bitset_op_hash *bitset_operation_iter(bitset_op *op) {
                         current->word &= ~word;
                         if (!current->word) {
                             HASH_DEL(words, current);
+                            free(current);
                         }
                     }
                     break;
