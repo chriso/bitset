@@ -618,5 +618,51 @@ void test_suite_operation() {
     bitset_free(b2);
     bitset_free(b3);
     bitset_free(b4);
+
+    b1 = bitset_new();
+    b2 = bitset_new();
+    b3 = bitset_new();
+    bitset_set(b1, 1000, true);
+    bitset_set(b1, 1001, true);
+    bitset_set(b1, 1100, true);
+    bitset_set(b1, 3, true);
+    bitset_set(b2, 1000, true);
+    bitset_set(b2, 1101, true);
+    bitset_set(b2, 3, true);
+    bitset_set(b2, 130, true);
+    bitset_set(b3, 1000, true);
+    ops = bitset_operation_new(b1);
+    bitset_operation_add(ops, b2, BITSET_AND);
+    bitset_operation_add(ops, b3, BITSET_ANDNOT);
+    b4 = bitset_operation_exec(ops);
+    test_bool("Checking operation exec get 6\n", true, bitset_get(b4, 3));
+    test_bool("Checking operation exec get 7\n", false, bitset_get(b4, 1000));
+    test_bool("Checking operation exec get 8\n", false, bitset_get(b4, 130));
+    test_bool("Checking operation exec get 9\n", false, bitset_get(b4, 1001));
+    test_bool("Checking operation exec get 10\n", false, bitset_get(b4, 1100));
+    test_bool("Checking operation exec get 11\n", false, bitset_get(b4, 1101));
+    test_ulong("Checking operation exec 2\n", 1, bitset_count(b4));
+    bitset_operation_free(ops);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b3);
+    bitset_free(b4);
+
+    b1 = bitset_new();
+    b2 = bitset_new();
+    bitset_set(b1, 1, true);
+    bitset_set(b2, 10000000000, true);
+    bitset_set(b2, 100000000000, true);
+    ops = bitset_operation_new(b1);
+    bitset_operation_add(ops, b2, BITSET_OR);
+    b4 = bitset_operation_exec(ops);
+    test_ulong("Checking operation exec 2\n", 3, bitset_count(b4));
+    test_bool("Checking operation exec get 12\n", true, bitset_get(b4, 1));
+    test_bool("Checking operation exec get 12\n", true, bitset_get(b4, 10000000000));
+    test_bool("Checking operation exec get 13\n", true, bitset_get(b4, 100000000000));
+    bitset_operation_free(ops);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b4);
 }
 
