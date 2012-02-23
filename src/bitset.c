@@ -473,12 +473,10 @@ bitset *bitset_new_bits(unsigned length, bitset_offset *bits) {
         rem = next_rem;
     }
 
-    div = bits[i-2] / BITSET_LITERAL_LENGTH;
-
-    if (div == next_div) {
-        b->words[pos] |= BITSET_CREATE_LITERAL(next_rem);
+    if (length == 1 || div == bits[i-2] / BITSET_LITERAL_LENGTH) {
+        b->words[pos] |= BITSET_CREATE_LITERAL(rem);
     } else {
-        b->words[pos] = BITSET_CREATE_FILL(next_div - word_offset, next_rem);
+        b->words[pos] = BITSET_CREATE_FILL(div - word_offset, rem);
     }
 
     return b;
