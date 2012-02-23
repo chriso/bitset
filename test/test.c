@@ -492,9 +492,8 @@ void test_suite_stress() {
     for (unsigned i = 0; i < num; i++) {
         test_bool("Checking stress test bits were set", true, bitset_get(b, bits[i]));
     }
-    volatile unsigned j = 0;
     for (unsigned i = 0; i < 86400; i++) {
-        j = bitset_count(b);
+        bitset_count(b);
     }
     free(bits);
     bitset_free(b);
