@@ -7,6 +7,8 @@ OBJ=$(SOURCE:.c=.o)
 TEST=test/test.o
 STRESS=test/stress.o
 
+$(shell [ -d "bin" ] || mkdir bin)
+
 stress: $(OBJ) $(STRESS)
 	@$(CC) $(LDFLAGS) $(OBJ) $(STRESS) -o ./bin/$@
 	@./bin/$@
@@ -19,6 +21,6 @@ test: $(OBJ) $(TEST)
 	@$(CC) -c $(CFLAGS) -Iinclude $< -o $@
 
 clean:
-	@rm -f $(OBJ) $(TEST) $(STRESS) ./bin/*
+	@rm -rf $(OBJ) $(TEST) $(STRESS) bin
 
 .PHONY: test stress
