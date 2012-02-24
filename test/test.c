@@ -464,6 +464,7 @@ void test_suite_set() {
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 24));
     bitset_free(b);
 
+#ifdef BITSET_64BIT_OFFSETS
     b = bitset_new(b);
     bitset_set(b, 1, true);
     bitset_set(b, 1000000000000, true);
@@ -471,6 +472,7 @@ void test_suite_set() {
     test_bool("Testing set where a chain of fills is required 2\n", true, bitset_get(b, 1000000000000));
     test_ulong("Testing set where a chain of fills is required 3\n", 2, bitset_count(b));
     bitset_free(b);
+#endif
 
     //Test unsetting of position bit of 0-colour => fill_length++
     //Test setting & unsetting the position bit of a 1-colour fill word
@@ -647,6 +649,7 @@ void test_suite_operation() {
     bitset_free(b3);
     bitset_free(b4);
 
+#ifdef BITSET_64BIT_OFFSETS
     b1 = bitset_new();
     b2 = bitset_new();
     bitset_set(b1, 1, true);
@@ -663,5 +666,6 @@ void test_suite_operation() {
     bitset_free(b1);
     bitset_free(b2);
     bitset_free(b4);
+#endif
 }
 
