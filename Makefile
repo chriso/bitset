@@ -11,6 +11,6 @@ bitset_test: $(OBJ)
 	@$(CC) -c $(CFLAGS) -Iinclude $< -o $@
 
 clean:
-	@rm src/bitset.o test/test.o bitset_test
+	@rm -f src/bitset.o test/test.o bitset_test
 
 .PHONY: bitest_test
