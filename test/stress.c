@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include <time.h>
 
+#ifdef BITSET_64BIT_OFFSETS
+#   define wordformat "%lu"
+#else
+#   define wordformat "%u"
+#endif
+
 #include "bitset.h"
 
 int main(int argc, char **argv) {
@@ -30,11 +36,11 @@ int main(int argc, char **argv) {
 
     //Pop count all bitsets
     start = (float) clock();
-    unsigned count = 0;
+    bitset_offset count = 0;
     for (unsigned i = 0; i < bitsets; i++) {
         count += bitset_count(b[i]);
     }
-    printf("Bit count => %u\n", count);
+    printf("Bit count => " bitset_format "\n", count);
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
     printf("Executed pop count in %.2fs (%.2fMB/s)\n", end, size/end);
 
@@ -44,7 +50,7 @@ int main(int argc, char **argv) {
     for (unsigned i = 1; i < bitsets; i++) {
         bitset_operation_add(op, b[i], BITSET_OR);
     }
-    printf("Unique bit count => %u\n", bitset_operation_count(op));
+    printf("Unique bit count => " bitset_format "\n", bitset_operation_count(op));
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
     printf("Executed bitwise OR + pop count operation in %.2fs (%.2fMB/s)\n", end, size/end);
 }

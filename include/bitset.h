@@ -69,8 +69,10 @@
 
 #ifndef BITSET_64BIT_OFFSETS
 #  define bitset_offset uint32_t
+#  define bitset_format "%u"
 #else
 #  define bitset_offset uint64_t
+#  define bitset_format "%llu"
 #endif
 
 /**
