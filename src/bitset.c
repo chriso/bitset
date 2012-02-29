@@ -265,11 +265,13 @@ bool bitset_set(bitset *b, bitset_offset bit, bool value) {
     return false;
 }
 
-bitset_hash *bitset_hash_new(unsigned size) {
+bitset_hash *bitset_hash_new(unsigned predicted_size) {
+    unsigned size;
     bitset_hash *hash = malloc(sizeof(bitset_hash));
     if (!hash) {
         bitset_oom();
     }
+    BITSET_NEXT_POW2(size, predicted_size);
     hash->size = size;
     hash->count = 0;
     hash->buckets = calloc(1, sizeof(bitset_hash_bucket *) * size);
@@ -374,7 +376,7 @@ bitset_op *bitset_operation_new(bitset *initial) {
     step->operation = BITSET_OR;
     ops->steps[0] = step;
     ops->length = 1;
-    ops->words = bitset_hash_new(262144);
+    ops->words = NULL;
     return ops;
 }
 
@@ -385,7 +387,9 @@ void bitset_operation_free(bitset_op *ops) {
         }
         free(ops->steps);
     }
-    bitset_hash_free(ops->words);
+    if (ops->words) {
+        bitset_hash_free(ops->words);
+    }
     free(ops);
 }
 
@@ -410,7 +414,17 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
     bitset_op_step *step;
     bitset_word word, current;
     unsigned char position;
+    unsigned size;
     bitset_hash *and_words = NULL;
+
+    if (!op->length) {
+        return bitset_hash_new(1);
+    }
+
+    //Guess the number of required hash buckets since we don't do any adaptive resizing
+    size = op->length * op->steps[1]->b->length / 100;
+    size = size < 32 ? 32 : size > 1048576 ? 1048576 : size;
+    op->words = bitset_hash_new(size);
 
     for (unsigned i = 0; i < op->length; i++) {
 
