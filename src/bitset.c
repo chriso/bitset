@@ -265,6 +265,75 @@ bool bitset_set(bitset *b, bitset_offset bit, bool value) {
     return false;
 }
 
+bitset_hash *bitset_hash_new(unsigned size) {
+    bitset_hash *hash = malloc(sizeof(bitset_hash));
+    hash->size = size;
+    hash->buckets = calloc(1, sizeof(bitset_hash_bucket *) * size);
+    return hash;
+}
+
+bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset, bitset_word word) {
+    unsigned key = offset % hash->size;
+    bitset_hash_bucket *insert, *bucket = hash->buckets[key];
+    if (!bucket) {
+        insert = malloc(sizeof(bitset_hash_bucket));
+        insert->offset = offset;
+        insert->word = word;
+        insert->next = NULL;
+        //return CAS(&hash->buckets[key], NULL, insert);
+        hash->buckets[key] = insert;
+        return true;
+    }
+    for (;;) {
+        if (bucket->offset == offset) {
+            return false;
+        }
+        if (bucket->next == NULL) {
+            break;
+        }
+        bucket = bucket->next;
+    }
+    insert = malloc(sizeof(bitset_hash_bucket));
+    insert->offset = offset;
+    insert->word = word;
+    insert->next = NULL;
+    bucket->next = insert;
+    return true;
+    //return CAS(&bucket->next, NULL, insert);
+}
+
+bool bitset_hash_replace(bitset_hash *hash, bitset_offset offset, bitset_word current, bitset_word word) {
+    unsigned key = offset % hash->size;
+    bitset_hash_bucket *bucket = hash->buckets[key];
+    if (!bucket) {
+        return false;
+    }
+    for (;;) {
+        if (bucket->offset == offset) {
+            //return CAS(&bucket->word, current, word);
+            bucket->word = word;
+            return true;
+        }
+        if (bucket->next == NULL) {
+            break;
+        }
+        bucket = bucket->next;
+    }
+    return false;
+}
+
+bitset_word bitset_hash_get(bitset_hash *hash, bitset_offset offset) {
+    unsigned key = offset % hash->size;
+    bitset_hash_bucket *bucket = hash->buckets[key];
+    while (bucket) {
+        if (bucket->offset == offset) {
+            return bucket->word;
+        }
+        bucket = bucket->next;
+    }
+    return 0;
+}
+
 bitset_op *bitset_operation_new(bitset *initial) {
     bitset_op *ops = (bitset_op *) malloc(sizeof(bitset_op));
     if (!ops) {
@@ -279,6 +348,7 @@ bitset_op *bitset_operation_new(bitset *initial) {
     step->operation = BITSET_OR;
     ops->steps[0] = step;
     ops->length = 1;
+    ops->words = bitset_hash_new(262144);
     return ops;
 }
 
@@ -308,13 +378,11 @@ void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
     ops->steps[ops->length++] = step;
 }
 
-static inline bitset_op_hash *bitset_operation_iter(bitset_op *op) {
+static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
     bitset_offset word_offset;
-    bitset_word fill = 0;
     bitset_op_step *step;
-    bitset_word word;
+    bitset_word word, current;
     unsigned char position;
-    bitset_op_hash *words = NULL, *current, *tmp, *and_words = NULL;
 
     for (unsigned i = 0; i < op->length; i++) {
 
@@ -337,19 +405,21 @@ static inline bitset_op_hash *bitset_operation_iter(bitset_op *op) {
 
             switch (step->operation) {
                 case BITSET_OR:
-                    HASH_FIND(hh, words, &word_offset, sizeof(bitset_offset), current);
-                    if (!current) {
-                        current = (bitset_op_hash *) malloc(sizeof(bitset_op_hash));
-                        if (!current) {
-                            bitset_oom();
+                    for (;;) {
+                        current = bitset_hash_get(op->words, word_offset);
+                        if (current) {
+                            if (bitset_hash_replace(op->words, word_offset, current, current | word)) {
+                                break;
+                            }
+                        } else {
+                            if (bitset_hash_insert(op->words, word_offset, word)) {
+                                break;
+                            }
                         }
-                        current->offset = word_offset;
-                        current->word = fill;
-                        HASH_ADD(hh, words, offset, sizeof(bitset_offset), current);
                     }
-                    current->word |= word;
                     break;
                 case BITSET_AND:
+                    /*
                     HASH_FIND(hh, words, &word_offset, sizeof(bitset_offset), current);
                     if (current) {
                         word &= current->word;
@@ -363,8 +433,10 @@ static inline bitset_op_hash *bitset_operation_iter(bitset_op *op) {
                             HASH_ADD(hh, and_words, offset, sizeof(bitset_offset), tmp);
                         }
                     }
+                    */
                     break;
                 case BITSET_ANDNOT:
+                    /*
                     HASH_FIND(hh, words, &word_offset, sizeof(bitset_offset), current);
                     if (current) {
                         current->word &= ~word;
@@ -373,8 +445,10 @@ static inline bitset_op_hash *bitset_operation_iter(bitset_op *op) {
                             free(current);
                         }
                     }
+                    */
                     break;
                 case BITSET_XOR:
+                    /*
                     HASH_FIND(hh, words, &word_offset, sizeof(bitset_offset), current);
                     if (!current) {
                         current = (bitset_op_hash *) malloc(sizeof(bitset_op_hash));
@@ -382,14 +456,16 @@ static inline bitset_op_hash *bitset_operation_iter(bitset_op *op) {
                             bitset_oom();
                         }
                         current->offset = word_offset;
-                        current->word = fill;
+                        current->word = 0;
                         HASH_ADD(hh, words, offset, sizeof(bitset_offset), current);
                     }
                     current->word ^= word;
+                    */
                     break;
             }
         }
 
+        /*
         if (step->operation == BITSET_AND) {
             HASH_ITER(hh, words, current, tmp) {
                 HASH_DEL(words, current);
@@ -398,9 +474,10 @@ static inline bitset_op_hash *bitset_operation_iter(bitset_op *op) {
             words = and_words;
             and_words = NULL;
         }
+        */
     }
 
-    return words;
+    return op->words;
 }
 
 bitset *bitset_new_array(unsigned length, bitset_word *words) {
@@ -482,11 +559,15 @@ bitset *bitset_new_bits(unsigned length, bitset_offset *bits) {
     return b;
 }
 
+/*
 static int bitset_operation_sort(bitset_op_hash *a, bitset_op_hash *b) {
     return a->offset > b->offset ? 1 : -1;
 }
+*/
 
 bitset *bitset_operation_exec(bitset_op *op) {
+    return NULL;
+    /*
     unsigned pos = 0;
     bitset_offset word_offset = 0, fills;
     bitset_word fill = BITSET_CREATE_EMPTY_FILL(BITSET_MAX_LENGTH);
@@ -523,15 +604,21 @@ bitset *bitset_operation_exec(bitset_op *op) {
         free(current);
     }
     return result;
+    */
 }
 
 bitset_offset bitset_operation_count(bitset_op *op) {
     bitset_offset count = 0;
-    bitset_op_hash *current, *tmp, *words = bitset_operation_iter(op);
-    HASH_ITER(hh, words, current, tmp) {
-        BITSET_POP_COUNT(count, current->word);
-        HASH_DEL(words, current);
-        free(current);
+    bitset_hash *words = bitset_operation_iter(op);
+    bitset_hash_bucket *bucket;
+    for (unsigned i = 0; i < words->size; i++) {
+        if (words->buckets[i]) {
+            bucket = words->buckets[i];
+            while (bucket) {
+                BITSET_POP_COUNT(count, bucket->word);
+                bucket = bucket->next;
+            }
+        }
     }
     return count;
 }

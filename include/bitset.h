@@ -101,8 +101,23 @@ typedef struct bitset_op_step_ {
     enum bitset_operation operation;
 } bitset_op_step;
 
+#define CAS(addr, old, new) __sync_bool_compare_and_swap((addr), (old), (new))
+#define INC(addr, inc)      __sync_fetch_and_add(addr, inc)
+
+typedef struct bucket_ {
+    bitset_offset offset;
+    bitset_word word;
+    struct bucket_ *next;
+} bitset_hash_bucket;
+
+typedef struct hash_ {
+    bitset_hash_bucket **buckets;
+    unsigned size;
+} bitset_hash;
+
 typedef struct bitset_op_ {
     bitset_op_step **steps;
+    bitset_hash *words;
     unsigned length;
 } bitset_op;
 
