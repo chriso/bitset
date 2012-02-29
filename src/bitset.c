@@ -367,15 +367,8 @@ bitset_op *bitset_operation_new(bitset *initial) {
     if (!ops) {
         bitset_oom();
     }
-    ops->steps = (bitset_op_step **) malloc(sizeof(bitset_op_step *) * 2);
-    bitset_op_step *step = (bitset_op_step *) malloc(sizeof(bitset_op_step));
-    if (!ops->steps || !step) {
-        bitset_oom();
-    }
-    step->b = initial;
-    step->operation = BITSET_OR;
-    ops->steps[0] = step;
-    ops->length = 1;
+    ops->length = 0;
+    bitset_operation_add(ops, initial, BITSET_OR);
     ops->words = NULL;
     return ops;
 }
@@ -394,6 +387,16 @@ void bitset_operation_free(bitset_op *ops) {
 }
 
 void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
+    if (!b->length) {
+        if (op == BITSET_AND && ops->length) {
+            for (unsigned i = 0; i < ops->length; i++) {
+                free(ops->steps[i]);
+            }
+            free(ops->steps);
+            ops->length = 0;
+        }
+        return;
+    }
     bitset_op_step *step = (bitset_op_step *) malloc(sizeof(bitset_op_step));
     if (!step) {
         bitset_oom();
@@ -401,7 +404,11 @@ void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
     step->b = b;
     step->operation = op;
     if (ops->length % 2 == 0) {
-        ops->steps = (bitset_op_step **) realloc(ops->steps, sizeof(bitset_op_step *) * ops->length * 2);
+        if (!ops->length) {
+            ops->steps = (bitset_op_step **) malloc(sizeof(bitset_op_step *) * 2);
+        } else {
+            ops->steps = (bitset_op_step **) realloc(ops->steps, sizeof(bitset_op_step *) * ops->length * 2);
+        }
         if (!ops->steps) {
             bitset_oom();
         }
