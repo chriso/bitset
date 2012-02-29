@@ -6,7 +6,6 @@
 #include <limits.h>
 
 #include "bitset.h"
-#include "hash.h"
 #include "operation.h"
 
 bitset *bitset_new() {
