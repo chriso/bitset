@@ -6,14 +6,14 @@
 
 bitset_hash *bitset_hash_new(unsigned buckets) {
     unsigned size;
-    bitset_hash *hash = malloc(sizeof(bitset_hash));
+    bitset_hash *hash = (bitset_hash *) malloc(sizeof(bitset_hash));
     if (!hash) {
         bitset_oom();
     }
     BITSET_NEXT_POW2(size, buckets);
     hash->size = size;
     hash->count = 0;
-    hash->buckets = calloc(1, sizeof(bitset_hash_bucket *) * size);
+    hash->buckets = (bitset_hash_bucket **) calloc(1, sizeof(bitset_hash_bucket *) * size);
     if (!hash->buckets) {
         bitset_oom();
     }
@@ -38,7 +38,7 @@ bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset, bitset_word wor
     unsigned key = offset % hash->size;
     bitset_hash_bucket *insert, *bucket = hash->buckets[key];
     if (!bucket) {
-        insert = malloc(sizeof(bitset_hash_bucket));
+        insert = (bitset_hash_bucket *) malloc(sizeof(bitset_hash_bucket));
         if (!insert) {
             bitset_oom();
         }
@@ -58,7 +58,7 @@ bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset, bitset_word wor
         }
         bucket = bucket->next;
     }
-    insert = malloc(sizeof(bitset_hash_bucket));
+    insert = (bitset_hash_bucket *) malloc(sizeof(bitset_hash_bucket));
     if (!insert) {
         bitset_oom();
     }
