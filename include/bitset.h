@@ -75,17 +75,6 @@
 #endif
 
 /**
- * Bitset operations.
- */
-
-enum bitset_operation {
-    BITSET_AND,
-    BITSET_OR,
-    BITSET_XOR,
-    BITSET_ANDNOT
-};
-
-/**
  * Bitset types.
  */
 
@@ -94,29 +83,6 @@ typedef struct bitset_ {
     unsigned length;
     unsigned size;
 } bitset;
-
-typedef struct bitset_op_step_ {
-    bitset *b;
-    enum bitset_operation operation;
-} bitset_op_step;
-
-typedef struct bucket_ {
-    bitset_offset offset;
-    bitset_word word;
-    struct bucket_ *next;
-} bitset_hash_bucket;
-
-typedef struct hash_ {
-    bitset_hash_bucket **buckets;
-    unsigned size;
-    unsigned count;
-} bitset_hash;
-
-typedef struct bitset_op_ {
-    bitset_op_step **steps;
-    bitset_hash *words;
-    unsigned length;
-} bitset_op;
 
 /**
  * Create a new bitset.
@@ -129,6 +95,12 @@ bitset *bitset_new();
  */
 
 void bitset_free(bitset *);
+
+/**
+ * Resize the bitset buffer.
+ */
+
+void bitset_resize(bitset *, unsigned);
 
 /**
  * Create a new bitset from an array of compressed words.
@@ -167,41 +139,16 @@ bitset_offset bitset_count(bitset *);
 bool bitset_set(bitset *, bitset_offset, bool);
 
 /**
- * Find the lowest set bit.
+ * Find the lowest set bit in the bitset.
  */
 
 bitset_offset bitset_fls(bitset *);
 
 /**
- * Create a new bitset operation.
+ * fls() implementation.
  */
 
-bitset_op *bitset_operation_new(bitset *b);
-
-/**
- * Free the bitset operation.
- */
-
-void bitset_operation_free(bitset_op *);
-
-/**
- * Add a bitset + operation to the queue.
- */
-
-void bitset_operation_add(bitset_op *, bitset *, enum bitset_operation);
-
-/**
- * Execute the operation and return the result.
- */
-
-bitset *bitset_operation_exec(bitset_op *);
-
-/**
- * Get the population count of the operation result without using
- * a temporary bitset.
- */
-
-bitset_offset bitset_operation_count(bitset_op *);
+unsigned char bitset_word_fls(bitset_word);
 
 /**
  * Custom out of memory behaviour.

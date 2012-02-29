@@ -1,7 +1,7 @@
 CC?=gcc
 CFLAGS+=-Wall -std=c99
 
-SOURCE=src/bitset.c
+SOURCE=src/bitset.c src/hash.c src/operation.c
 OBJ=$(SOURCE:.c=.o)
 
 TEST=test/test.o

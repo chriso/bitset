@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <time.h>
 
-#include "bitset.h"
+#include "operation.h"
 #include "test.h"
 
 void bitset_dump(bitset *b) {

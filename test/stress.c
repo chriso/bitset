@@ -4,13 +4,7 @@
 #include <stdint.h>
 #include <time.h>
 
-#ifdef BITSET_64BIT_OFFSETS
-#   define wordformat "%lu"
-#else
-#   define wordformat "%u"
-#endif
-
-#include "bitset.h"
+#include "operation.h"
 
 int main(int argc, char **argv) {
     float start, end, size = 0;
