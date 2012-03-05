@@ -49,7 +49,7 @@ typedef struct bitset_op_ {
  * Create a new bitset operation.
  */
 
-bitset_op *bitset_operation_new(bitset *b);
+bitset_op *bitset_operation_new(const bitset *b);
 
 /**
  * Free the bitset operation.
@@ -61,7 +61,7 @@ void bitset_operation_free(bitset_op *);
  * Add a bitset + operation to the queue.
  */
 
-void bitset_operation_add(bitset_op *, bitset *, enum bitset_operation);
+void bitset_operation_add(bitset_op *, const bitset *, enum bitset_operation);
 
 /**
  * Execute the operation and return the result.
@@ -104,7 +104,7 @@ bool bitset_hash_replace(bitset_hash *, bitset_offset, bitset_word);
  * Get the word at the specified offset.
  */
 
-bitset_word bitset_hash_get(bitset_hash *, bitset_offset);
+bitset_word bitset_hash_get(const bitset_hash *, bitset_offset);
 
 #endif
 

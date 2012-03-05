@@ -59,8 +59,6 @@ bool test_bitset(char *title, bitset *b, unsigned length, uint32_t *expected) {
 }
 
 int main(int argc, char **argv) {
-    printf("Testing macros\n");
-    test_suite_macros();
     printf("Testing get\n");
     test_suite_get();
     printf("Testing set\n");
@@ -75,48 +73,25 @@ int main(int argc, char **argv) {
     test_suite_stress();
 }
 
-void test_suite_macros() {
-    test_bool("Testing fill word is identified correctly 1\n", true, BITSET_IS_FILL_WORD(0xFFFFFFFF));
-    test_bool("Testing fill word is identified correctly 2\n", true, BITSET_IS_FILL_WORD(0xC0372187));
-    test_bool("Testing fill word is identified correctly 3\n", false, BITSET_IS_FILL_WORD(0x40367127));
-    test_bool("Testing literal word is identified correctly 1\n", false, BITSET_IS_LITERAL_WORD(0xFFFFFFFF));
-    test_bool("Testing literal word is identified correctly 2\n", false, BITSET_IS_LITERAL_WORD(0xC0372187));
-    test_bool("Testing literal word is identified correctly 3\n", true, BITSET_IS_LITERAL_WORD(0x40367127));
-    test_bool("Test the colour bit is identified correctly 1\n", true, BITSET_GET_COLOUR(0xC0000000));
-    test_bool("Test the colour bit is identified correctly 2\n", false, BITSET_GET_COLOUR(0x20123217));
-
-    test_ulong("Test fill length is extracted correctly 1\n", 3, BITSET_GET_LENGTH(0x00000003));
-    test_ulong("Test fill length is extracted correctly 2\n", 0x01FFFFFF, BITSET_GET_LENGTH(0xFFFFFFFF));
-    test_ulong("Test position is extracted correctly 1\n", 1, BITSET_GET_POSITION(0x02000000));
-    test_ulong("Test position is extracted correctly 2\n", 31, BITSET_GET_POSITION(0x3E000000));
-
-    test_ulong("Test set colour 1\n", 0xC0000000, BITSET_SET_COLOUR(0x80000000));
-    test_ulong("Test set colour 2\n", 0x80000000, BITSET_UNSET_COLOUR(0xC0000000));
-    test_ulong("Test set length 1\n", 0x00000001, BITSET_SET_LENGTH(0x00000000, 1));
-    test_ulong("Test set length 2\n", 0x0001E240, BITSET_SET_LENGTH(0x00000000, 123456));
-    test_ulong("Test set position 1\n", 0x3E000000, BITSET_SET_POSITION(0x00000000, 31));
-    test_ulong("Test clear position 1\n", 0x00000000, BITSET_UNSET_POSITION(0x3E000000));
-}
-
 void test_suite_get() {
     bitset *b = bitset_new();
     for (unsigned i = 0; i < 32; i++)
         test_bool("Testing initial bits are unset\n", false, bitset_get(b, i));
     bitset_free(b);
 
-    uint32_t p1[] = { 0x80000000, 0x00000001 };
+    uint32_t p1[] = { 0x80000000, BITSET_CREATE_LITERAL(30) };
     b = bitset_new_array(2, p1);
     test_bool("Testing get in the first literal 1\n", true, bitset_get(b, 30));
     test_bool("Testing get in the first literal 2\n", false, bitset_get(b, 31));
     bitset_free(b);
 
-    uint32_t p2[] = { 0x80000000, 0x40000000 };
+    uint32_t p2[] = { 0x80000000, BITSET_CREATE_LITERAL(0) };
     b = bitset_new_array(2, p2);
     test_bool("Testing get in the first literal 3\n", true, bitset_get(b, 0));
     test_bool("Testing get in the first literal 4\n", false, bitset_get(b, 1));
     bitset_free(b);
 
-    uint32_t p3[] = { 0x80000001, 0x40000000 };
+    uint32_t p3[] = { 0x80000001, BITSET_CREATE_LITERAL(0) };
     b = bitset_new_array(2, p3);
     test_bool("Testing get in the first literal with offset 1\n", false, bitset_get(b, 1));
     test_bool("Testing get in the first literal with offset 2\n", true, bitset_get(b, 31));
@@ -134,14 +109,6 @@ void test_suite_get() {
     test_bool("Testing get with position following a fill 1\n", false, bitset_get(b, 0));
     test_bool("Testing get with position following a fill 2\n", true, bitset_get(b, 31));
     test_bool("Testing get with position following a fill 3\n", false, bitset_get(b, 32));
-    bitset_free(b);
-
-    uint32_t p6[] = { 0xC2000001 };
-    b = bitset_new_array(1, p6);
-    test_bool("Testing get with position following a fill 4\n", true, bitset_get(b, 0));
-    test_bool("Testing get with position following a fill 5\n", true, bitset_get(b, 30));
-    test_bool("Testing get with position following a fill 6\n", false, bitset_get(b, 31));
-    test_bool("Testing get with position following a fill 7\n", true, bitset_get(b, 32));
     bitset_free(b);
 }
 
@@ -165,34 +132,9 @@ void test_suite_count() {
     test_ulong("Testing pop count of single fill 1\n", 0, bitset_count(b));
     bitset_free(b);
 
-    uint32_t p4[] = { 0xC0000001 };
-    b = bitset_new_array(1, p4);
-    test_ulong("Testing pop count of single fill 2\n", 31, bitset_count(b));
-    bitset_free(b);
-
-    uint32_t p5[] = { 0xC0000002 };
-    b = bitset_new_array(1, p5);
-    test_ulong("Testing pop count of single fill 3\n", 62, bitset_count(b));
-    bitset_free(b);
-
-    uint32_t p6[] = { 0xC0000001, 0xC0000001 };
-    b = bitset_new_array(2, p6);
-    test_ulong("Testing pop count of double fill 1\n", 62, bitset_count(b));
-    bitset_free(b);
-
-    uint32_t p7[] = { 0x80000010, 0xC0000001 };
-    b = bitset_new_array(2, p7);
-    test_ulong("Testing pop count of double fill 2\n", 31, bitset_count(b));
-    bitset_free(b);
-
     uint32_t p8[] = { 0x8C000011 };
     b = bitset_new_array(1, p8);
     test_ulong("Testing pop count of fill with position 1\n", 1, bitset_count(b));
-    bitset_free(b);
-
-    uint32_t p9[] = { 0xCC000001 };
-    b = bitset_new_array(1, p9);
-    test_ulong("Testing pop count of fill with position 2\n", 61, bitset_count(b));
     bitset_free(b);
 }
 

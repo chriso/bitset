@@ -5,7 +5,7 @@
 
 #include "operation.h"
 
-bitset_op *bitset_operation_new(bitset *initial) {
+bitset_op *bitset_operation_new(const bitset *initial) {
     bitset_op *ops = (bitset_op *) malloc(sizeof(bitset_op));
     if (!ops) {
         bitset_oom();
@@ -29,7 +29,7 @@ void bitset_operation_free(bitset_op *ops) {
     free(ops);
 }
 
-void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
+void bitset_operation_add(bitset_op *ops, const bitset *b, enum bitset_operation op) {
     if (!b->length) {
         if (op == BITSET_AND && ops->length) {
             for (unsigned i = 0; i < ops->length; i++) {
@@ -44,7 +44,7 @@ void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
     if (!step) {
         bitset_oom();
     }
-    step->b = b;
+    step->b = (bitset *) b;
     step->operation = op;
     if (ops->length % 2 == 0) {
         if (!ops->length) {
@@ -143,89 +143,29 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
     return op->words;
 }
 
-bitset *bitset_new_array(unsigned length, bitset_word *words) {
-    bitset *b = (bitset *) malloc(sizeof(bitset));
-    if (!b) {
-        bitset_oom();
-    }
-    b->words = (bitset_word *) malloc(length * sizeof(bitset_word));
-    if (!b->words) {
-        bitset_oom();
-    }
-    memcpy(b->words, words, length * sizeof(bitset_word));
-    b->length = b->size = length;
-    return b;
-}
-
-static int bitset_new_bits_sort(const void *a, const void *b) {
-    bitset_offset al = *(bitset_offset *)a, bl = *(bitset_offset *)b;
-    return al > bl ? 1 : -1;
-}
-
-bitset *bitset_new_bits(unsigned length, bitset_offset *bits) {
-    bitset *b = bitset_new();
-    if (!length) {
-        return b;
-    }
-    unsigned pos = 0, rem, next_rem, i;
-    bitset_offset word_offset = 0, div, next_div, fills;
-    bitset_word fill = BITSET_CREATE_EMPTY_FILL(BITSET_MAX_LENGTH);
-    qsort(bits, length, sizeof(bitset_offset), bitset_new_bits_sort);
-    div = bits[0] / BITSET_LITERAL_LENGTH;
-    rem = bits[0] % BITSET_LITERAL_LENGTH;
-    bitset_resize(b, 1);
-    b->words[0] = 0;
-
-    for (i = 1; i < length; i++) {
-        next_div = bits[i] / BITSET_LITERAL_LENGTH;
-        next_rem = bits[i] % BITSET_LITERAL_LENGTH;
-
-        if (div == word_offset) {
-            b->words[pos] |= BITSET_CREATE_LITERAL(rem);
-            if (div != next_div) {
-                bitset_resize(b, b->length + 1);
-                b->words[++pos] = 0;
-                word_offset = div + 1;
-            }
-        } else {
-            bitset_resize(b, b->length + 1);
-            if (div == next_div) {
-                b->words[pos++] = BITSET_CREATE_EMPTY_FILL(div - word_offset);
-                b->words[pos] = BITSET_CREATE_LITERAL(rem);
-                word_offset = div;
-            } else {
-                b->words[pos++] = BITSET_CREATE_FILL(div - word_offset, rem);
-                b->words[pos] = 0;
-                word_offset = div + 1;
-            }
-        }
-
-        if (next_div - word_offset > BITSET_MAX_LENGTH) {
-            fills = (next_div - word_offset) / BITSET_MAX_LENGTH;
-            bitset_resize(b, b->length + fills);
-            for (bitset_offset j = 0; j < fills; j++) {
-                b->words[pos++] = fill;
-            }
-            word_offset += fills * BITSET_MAX_LENGTH;
-        }
-
-        div = next_div;
-        rem = next_rem;
-    }
-
-    if (length == 1 || div == bits[i-2] / BITSET_LITERAL_LENGTH) {
-        b->words[pos] |= BITSET_CREATE_LITERAL(rem);
-    } else {
-        b->words[pos] = BITSET_CREATE_FILL(div - word_offset, rem);
-    }
-
-    return b;
-}
-
 static int bitset_operation_offset_sort(const void *a, const void *b) {
     bitset_offset a_offset = *(bitset_offset *)a;
     bitset_offset b_offset = *(bitset_offset *)b;
     return a_offset < b_offset ? -1 : a_offset > b_offset;
+}
+
+static inline unsigned char bitset_word_fls(bitset_word word) {
+    static char table[64] = {
+        32, 31, 0, 16, 0, 30, 3, 0, 15, 0, 0, 0, 29, 10, 2, 0,
+        0, 0, 12, 14, 21, 0, 19, 0, 0, 28, 0, 25, 0, 9, 1, 0,
+        17, 0, 4, 0, 0, 0, 11, 0, 13, 22, 20, 0, 26, 0, 0, 18,
+        5, 0, 0, 23, 0, 27, 0, 6, 0, 24, 7, 0, 8, 0, 0, 0
+    };
+    word = word | (word >> 1);
+    word = word | (word >> 2);
+    word = word | (word >> 4);
+    word = word | (word >> 8);
+    word = word | (word >> 16);
+    word = (word << 3) - word;
+    word = (word << 8) - word;
+    word = (word << 8) - word;
+    word = (word << 8) - word;
+    return table[word >> 26] - 1;
 }
 
 bitset *bitset_operation_exec(bitset_op *op) {
@@ -384,7 +324,7 @@ inline bool bitset_hash_replace(bitset_hash *hash, bitset_offset offset, bitset_
     return false;
 }
 
-inline bitset_word bitset_hash_get(bitset_hash *hash, bitset_offset offset) {
+inline bitset_word bitset_hash_get(const bitset_hash *hash, bitset_offset offset) {
     unsigned key = offset % hash->size;
     bitset_hash_bucket *bucket = hash->buckets[key];
     while (bucket) {

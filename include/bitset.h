@@ -106,7 +106,7 @@ void bitset_resize(bitset *, unsigned);
  * Create a new bitset from an array of compressed words.
  */
 
-bitset *bitset_new_array(unsigned, bitset_word *);
+bitset *bitset_new_array(unsigned, const bitset_word *);
 
 /**
  * Create a new bitset from an array of bits.
@@ -118,19 +118,19 @@ bitset *bitset_new_bits(unsigned, bitset_offset *);
  * Create a copy of the specified bitset.
  */
 
-bitset *bitset_copy(bitset *);
+bitset *bitset_copy(const bitset *);
 
 /**
  * Check whether a bit is set.
  */
 
-bool bitset_get(bitset *, bitset_offset);
+bool bitset_get(const bitset *, bitset_offset);
 
 /**
  * Get the population count of the bitset (number of set bits).
  */
 
-bitset_offset bitset_count(bitset *);
+bitset_offset bitset_count(const bitset *);
 
 /**
  * Set or unset the specified bit.
@@ -142,13 +142,7 @@ bool bitset_set(bitset *, bitset_offset, bool);
  * Find the lowest set bit in the bitset.
  */
 
-bitset_offset bitset_fls(bitset *);
-
-/**
- * fls() implementation.
- */
-
-unsigned char bitset_word_fls(bitset_word);
+bitset_offset bitset_fls(const bitset *);
 
 /**
  * Custom out of memory behaviour.
