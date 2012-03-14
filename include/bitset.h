@@ -103,6 +103,12 @@ void bitset_free(bitset *);
 void bitset_resize(bitset *, unsigned);
 
 /**
+ * Get the byte length of the bitset buffer.
+ */
+
+unsigned bitset_length(bitset *);
+
+/**
  * Create a new bitset from an array of compressed words.
  */
 

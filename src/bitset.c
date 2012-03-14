@@ -41,6 +41,10 @@ void bitset_resize(bitset *b, unsigned length) {
     b->length = length;
 }
 
+unsigned bitset_length(bitset *b) {
+    return b->length;
+}
+
 bitset *bitset_copy(const bitset *b) {
     bitset *replica = (bitset *) malloc(sizeof(bitset));
     if (!replica) {
