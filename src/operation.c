@@ -72,7 +72,8 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
     }
 
     //Guess the number of required hash buckets since we don't do any adaptive resizing
-    size = op->length * op->steps[1]->b->length / 400;
+    size = op->length * op->steps[1]->b->length / 300;
+    printf("%u buckets\n", size);
     size = size < 32 ? 32 : size > 1048576 ? 1048576 : size;
     op->words = bitset_hash_new(size);
 
@@ -280,12 +281,14 @@ void bitset_hash_free(bitset_hash *hash) {
 }
 
 inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset, bitset_word word) {
-    unsigned key = offset % hash->size * 2;
+    unsigned key = (offset % hash->size) * 2;
     bitset_hash_bucket *insert, *bucket = hash->buckets[key];
     bitset_offset off;
     if ((uintptr_t)bucket & 1) {
         off = (uintptr_t)bucket >> 1;
-        if (off == offset) return false;
+        if (off == offset) {
+            return false;
+        }
         insert = (bitset_hash_bucket *) malloc(sizeof(bitset_hash_bucket));
         if (!insert) {
             bitset_oom();
@@ -329,14 +332,16 @@ inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset, bitset_w
 }
 
 inline bool bitset_hash_replace(bitset_hash *hash, bitset_offset offset, bitset_word word) {
-    unsigned key = offset % hash->size * 2;
+    unsigned key = (offset % hash->size) * 2;
     bitset_hash_bucket *bucket = hash->buckets[key];
     bitset_offset off;
     if (!bucket) {
         return false;
     } else if ((uintptr_t)bucket & 1) {
         off = (uintptr_t)bucket >> 1;
-        if (off != offset) return false;
+        if (off != offset) {
+            return false;
+        }
         hash->buckets[key + 1] = (bitset_hash_bucket *)(uintptr_t)word;
         return true;
     }
@@ -354,10 +359,15 @@ inline bool bitset_hash_replace(bitset_hash *hash, bitset_offset offset, bitset_
 }
 
 inline bitset_word bitset_hash_get(const bitset_hash *hash, bitset_offset offset) {
-    unsigned key = offset % hash->size * 2;
+    unsigned key = (offset % hash->size) * 2;
     bitset_hash_bucket *bucket = hash->buckets[key];
+    bitset_offset off;
     while (bucket) {
         if ((uintptr_t)bucket & 1) {
+            off = ((uintptr_t)bucket) >> 1;
+            if (off != offset) {
+                return 0;
+            }
             return (bitset_word)(uintptr_t)hash->buckets[key + 1];
         }
         if (bucket->offset == offset) {
