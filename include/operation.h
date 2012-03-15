@@ -26,6 +26,7 @@ typedef struct bucket_ {
 
 typedef struct hash_ {
     bitset_hash_bucket **buckets;
+    bitset_word *words;
     unsigned size;
     unsigned count;
 } bitset_hash;
