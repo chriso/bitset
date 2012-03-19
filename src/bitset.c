@@ -107,7 +107,7 @@ bitset_offset bitset_count(const bitset *b) {
     return count;
 }
 
-static inline unsigned char bitset_word_fls(bitset_word word) {
+static inline unsigned char bitset_fls(bitset_word word) {
     static char table[64] = {
         32, 31, 0, 16, 0, 30, 3, 0, 15, 0, 0, 0, 29, 10, 2, 0,
         0, 0, 12, 14, 21, 0, 19, 0, 0, 28, 0, 25, 0, 9, 1, 0,
@@ -126,7 +126,15 @@ static inline unsigned char bitset_word_fls(bitset_word word) {
     return table[word >> 26] - 1;
 }
 
-bitset_offset bitset_fls(const bitset *b) {
+static inline unsigned char bitset_ffs(bitset_word word) {
+    static char table[32] = {
+        0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 
+        31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
+    };
+    return table[((bitset_word)((word & -word) * 0x077CB531U)) >> 27] + 1;
+}
+
+bitset_offset bitset_min(const bitset *b) {
     bitset_offset offset = 0;
     unsigned char position;
     bitset_word word;
@@ -139,10 +147,31 @@ bitset_offset bitset_fls(const bitset *b) {
                 return offset * BITSET_LITERAL_LENGTH + position - 1;
             }
         } else {
-            return offset * BITSET_LITERAL_LENGTH + bitset_word_fls(word);
+            return offset * BITSET_LITERAL_LENGTH + bitset_fls(word);
         }
     }
     return 0;
+}
+
+bitset_offset bitset_max(const bitset *b) {
+    bitset_offset offset = 0;
+    bitset_word word = 0;
+    for (unsigned i = 0; i < b->length; i++) {
+        word = b->words[i];
+        if (BITSET_IS_FILL_WORD(word)) {
+            offset += BITSET_GET_LENGTH(word);
+            if (BITSET_GET_POSITION(word)) {
+                offset += 1;
+            }
+        } else {
+            offset += 1;
+        }
+    }
+    offset = (offset - 1) * BITSET_LITERAL_LENGTH;
+    if (BITSET_IS_FILL_WORD(word)) {
+        return offset + BITSET_GET_POSITION(word) - 1;
+    }
+    return offset + BITSET_LITERAL_LENGTH - bitset_ffs(word);
 }
 
 bool bitset_set(bitset *b, bitset_offset bit, bool value) {

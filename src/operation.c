@@ -150,9 +150,9 @@ static int bitset_operation_offset_sort(const void *a, const void *b) {
     return a_offset < b_offset ? -1 : a_offset > b_offset;
 }
 
-static inline unsigned char bitset_word_fls(bitset_word word) {
+static inline unsigned char bitset_fls(bitset_word word) {
     static char table[64] = {
-        32, 31, 0, 16, 0, 30, 3, 0, 15, 0, 0, 0, 29, 10, 2, 0,
+        32, 31, 0, 16, 0, 30, 3, 0, 16, 0, 0, 0, 29, 10, 2, 0,
         0, 0, 12, 14, 21, 0, 19, 0, 0, 28, 0, 25, 0, 9, 1, 0,
         17, 0, 4, 0, 0, 0, 11, 0, 13, 22, 20, 0, 26, 0, 0, 18,
         5, 0, 0, 23, 0, 27, 0, 6, 0, 24, 7, 0, 8, 0, 0, 0
@@ -215,7 +215,7 @@ bitset *bitset_operation_exec(bitset_op *op) {
             if (BITSET_IS_POW2(word)) {
                 bitset_resize(result, result->length + 1);
                 result->words[pos++] = BITSET_CREATE_FILL(offset - word_offset - 1,
-                    bitset_word_fls(word));
+                    bitset_fls(word));
             } else {
                 bitset_resize(result, result->length + 2);
                 result->words[pos++] = BITSET_CREATE_EMPTY_FILL(offset - word_offset - 1);

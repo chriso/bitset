@@ -67,8 +67,9 @@ int main(int argc, char **argv) {
     test_suite_count();
     printf("Testing operations\n");
     test_suite_operation();
-    printf("Testing ffs\n");
-    test_suite_ffs();
+    printf("Testing min / max\n");
+    test_suite_min();
+    test_suite_max();
     printf("Testing stress\n");
     test_suite_stress();
 }
@@ -138,24 +139,45 @@ void test_suite_count() {
     bitset_free(b);
 }
 
-void test_suite_ffs() {
+void test_suite_min() {
     bitset *b = bitset_new();
     bitset_set(b, 1000, true);
-    test_ulong("Test find first set 1", 1000, bitset_fls(b));
+    test_ulong("Test find first set 1", 1000, bitset_min(b));
     bitset_set(b, 300, true);
-    test_ulong("Test find first set 2", 300, bitset_fls(b));
+    test_ulong("Test find first set 2", 300, bitset_min(b));
     bitset_set(b, 299, true);
-    test_ulong("Test find first set 3", 299, bitset_fls(b));
+    test_ulong("Test find first set 3", 299, bitset_min(b));
     bitset_set(b, 298, true);
-    test_ulong("Test find first set 4", 298, bitset_fls(b));
+    test_ulong("Test find first set 4", 298, bitset_min(b));
     bitset_set(b, 290, true);
-    test_ulong("Test find first set 5", 290, bitset_fls(b));
+    test_ulong("Test find first set 5", 290, bitset_min(b));
     bitset_set(b, 240, true);
-    test_ulong("Test find first set 6", 240, bitset_fls(b));
+    test_ulong("Test find first set 6", 240, bitset_min(b));
     bitset_set(b, 12, true);
-    test_ulong("Test find first set 7", 12, bitset_fls(b));
+    test_ulong("Test find first set 7", 12, bitset_min(b));
     bitset_set(b, 3, true);
-    test_ulong("Test find first set 8", 3, bitset_fls(b));
+    test_ulong("Test find first set 8", 3, bitset_min(b));
+    bitset_free(b);
+}
+
+void test_suite_max() {
+    bitset *b = bitset_new();
+    bitset_set(b, 3, true);
+    test_ulong("Test find last set 8", 3, bitset_max(b));
+    bitset_set(b, 12, true);
+    test_ulong("Test find last set 7", 12, bitset_max(b));
+    bitset_set(b, 240, true);
+    test_ulong("Test find last set 6", 240, bitset_max(b));
+    bitset_set(b, 290, true);
+    test_ulong("Test find last set 5", 290, bitset_max(b));
+    bitset_set(b, 298, true);
+    test_ulong("Test find last set 4", 298, bitset_max(b));
+    bitset_set(b, 299, true);
+    test_ulong("Test find last set 3", 299, bitset_max(b));
+    bitset_set(b, 300, true);
+    test_ulong("Test find last set 2", 300, bitset_max(b));
+    bitset_set(b, 1000, true);
+    test_ulong("Test find last set 1", 1000, bitset_max(b));
     bitset_free(b);
 }
 

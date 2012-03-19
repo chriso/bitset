@@ -148,7 +148,13 @@ bool bitset_set(bitset *, bitset_offset, bool);
  * Find the lowest set bit in the bitset.
  */
 
-bitset_offset bitset_fls(const bitset *);
+bitset_offset bitset_min(const bitset *);
+
+/**
+ * Find the highest set bit in the bitset.
+ */
+
+bitset_offset bitset_max(const bitset *);
 
 /**
  * Custom out of memory behaviour.
