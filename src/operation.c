@@ -13,6 +13,8 @@ bitset_op *bitset_operation_new(const bitset *initial) {
     ops->length = 0;
     bitset_operation_add(ops, initial, BITSET_OR);
     ops->words = NULL;
+    ops->bit_count = bitset_count(initial);
+    ops->bit_max = bitset_max(initial);
     return ops;
 }
 
@@ -57,6 +59,8 @@ void bitset_operation_add(bitset_op *ops, const bitset *b, enum bitset_operation
         }
     }
     ops->steps[ops->length++] = step;
+    ops->bit_count += bitset_count(b);
+    ops->bit_max = BITSET_MAX(ops->bit_max, bitset_max(b));
 }
 
 static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
@@ -71,9 +75,18 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
         return bitset_hash_new(1);
     }
 
-    //Guess the number of required hash buckets since we don't do any adaptive resizing
-    size = op->length * op->steps[1]->b->length / 400;
-    size = size < 32 ? 32 : size > 1048576 ? 1048576 : size;
+#ifdef HASH_DEBUG
+    fprintf(stderr, "HASH: Bitsets count = %u, max = %u\n", op->bit_count, op->bit_max);
+#endif
+
+    //Note: setting the right number of buckets to avoid collisions is
+    //the biggest win available here
+    size = op->bit_max / BITSET_LITERAL_LENGTH + 2;
+    while (op->bit_count < op->bit_max / 10) {
+        size /= 2;
+        op->bit_max /= 10;
+    }
+    size = size < 32 ? 32 : size > 16777216 ? 16777216 : size;
     op->words = bitset_hash_new(size);
 
     for (unsigned i = 0; i < op->length; i++) {
@@ -263,19 +276,17 @@ bitset_offset bitset_operation_count(bitset_op *op) {
 }
 
 bitset_hash *bitset_hash_new(unsigned buckets) {
-    unsigned size;
     bitset_hash *hash = (bitset_hash *) malloc(sizeof(bitset_hash));
     if (!hash) {
         bitset_oom();
     }
-    BITSET_NEXT_POW2(size, buckets);
 #ifdef HASH_DEBUG
-    fprintf(stderr, "HASH: %u buckets (%u actual)\n", buckets, size);
+    fprintf(stderr, "HASH: %u buckets\n", buckets);
 #endif
-    hash->size = size;
+    hash->size = buckets;
     hash->count = 0;
-    hash->buckets = (bitset_hash_bucket **) calloc(1, sizeof(bitset_hash_bucket *) * size);
-    hash->words = (bitset_word *) malloc(sizeof(bitset_word) * size);
+    hash->buckets = (bitset_hash_bucket **) calloc(1, sizeof(bitset_hash_bucket *) * buckets);
+    hash->words = (bitset_word *) malloc(sizeof(bitset_word) * buckets);
     if (!hash->buckets || !hash->words) {
         bitset_oom();
     }
