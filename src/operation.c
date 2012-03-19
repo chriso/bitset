@@ -13,8 +13,6 @@ bitset_op *bitset_operation_new(const bitset *initial) {
     ops->length = 0;
     bitset_operation_add(ops, initial, BITSET_OR);
     ops->words = NULL;
-    ops->bit_count = bitset_count(initial);
-    ops->bit_max = bitset_max(initial);
     return ops;
 }
 
@@ -59,32 +57,34 @@ void bitset_operation_add(bitset_op *ops, const bitset *b, enum bitset_operation
         }
     }
     ops->steps[ops->length++] = step;
-    ops->bit_count += bitset_count(b);
-    ops->bit_max = BITSET_MAX(ops->bit_max, bitset_max(b));
 }
 
 static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
-    bitset_offset word_offset;
+    bitset_offset word_offset, max = 0, next_max;
     bitset_op_step *step;
     bitset_word word, *hashed;
     unsigned char position;
-    unsigned size;
+    unsigned size, count = 0;
     bitset_hash *and_words = NULL;
 
     if (!op->length) {
         return bitset_hash_new(1);
     }
 
+    //Work out the number of hash buckets required. Note that setting the right
+    //number of buckets to avoid collisions is the biggest available win here
+    for (unsigned i = 0; i < op->length; i++) {
+        count += bitset_count(op->steps[i]->b);
+        next_max = bitset_max(op->steps[i]->b);
+        if (next_max > max) max = next_max;
+    }
 #ifdef HASH_DEBUG
-    fprintf(stderr, "HASH: Bitsets count = %u, max = %u\n", op->bit_count, op->bit_max);
+    fprintf(stderr, "HASH: Bitsets count = %u, max = %u\n", count, max);
 #endif
-
-    //Note: setting the right number of buckets to avoid collisions is
-    //the biggest win available here
-    size = op->bit_max / BITSET_LITERAL_LENGTH + 2;
-    while (op->bit_count < op->bit_max / 10) {
+    size = max / BITSET_LITERAL_LENGTH + 2;
+    while (count < max / 50) {
         size /= 2;
-        op->bit_max /= 10;
+        max /= 50;
     }
     size = size < 32 ? 32 : size > 16777216 ? 16777216 : size;
     op->words = bitset_hash_new(size);

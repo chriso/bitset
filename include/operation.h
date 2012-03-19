@@ -44,8 +44,6 @@ typedef struct bitset_op_ {
     bitset_op_step **steps;
     bitset_hash *words;
     unsigned length;
-    unsigned bit_count;
-    bitset_offset bit_max;
 } bitset_op;
 
 /**
