@@ -73,7 +73,6 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
 
     //Guess the number of required hash buckets since we don't do any adaptive resizing
     size = op->length * op->steps[1]->b->length / 400;
-    //printf("%u buckets\n", size);
     size = size < 32 ? 32 : size > 1048576 ? 1048576 : size;
     op->words = bitset_hash_new(size);
 
@@ -83,6 +82,8 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
         word_offset = 0;
 
         if (step->operation == BITSET_AND) {
+
+            and_words = bitset_hash_new(op->words->size);
 
             for (unsigned j = 0; j < step->b->length; j++) {
                 word = step->b->words[j];
@@ -99,9 +100,6 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
                 if (hashed && *hashed) {
                     word &= *hashed;
                     if (word) {
-                        if (and_words == NULL) {
-                            and_words = bitset_hash_new(op->words->size);
-                        }
                         bitset_hash_insert(and_words, word_offset, word);
                     }
                 }
@@ -110,6 +108,7 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
             bitset_hash_free(op->words);
             op->words = and_words;
             and_words = NULL;
+
         } else {
 
             for (unsigned j = 0; j < step->b->length; j++) {
@@ -139,10 +138,6 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
                     bitset_hash_insert(op->words, word_offset, word);
                 }
             }
-
-        }
-
-        if (step->operation == BITSET_AND) {
         }
     }
 
@@ -242,23 +237,31 @@ bitset_offset bitset_operation_count(bitset_op *op) {
     bitset_hash *words = bitset_operation_iter(op);
     bitset_hash_bucket *bucket;
     bitset_word word;
+#ifdef HASH_DEBUG
     unsigned tagged = 0, ll = 0;
-    //printf("Looking at %u buckets\n", words->size);
+    fprintf(stderr, "HASH: Looking at %u buckets\n", words->size);
+#endif
     for (unsigned i = 0; i < words->size; i++) {
         bucket = words->buckets[i];
         if ((uintptr_t)bucket & 1) {
+#ifdef HASH_DEBUG
             tagged++;
+#endif
             word = words->words[i];
             BITSET_POP_COUNT(count, word);
             continue;
         }
         while (bucket) {
+#ifdef HASH_DEBUG
             ll++;
+#endif
             BITSET_POP_COUNT(count, bucket->word);
             bucket = bucket->next;
         }
     }
-    //printf("%u tagged, %u linked-list nodes\n", tagged, ll);
+#ifdef HASH_DEBUG
+    fprintf(stderr, "HASH: %u tagged, %u linked-list nodes\n", tagged, ll);
+#endif
     return count;
 }
 
@@ -269,6 +272,9 @@ bitset_hash *bitset_hash_new(unsigned buckets) {
         bitset_oom();
     }
     BITSET_NEXT_POW2(size, buckets);
+#ifdef HASH_DEBUG
+    fprintf(stderr, "HASH: %u buckets (%u actual)\n", buckets, size);
+#endif
     hash->size = size;
     hash->count = 0;
     hash->buckets = (bitset_hash_bucket **) calloc(1, sizeof(bitset_hash_bucket *) * size);
