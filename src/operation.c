@@ -237,30 +237,27 @@ bitset_offset bitset_operation_count(bitset_op *op) {
     bitset_hash *words = bitset_operation_iter(op);
     bitset_hash_bucket *bucket;
     bitset_word word;
-#ifdef HASH_DEBUG
-    unsigned tagged = 0, ll = 0;
-    fprintf(stderr, "HASH: Looking at %u buckets\n", words->size);
-#endif
     for (unsigned i = 0; i < words->size; i++) {
         bucket = words->buckets[i];
         if ((uintptr_t)bucket & 1) {
-#ifdef HASH_DEBUG
-            tagged++;
-#endif
             word = words->words[i];
             BITSET_POP_COUNT(count, word);
             continue;
         }
         while (bucket) {
-#ifdef HASH_DEBUG
-            ll++;
-#endif
             BITSET_POP_COUNT(count, bucket->word);
             bucket = bucket->next;
         }
     }
 #ifdef HASH_DEBUG
-    fprintf(stderr, "HASH: %u tagged, %u linked-list nodes\n", tagged, ll);
+    unsigned tagged = 0, nodes = 0;
+    for (unsigned i = 0; i < words->size; i++) {
+        bucket = words->buckets[i];
+        if ((uintptr_t)bucket & 1) { tagged++; continue; }
+        while (bucket) { nodes++; bucket = bucket->next; }
+    }
+    fprintf(stderr, "HASH: %u buckets, %u tagged, %u linked-list nodes\n",
+        words->size, tagged, nodes);
 #endif
     return count;
 }
