@@ -62,7 +62,7 @@ void bitset_operation_add(bitset_op *ops, const bitset *b, enum bitset_operation
 static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
     bitset_offset word_offset;
     bitset_op_step *step;
-    bitset_word word, current;
+    bitset_word word, *hashed;
     unsigned char position;
     unsigned size;
     bitset_hash *and_words = NULL;
@@ -82,62 +82,67 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
         step = op->steps[i];
         word_offset = 0;
 
-        for (unsigned j = 0; j < step->b->length; j++) {
-            word = step->b->words[j];
-
-            if (BITSET_IS_FILL_WORD(word)) {
-                word_offset += BITSET_GET_LENGTH(word);
-                position = BITSET_GET_POSITION(word);
-                if (!position) {
-                    continue;
-                }
-                word = BITSET_CREATE_LITERAL(position - 1);
-            }
-
-            word_offset++;
-
-            switch (step->operation) {
-                case BITSET_OR:
-                    current = bitset_hash_get(op->words, word_offset);
-                    if (current) {
-                        bitset_hash_replace(op->words, word_offset, current | word);
-                    } else {
-                        bitset_hash_insert(op->words, word_offset, word);
-                    }
-                    break;
-                case BITSET_AND:
-                    current = bitset_hash_get(op->words, word_offset);
-                    if (current) {
-                        word &= current;
-                        if (word) {
-                            if (and_words == NULL) {
-                                and_words = bitset_hash_new(op->words->size);
-                            }
-                            bitset_hash_insert(and_words, word_offset, word);
-                        }
-                    }
-                    break;
-                case BITSET_ANDNOT:
-                    current = bitset_hash_get(op->words, word_offset);
-                    if (current) {
-                        bitset_hash_replace(op->words, word_offset, current & ~word);
-                    }
-                    break;
-                case BITSET_XOR:
-                    current = bitset_hash_get(op->words, word_offset);
-                    if (current) {
-                        bitset_hash_replace(op->words, word_offset, current ^ word);
-                    } else {
-                        bitset_hash_insert(op->words, word_offset, word);
-                    }
-                    break;
-            }
-        }
-
         if (step->operation == BITSET_AND) {
+
+            for (unsigned j = 0; j < step->b->length; j++) {
+                word = step->b->words[j];
+                if (BITSET_IS_FILL_WORD(word)) {
+                    word_offset += BITSET_GET_LENGTH(word);
+                    position = BITSET_GET_POSITION(word);
+                    if (!position) {
+                        continue;
+                    }
+                    word = BITSET_CREATE_LITERAL(position - 1);
+                }
+                word_offset++;
+                hashed = bitset_hash_get(op->words, word_offset);
+                if (hashed && *hashed) {
+                    word &= *hashed;
+                    if (word) {
+                        if (and_words == NULL) {
+                            and_words = bitset_hash_new(op->words->size);
+                        }
+                        bitset_hash_insert(and_words, word_offset, word);
+                    }
+                }
+            }
+
             bitset_hash_free(op->words);
             op->words = and_words;
             and_words = NULL;
+        } else {
+
+            for (unsigned j = 0; j < step->b->length; j++) {
+                word = step->b->words[j];
+
+                if (BITSET_IS_FILL_WORD(word)) {
+                    word_offset += BITSET_GET_LENGTH(word);
+                    position = BITSET_GET_POSITION(word);
+                    if (!position) {
+                        continue;
+                    }
+                    word = BITSET_CREATE_LITERAL(position - 1);
+                }
+
+                word_offset++;
+
+                hashed = bitset_hash_get(op->words, word_offset);
+
+                if (hashed) {
+                    switch (step->operation) {
+                        case BITSET_OR:     *hashed |= word;  break;
+                        case BITSET_ANDNOT: *hashed &= ~word; break;
+                        case BITSET_XOR:    *hashed ^= word;  break;
+                        default: break;
+                    }
+                } else if (step->operation != BITSET_ANDNOT) {
+                    bitset_hash_insert(op->words, word_offset, word);
+                }
+            }
+
+        }
+
+        if (step->operation == BITSET_AND) {
         }
     }
 
@@ -175,7 +180,7 @@ bitset *bitset_operation_exec(bitset_op *op) {
     bitset *result = bitset_new();
     unsigned pos = 0;
     bitset_offset word_offset = 0, fills, offset;
-    bitset_word word, fill = BITSET_CREATE_EMPTY_FILL(BITSET_MAX_LENGTH);
+    bitset_word word, *hashed, fill = BITSET_CREATE_EMPTY_FILL(BITSET_MAX_LENGTH);
 
     if (!words->count) {
         return result;
@@ -197,7 +202,9 @@ bitset *bitset_operation_exec(bitset_op *op) {
 
     for (unsigned i = 0; i < words->count; i++) {
         offset = offsets[i];
-        word = bitset_hash_get(op->words, offset);
+        hashed = bitset_hash_get(op->words, offset);
+        if (!hashed) continue;
+        word = *hashed;
         if (!word) continue;
 
         if (offset - word_offset == 1) {
@@ -343,34 +350,7 @@ inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset, bitset_w
     return true;
 }
 
-inline bool bitset_hash_replace(bitset_hash *hash, bitset_offset offset, bitset_word word) {
-    unsigned key = offset % hash->size;
-    bitset_hash_bucket *bucket = hash->buckets[key];
-    bitset_offset off;
-    if (!bucket) {
-        return false;
-    } else if ((uintptr_t)bucket & 1) {
-        off = (uintptr_t)bucket >> 1;
-        if (off != offset) {
-            return false;
-        }
-        hash->words[key] = word;
-        return true;
-    }
-    for (;;) {
-        if (bucket->offset == offset) {
-            bucket->word = word;
-            return true;
-        }
-        if (bucket->next == NULL) {
-            break;
-        }
-        bucket = bucket->next;
-    }
-    return false;
-}
-
-inline bitset_word bitset_hash_get(const bitset_hash *hash, bitset_offset offset) {
+inline bitset_word *bitset_hash_get(const bitset_hash *hash, bitset_offset offset) {
     unsigned key = offset % hash->size;
     bitset_hash_bucket *bucket = hash->buckets[key];
     bitset_offset off;
@@ -378,15 +358,15 @@ inline bitset_word bitset_hash_get(const bitset_hash *hash, bitset_offset offset
         if ((uintptr_t)bucket & 1) {
             off = ((uintptr_t)bucket) >> 1;
             if (off != offset) {
-                return 0;
+                return NULL;
             }
-            return hash->words[key];
+            return &hash->words[key];
         }
         if (bucket->offset == offset) {
-            return bucket->word;
+            return &bucket->word;
         }
         bucket = bucket->next;
     }
-    return 0;
+    return NULL;
 }
 

@@ -96,16 +96,10 @@ void bitset_hash_free(bitset_hash *);
 bool bitset_hash_insert(bitset_hash *, bitset_offset, bitset_word);
 
 /**
- * Replace the word at an offset that exists in the hash.
- */
-
-bool bitset_hash_replace(bitset_hash *, bitset_offset, bitset_word);
-
-/**
  * Get the word at the specified offset.
  */
 
-bitset_word bitset_hash_get(const bitset_hash *, bitset_offset);
+bitset_word *bitset_hash_get(const bitset_hash *, bitset_offset);
 
 #endif
 
