@@ -310,15 +310,19 @@ bitset *bitset_new_bits(unsigned length, bitset_offset *bits) {
         return b;
     }
     unsigned pos = 0, rem, next_rem, i;
-    bitset_offset word_offset = 0, div, next_div, fills;
+    bitset_offset word_offset = 0, div, next_div, fills, last_bit;
     bitset_word fill = BITSET_CREATE_EMPTY_FILL(BITSET_MAX_LENGTH);
     qsort(bits, length, sizeof(bitset_offset), bitset_new_bits_sort);
+    last_bit = bits[0];
     div = bits[0] / BITSET_LITERAL_LENGTH;
     rem = bits[0] % BITSET_LITERAL_LENGTH;
     bitset_resize(b, 1);
     b->words[0] = 0;
 
     for (i = 1; i < length; i++) {
+        if (bits[i] == last_bit) continue;
+        last_bit = bits[i];
+
         next_div = bits[i] / BITSET_LITERAL_LENGTH;
         next_rem = bits[i] % BITSET_LITERAL_LENGTH;
 
