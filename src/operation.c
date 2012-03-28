@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "operation.h"
 
@@ -324,6 +325,8 @@ inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset, bitset_w
         if (!insert) {
             bitset_oom();
         }
+        //Pointer tagging is out if malloc returns an address with the LSB set
+        assert(!((uintptr_t)insert & 1));
         insert->offset = off;
         insert->word = (uintptr_t)hash->words[key];
         bucket = hash->buckets[key] = insert;
@@ -356,6 +359,7 @@ inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset, bitset_w
     if (!insert) {
         bitset_oom();
     }
+    assert(!((uintptr_t)insert & 1));
     insert->offset = offset;
     insert->word = word;
     insert->next = NULL;
