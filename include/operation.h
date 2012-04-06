@@ -47,14 +47,14 @@ typedef struct bitset_op_ {
 } bitset_op;
 
 /**
- * Bitset linear probabilistic counter type.
+ * Bitset linear counting type.
  */
 
-typedef struct bitset_estimate_ {
+typedef struct bitset_linear_ {
     bitset_word *words;
     unsigned count;
     unsigned size;
-} bitset_estimate;
+} bitset_linear;
 
 /**
  * Create a new bitset operation.
@@ -112,28 +112,28 @@ bool bitset_hash_insert(bitset_hash *, bitset_offset, bitset_word);
 bitset_word *bitset_hash_get(const bitset_hash *, bitset_offset);
 
 /**
- * Create a new cardinality estimator.
+ * Count unique bits using an uncompressed bitset of the specified size.
  */
 
-bitset_estimate *bitset_estimate_new(unsigned);
+bitset_linear *bitset_linear_new(unsigned);
 
 /**
- * Add a bitset to the estimate.
+ * Count unique bits in the bitset.
  */
 
-unsigned bitset_estimate_add(bitset_estimate *, bitset *);
+void bitset_linear_add(bitset_linear *, bitset *);
 
 /**
- * Get the cardinality count.
+ * Get the unique bit count.
  */
 
-unsigned bitset_estimate_count(bitset_estimate *);
+unsigned bitset_linear_count(bitset_linear *);
 
 /**
- * Free the estimator.
+ * Free the linear counter.
  */
 
-void bitset_estimate_free(bitset_estimate *);
+void bitset_linear_free(bitset_linear *);
 
 #endif
 

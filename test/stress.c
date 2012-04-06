@@ -51,12 +51,12 @@ int main(int argc, char **argv) {
 
     //Use linear counting
     start = (float) clock();
-    bitset_estimate *e = bitset_estimate_new(1048576);
+    bitset_linear *e = bitset_linear_new(1048576);
     for (unsigned i = 0; i < bitsets; i++) {
-        bitset_estimate_add(e, b[i]);
+        bitset_linear_add(e, b[i]);
     }
-    printf("Estimated unique bit count => " bitset_format "\n", bitset_estimate_count(e));
+    printf("Unique bit count => " bitset_format "\n", bitset_linear_count(e));
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
-    printf("Executed estimate operation in %.2fs (%.2fMB/s)\n", end, size/end);
+    printf("Executed linear count in %.2fs (%.2fMB/s)\n", end, size/end);
 }
 

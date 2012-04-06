@@ -388,69 +388,59 @@ inline bitset_word *bitset_hash_get(const bitset_hash *hash, bitset_offset offse
     return NULL;
 }
 
-bitset_estimate *bitset_estimate_new(unsigned size) {
-    bitset_estimate *e = (bitset_estimate *) malloc(sizeof(bitset_estimate));
+bitset_linear *bitset_linear_new(unsigned size) {
+    bitset_linear *e = (bitset_linear *) malloc(sizeof(bitset_linear));
     if (!e) {
         bitset_oom();
     }
     e->count = 0;
     assert(size);
     size = (unsigned)(size / sizeof(bitset_word) / 8) + 1;
-    e->size = size * sizeof(bitset_word) * 8;
-    e->words = (bitset_word *) calloc(1, size * sizeof(bitset_word));
+    e->size = size * sizeof(bitset_word);
+    e->words = (bitset_word *) calloc(1, e->size);
     if (!e->words) {
         bitset_oom();
     }
     return e;
 };
 
-unsigned bitset_estimate_add(bitset_estimate *e, bitset *b) {
+void bitset_linear_add(bitset_linear *e, bitset *b) {
     bitset_offset offset = 0, tmp;
-    bitset_word word = 0;
-    unsigned count = 0, div, rem;
+    bitset_word word = 0, mask;
     unsigned char position;
     for (unsigned i = 0; i < b->length; i++) {
         word = b->words[i];
         if (BITSET_IS_FILL_WORD(word)) {
-            offset += BITSET_GET_LENGTH(word) * BITSET_LITERAL_LENGTH;
+            offset += BITSET_GET_LENGTH(word);
             position = BITSET_GET_POSITION(word);
             if (!position) {
                 continue;
             }
-            count++;
-            tmp = (offset + position - 1) % e->size;
-            div = tmp / (sizeof(bitset_word) * 8);
-            rem = tmp % (sizeof(bitset_word) * 8);
-            rem = 1 << rem;
-            if ((e->words[div] & rem) == 0) {
+            tmp = offset % e->size;
+            mask = 1 << position;
+            if ((e->words[tmp] & mask) == 0) {
                 e->count++;
-                e->words[div] |= rem;
+                e->words[tmp] |= mask;
             }
         } else {
+            tmp = offset % e->size;
             for (unsigned i = BITSET_LITERAL_LENGTH - 1; i; i--) {
-                if (word & (1 << i)) {
-                    tmp = (offset + BITSET_LITERAL_LENGTH - i - 1) % e->size;
-                    div = tmp / (sizeof(bitset_word) * 8);
-                    rem = tmp % (sizeof(bitset_word) * 8);
-                    rem = 1 << rem;
-                    if ((e->words[div] & rem) == 0) {
-                        e->count++;
-                        e->words[div] |= rem;
-                    }
+                mask = 1 << i;
+                if (word & mask && (e->words[tmp] & mask) == 0) {
+                    e->count++;
+                    e->words[tmp] |= mask;
                 }
             }
-            BITSET_POP_COUNT(count, word);
         }
-        offset += BITSET_LITERAL_LENGTH;
+        offset++;
     }
-    return count;
 };
 
-unsigned bitset_estimate_count(bitset_estimate *e) {
+unsigned bitset_linear_count(bitset_linear *e) {
     return e->count;
 };
 
-void bitset_estimate_free(bitset_estimate *e) {
+void bitset_linear_free(bitset_linear *e) {
     free(e->words);
     free(e);
 };
