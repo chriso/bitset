@@ -47,6 +47,16 @@ typedef struct bitset_op_ {
 } bitset_op;
 
 /**
+ * Bitset linear probabilistic counter type.
+ */
+
+typedef struct bitset_estimate_ {
+    bitset_word *words;
+    unsigned count;
+    unsigned size;
+} bitset_estimate;
+
+/**
  * Create a new bitset operation.
  */
 
@@ -100,6 +110,30 @@ bool bitset_hash_insert(bitset_hash *, bitset_offset, bitset_word);
  */
 
 bitset_word *bitset_hash_get(const bitset_hash *, bitset_offset);
+
+/**
+ * Create a new cardinality estimator.
+ */
+
+bitset_estimate *bitset_estimate_new(unsigned);
+
+/**
+ * Add a bitset to the estimate.
+ */
+
+unsigned bitset_estimate_add(bitset_estimate *, bitset *);
+
+/**
+ * Get the cardinality count.
+ */
+
+unsigned bitset_estimate_count(bitset_estimate *);
+
+/**
+ * Free the estimator.
+ */
+
+void bitset_estimate_free(bitset_estimate *);
 
 #endif
 

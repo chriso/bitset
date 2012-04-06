@@ -7,6 +7,7 @@
 #include "operation.h"
 
 int main(int argc, char **argv) {
+
     float start, end, size = 0;
     srand(time(NULL));
 
@@ -47,5 +48,15 @@ int main(int argc, char **argv) {
     printf("Unique bit count => " bitset_format "\n", bitset_operation_count(op));
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
     printf("Executed bitwise OR + pop count operation in %.2fs (%.2fMB/s)\n", end, size/end);
+
+    //Use linear counting
+    start = (float) clock();
+    bitset_estimate *e = bitset_estimate_new(1048576);
+    for (unsigned i = 0; i < bitsets; i++) {
+        bitset_estimate_add(e, b[i]);
+    }
+    printf("Estimated unique bit count => " bitset_format "\n", bitset_estimate_count(e));
+    end = ((float) clock() - start) / CLOCKS_PER_SEC;
+    printf("Executed estimate operation in %.2fs (%.2fMB/s)\n", end, size/end);
 }
 
