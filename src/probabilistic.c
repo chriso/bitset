@@ -14,8 +14,8 @@ bitset_linear *bitset_linear_new(unsigned size) {
     e->count = 0;
     assert(size);
     size = (unsigned)(size / sizeof(bitset_word) / 8) + 1;
-    e->size = size * sizeof(bitset_word);
-    e->words = (bitset_word *) calloc(1, e->size);
+    e->size = size;
+    e->words = (bitset_word *) calloc(1, e->size * sizeof(bitset_word));
     if (!e->words) {
         bitset_oom();
     }
