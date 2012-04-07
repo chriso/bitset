@@ -7,13 +7,9 @@
 #include "operation.h"
 #include "probabilistic.h"
 
-int main(int argc, char **argv) {
-
+void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
     float start, end, size = 0;
-    srand(time(NULL));
 
-    printf("Creating 100k bitsets with 10M total bits between 1->1M\n");
-    unsigned bitsets = 100000, bits = 100, max = 1000000;
     bitset **b = malloc(sizeof(bitset *) * bitsets);
     bitset_offset *offsets = malloc(sizeof(bitset_offset) * bits);
 
@@ -49,15 +45,31 @@ int main(int argc, char **argv) {
     printf("Unique bit count => " bitset_format "\n", bitset_operation_count(op));
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
     printf("Executed bitwise OR + pop count operation in %.2fs (%.2fMB/s)\n", end, size/end);
+    bitset_operation_free(op);
 
     //Use linear counting
     start = (float) clock();
-    bitset_linear *e = bitset_linear_new(1048576);
+    bitset_linear *e = bitset_linear_new(330000000);
     for (unsigned i = 0; i < bitsets; i++) {
         bitset_linear_add(e, b[i]);
     }
     printf("Unique bit count => " bitset_format "\n", bitset_linear_count(e));
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
     printf("Executed linear count in %.2fs (%.2fMB/s)\n", end, size/end);
+    bitset_linear_free(e);
+
+    for (unsigned i = 0; i < bitsets; i++) {
+        bitset_free(b[i]);
+    }
+}
+
+int main(int argc, char **argv) {
+    srand(time(NULL));
+
+    printf("Creating 100k bitsets with 10M total bits between 1->10M\n");
+    stress_exec(100000, 100, 10000000);
+
+    printf("\nCreating 1M bitsets with 100M total bits between 1->100M\n");
+    stress_exec(1000000, 100, 100000000);
 }
 
