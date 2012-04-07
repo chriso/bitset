@@ -5,6 +5,7 @@
 #include <time.h>
 
 #include "operation.h"
+#include "probabilistic.h"
 
 int main(int argc, char **argv) {
 
