@@ -8,21 +8,22 @@ TEST=test/test.o
 STRESS=test/stress.o
 
 stress: $(OBJ) $(STRESS)
-	@$(CC) $(LDFLAGS) $(OBJ) $(STRESS) -o ./bin/$@
-	@./bin/$@
+	$(CC) $(LDFLAGS) $(OBJ) $(STRESS) -o ./bin/$@
+	./bin/$@
 
 test: $(OBJ) $(TEST)
-	@$(CC) $(LDFLAGS) $(OBJ) $(TEST) -o ./bin/$@
-	@./bin/$@
+	$(CC) $(LDFLAGS) $(OBJ) $(TEST) -o ./bin/$@
+	./bin/$@
 
 .c.o: init
-	@$(CC) -c $(CFLAGS) -Iinclude $< -o $@
+	$(CC) -c $(CFLAGS) -Iinclude $< -o $@
 
 init:
-	@test -d bin || mkdir bin
+	test -d bin || mkdir bin
 
 clean:
-	@rm -rf $(OBJ) $(TEST) $(STRESS) bin
+	rm -rf $(OBJ) $(TEST) $(STRESS) bin
 
 
 .PHONY: test stress
+.SILENT: 
