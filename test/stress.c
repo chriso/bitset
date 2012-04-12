@@ -66,7 +66,10 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
 int main(int argc, char **argv) {
     srand(time(NULL));
 
-    printf("Creating 100k bitsets with 10M total bits between 1->10M\n");
+    printf("Creating 100k bitsets with 10M total bits between 1->1M\n");
+    stress_exec(100000, 100, 1000000);
+
+    printf("\nCreating 100k bitsets with 10M total bits between 1->10M\n");
     stress_exec(100000, 100, 10000000);
 
     printf("\nCreating 1M bitsets with 100M total bits between 1->100M\n");
