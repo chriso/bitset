@@ -83,7 +83,7 @@ bool bitset_get(const bitset *b, bitset_offset bit) {
                 return false;
             } else if (position) {
                 if (word_offset == length) {
-                    return position - 1 == bit;
+                    return position == bit + 1;
                 }
                 word_offset--;
             }
@@ -231,7 +231,7 @@ bool bitset_set(bitset *b, bitset_offset bit, bool value) {
 
                 if (position) {
                     if (!word_offset) {
-                        if (position - 1 == bit) {
+                        if (position == bit + 1) {
                             if (!value) {
                                 b->words[i] = BITSET_UNSET_POSITION(word);
                             }
