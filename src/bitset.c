@@ -41,6 +41,10 @@ void bitset_resize(bitset *b, unsigned length) {
     b->length = length;
 }
 
+void bitset_clear(bitset *b) {
+    b->length = 0;
+}
+
 unsigned bitset_length(bitset *b) {
     return b->length;
 }

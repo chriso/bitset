@@ -91,6 +91,12 @@ typedef struct bitset_ {
 bitset *bitset_new();
 
 /**
+ * Clear the specified bitset.
+ */
+
+void bitset_free(bitset *);
+
+/**
  * Free the specified bitset.
  */
 
