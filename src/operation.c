@@ -75,7 +75,7 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
     //Work out the number of hash buckets required. Note that setting the right
     //number of buckets to avoid collisions is the biggest available win here
     for (unsigned i = 0; i < op->length; i++) {
-        count += bitset_count(op->steps[i]->b);
+        count += op->steps[i]->b->length / sizeof(bitset_word);
         next_max = bitset_max(op->steps[i]->b);
         if (next_max > max) max = next_max;
     }
