@@ -72,7 +72,7 @@ bool bitset_get(const bitset *b, bitset_offset bit) {
     bitset_offset length, word_offset = bit / BITSET_LITERAL_LENGTH;
 
     bit %= BITSET_LITERAL_LENGTH;
-    unsigned char position;
+    unsigned position;
 
     for (unsigned i = 0; i < b->length; i++) {
         word = words[i];
@@ -140,7 +140,7 @@ static inline unsigned char bitset_ffs(bitset_word word) {
 
 bitset_offset bitset_min(const bitset *b) {
     bitset_offset offset = 0;
-    unsigned char position;
+    unsigned position;
     bitset_word word;
     for (unsigned i = 0; i < b->length; i++) {
         word = b->words[i];
@@ -185,7 +185,7 @@ bool bitset_set(bitset *b, bitset_offset bit, bool value) {
     if (b->length) {
         bitset_word word;
         bitset_offset fill_length;
-        unsigned char position;
+        unsigned position;
 
         for (unsigned i = 0; i < b->length; i++) {
             word = b->words[i];

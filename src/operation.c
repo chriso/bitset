@@ -64,7 +64,7 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
     bitset_offset word_offset, max = 0, next_max;
     bitset_op_step *step;
     bitset_word word, *hashed;
-    unsigned char position;
+    unsigned position;
     unsigned size, count = 0;
     bitset_hash *and_words = NULL;
 

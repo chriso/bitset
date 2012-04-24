@@ -25,7 +25,7 @@ bitset_linear *bitset_linear_new(unsigned size) {
 void bitset_linear_add(bitset_linear *e, bitset *b) {
     bitset_offset offset = 0, tmp;
     bitset_word word = 0, mask;
-    unsigned char position;
+    unsigned position;
     for (unsigned i = 0; i < b->length; i++) {
         word = b->words[i];
         if (BITSET_IS_FILL_WORD(word)) {
