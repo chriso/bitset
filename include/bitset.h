@@ -94,7 +94,7 @@ bitset *bitset_new();
  * Clear the specified bitset.
  */
 
-void bitset_free(bitset *);
+void bitset_clear(bitset *);
 
 /**
  * Free the specified bitset.
