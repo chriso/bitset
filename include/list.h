@@ -3,10 +3,8 @@
 
 /**
  * Bitset buffers can be packed together into a list and compressed using
- * length encoding.
- *
- * Each list buffer consists of zero or more bitsets prefixed with their
- * offset position and length
+ * length encoding.  Each list buffer consists of zero or more bitsets
+ * prefixed with their offset position and length
  *
  *    <offset1><length1><bitset_buffer1><offsetN><lengthN><bitset_bufferN>
  *
@@ -42,8 +40,6 @@ typedef struct bitset_list_iter_ {
     unsigned *offsets;
     unsigned count;
 } bitset_list_iter;
-
-typedef void (*bitset_list_fn)(bitset *, unsigned, void *);
 
 /**
  * Create a new bitset list.
