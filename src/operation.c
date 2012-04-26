@@ -190,7 +190,7 @@ static int bitset_operation_offset_sort(const void *a, const void *b) {
 
 static inline unsigned char bitset_fls(bitset_word word) {
     static char table[64] = {
-        32, 31, 0, 16, 0, 30, 3, 0, 16, 0, 0, 0, 29, 10, 2, 0,
+        32, 31, 0, 16, 0, 30, 3, 0, 15, 0, 0, 0, 29, 10, 2, 0,
         0, 0, 12, 14, 21, 0, 19, 0, 0, 28, 0, 25, 0, 9, 1, 0,
         17, 0, 4, 0, 0, 0, 11, 0, 13, 22, 20, 0, 26, 0, 0, 18,
         5, 0, 0, 23, 0, 27, 0, 6, 0, 24, 7, 0, 8, 0, 0, 0
@@ -220,6 +220,9 @@ bitset *bitset_operation_exec(bitset_op *op) {
     }
 
     bitset_offset *offsets = (bitset_offset *) malloc(sizeof(bitset_offset) * words->count);
+    if (!offsets) {
+        bitset_oom();
+    }
     for (unsigned i = 0, j = 0; i < words->size; i++) {
         bucket = words->buckets[i];
         if ((uintptr_t)bucket & 1) {
@@ -236,7 +239,6 @@ bitset *bitset_operation_exec(bitset_op *op) {
     for (unsigned i = 0; i < words->count; i++) {
         offset = offsets[i];
         hashed = bitset_hash_get(op->words, offset);
-        if (!hashed) continue;
         word = *hashed;
         if (!word) continue;
 
