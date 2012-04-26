@@ -46,11 +46,11 @@ typedef struct bitset_op_step_ {
     enum bitset_operation operation;
 } bitset_op_step;
 
-typedef struct bitset_op_ {
+struct bitset_op_ {
     bitset_op_step **steps;
     bitset_hash *words;
     unsigned length;
-} bitset_op;
+};
 
 /**
  * Create a new bitset operation.
