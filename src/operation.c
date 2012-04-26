@@ -6,7 +6,7 @@
 
 #include "operation.h"
 
-bitset_op *bitset_operation_new(const bitset *initial) {
+bitset_op *bitset_operation_new(bitset *initial) {
     bitset_op *ops = (bitset_op *) malloc(sizeof(bitset_op));
     if (!ops) {
         bitset_oom();
@@ -30,23 +30,11 @@ void bitset_operation_free(bitset_op *ops) {
     free(ops);
 }
 
-void bitset_operation_add(bitset_op *ops, const bitset *b, enum bitset_operation op) {
-    if (!b->length) {
-        if (op == BITSET_AND && ops->length) {
-            for (unsigned i = 0; i < ops->length; i++) {
-                free(ops->steps[i]);
-            }
-            free(ops->steps);
-            ops->length = 0;
-        }
-        return;
-    }
+static inline bitset_op_step *bitset_operation_add_step(bitset_op *ops) {
     bitset_op_step *step = (bitset_op_step *) malloc(sizeof(bitset_op_step));
     if (!step) {
         bitset_oom();
     }
-    step->b = (bitset *) b;
-    step->operation = op;
     if (ops->length % 2 == 0) {
         if (!ops->length) {
             ops->steps = (bitset_op_step **) malloc(sizeof(bitset_op_step *) * 2);
@@ -58,6 +46,31 @@ void bitset_operation_add(bitset_op *ops, const bitset *b, enum bitset_operation
         }
     }
     ops->steps[ops->length++] = step;
+    return step;
+}
+
+void bitset_operation_add(bitset_op *ops, bitset *b, enum bitset_operation op) {
+    if (!b->length) {
+        if (op == BITSET_AND && ops->length) {
+            for (unsigned i = 0; i < ops->length; i++) {
+                free(ops->steps[i]);
+            }
+            free(ops->steps);
+            ops->length = 0;
+        }
+        return;
+    }
+    bitset_op_step *step = bitset_operation_add_step(ops);
+    step->is_nested = false;
+    step->data.b = b;
+    step->operation = op;
+}
+
+void bitset_operation_add_nested(bitset_op *ops, bitset_op *o, enum bitset_operation op) {
+    bitset_op_step *step = bitset_operation_add_step(ops);
+    step->is_nested = true;
+    step->data.op = o;
+    step->operation = op;
 }
 
 static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
@@ -67,16 +80,27 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
     unsigned position;
     unsigned size, count = 0;
     bitset_hash *and_words = NULL;
+    bitset *tmp;
 
     if (!op->length) {
         return bitset_hash_new(1);
     }
 
+    //Recursively flatten nested operations
+    for (unsigned i = 0; i < op->length; i++) {
+        if (op->steps[i]->is_nested) {
+            tmp = bitset_operation_exec(op->steps[i]->data.op);
+            op->steps[i]->is_nested = false;
+            bitset_operation_free(op->steps[i]->data.op);
+            op->steps[i]->data.b = tmp;
+        }
+    }
+
     //Work out the number of hash buckets required. Note that setting the right
     //number of buckets to avoid collisions is the biggest available win here
     for (unsigned i = 0; i < op->length; i++) {
-        count += op->steps[i]->b->length / sizeof(bitset_word);
-        next_max = bitset_max(op->steps[i]->b);
+        count += op->steps[i]->data.b->length / sizeof(bitset_word);
+        next_max = bitset_max(op->steps[i]->data.b);
         if (next_max > max) max = next_max;
     }
 #ifdef HASH_DEBUG
@@ -99,8 +123,8 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
 
             and_words = bitset_hash_new(op->words->size);
 
-            for (unsigned j = 0; j < step->b->length; j++) {
-                word = step->b->words[j];
+            for (unsigned j = 0; j < step->data.b->length; j++) {
+                word = step->data.b->words[j];
                 if (BITSET_IS_FILL_WORD(word)) {
                     word_offset += BITSET_GET_LENGTH(word);
                     position = BITSET_GET_POSITION(word);
@@ -125,8 +149,8 @@ static inline bitset_hash *bitset_operation_iter(bitset_op *op) {
 
         } else {
 
-            for (unsigned j = 0; j < step->b->length; j++) {
-                word = step->b->words[j];
+            for (unsigned j = 0; j < step->data.b->length; j++) {
+                word = step->data.b->words[j];
 
                 if (BITSET_IS_FILL_WORD(word)) {
                     word_offset += BITSET_GET_LENGTH(word);

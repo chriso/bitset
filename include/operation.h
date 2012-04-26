@@ -35,8 +35,14 @@ typedef struct hash_ {
  * Bitset operation types.
  */
 
+typedef struct bitset_op_ bitset_op;
+
 typedef struct bitset_op_step_ {
-    bitset *b;
+    union {
+        bitset *b;
+        bitset_op *op;
+    } data;
+    bool is_nested;
     enum bitset_operation operation;
 } bitset_op_step;
 
@@ -50,7 +56,7 @@ typedef struct bitset_op_ {
  * Create a new bitset operation.
  */
 
-bitset_op *bitset_operation_new(const bitset *b);
+bitset_op *bitset_operation_new(bitset *b);
 
 /**
  * Free the bitset operation.
@@ -59,10 +65,16 @@ bitset_op *bitset_operation_new(const bitset *b);
 void bitset_operation_free(bitset_op *);
 
 /**
- * Add a bitset + operation to the queue.
+ * Add a bitset to the operation.
  */
 
-void bitset_operation_add(bitset_op *, const bitset *, enum bitset_operation);
+void bitset_operation_add(bitset_op *, bitset *, enum bitset_operation);
+
+/**
+ * Add a nested operation.
+ */
+
+void bitset_operation_add_nested(bitset_op *, bitset_op *, enum bitset_operation);
 
 /**
  * Execute the operation and return the result.
