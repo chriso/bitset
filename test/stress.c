@@ -3,9 +3,59 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <time.h>
+#include <assert.h>
 
 #include "operation.h"
+#include "list.h"
 #include "probabilistic.h"
+
+void stress_list(unsigned bitsets, unsigned bits, unsigned max) {
+    float start, end, size = 0;
+    unsigned i;
+
+    bitset **b = malloc(sizeof(bitset *) * bitsets);
+    bitset_offset *offsets = malloc(sizeof(bitset_offset) * bits);
+    bitset_list *list = bitset_list_new();
+
+    //Create the bitsets
+    start = (float) clock();
+    for (i = 0; i < bitsets; i++) {
+        for (unsigned j = 0; j < bits; j++) {
+            offsets[j] = rand() % max;
+        }
+        b[i] = bitset_new_bits(bits, offsets);
+        bitset_list_push(list, b[i], i);
+        size += b[i]->length * sizeof(bitset_word);
+    }
+    end = ((float) clock() - start) / CLOCKS_PER_SEC;
+    size /= 1024 * 1024;
+    printf("Created %.2fMB in %.2fs (%.2fMB/s)\n", size, end, size/end);
+
+    //Popcnt bitsets
+    bitset_offset count = 0, actual = 0;
+    for (i = 0; i < bitsets; i++) {
+        count += bitset_count(b[i]);
+    }
+
+    //Popcnt bitsets using an iterator
+    bitset_list_iter *iter = bitset_list_iter_new(list);
+    bitset *bs;
+    start = (float) clock();
+    BITSET_LIST_FOREACH(iter, bs, i) {
+        actual += bitset_count(bs);
+    }
+    end = ((float) clock() - start) / CLOCKS_PER_SEC;
+    printf("Counted " bitset_format " (" bitset_format \
+        " expected) bits using an iterator in %.2fs\n", count, actual, end);
+
+    for (i = 0; i < bitsets; i++) {
+        bitset_free(b[i]);
+    }
+    bitset_list_iter_free(iter);
+    bitset_list_free(list);
+    free(b);
+    free(offsets);
+}
 
 void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
     float start, end, size = 0;
@@ -61,6 +111,8 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
     for (unsigned i = 0; i < bitsets; i++) {
         bitset_free(b[i]);
     }
+    free(b);
+    free(offsets);
 }
 
 int main(int argc, char **argv) {
@@ -71,6 +123,9 @@ int main(int argc, char **argv) {
 
     printf("\nCreating 100k bitsets with 10M total bits between 1->10M\n");
     stress_exec(100000, 100, 10000000);
+
+    printf("\nStress testing list with 100k bitsets\n");
+    stress_list(100000, 100, 100000000);
 
     printf("\nCreating 1M bitsets with 100M total bits between 1->100M\n");
     stress_exec(1000000, 100, 100000000);
