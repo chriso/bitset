@@ -7,7 +7,7 @@
  * Bitset operations.
  */
 
-enum bitset_operation {
+enum bitset_operation_type {
     BITSET_AND,
     BITSET_OR,
     BITSET_XOR,
@@ -35,19 +35,19 @@ typedef struct hash_ {
  * Bitset operation types.
  */
 
-typedef struct bitset_op_ bitset_op;
+typedef struct bitset_operation_ bitset_operation;
 
-typedef struct bitset_op_step_ {
+typedef struct bitset_operation_step_ {
     union {
         bitset *b;
-        bitset_op *op;
+        bitset_operation *op;
     } data;
     bool is_nested;
-    enum bitset_operation operation;
-} bitset_op_step;
+    enum bitset_operation_type type;
+} bitset_operation_step;
 
-struct bitset_op_ {
-    bitset_op_step **steps;
+struct bitset_operation_ {
+    bitset_operation_step **steps;
     bitset_hash *words;
     unsigned length;
 };
@@ -56,38 +56,38 @@ struct bitset_op_ {
  * Create a new bitset operation.
  */
 
-bitset_op *bitset_operation_new(bitset *b);
+bitset_operation *bitset_operation_new(bitset *b);
 
 /**
  * Free the bitset operation.
  */
 
-void bitset_operation_free(bitset_op *);
+void bitset_operation_free(bitset_operation *);
 
 /**
  * Add a bitset to the operation.
  */
 
-void bitset_operation_add(bitset_op *, bitset *, enum bitset_operation);
+void bitset_operation_add(bitset_operation *, bitset *, enum bitset_operation_type);
 
 /**
  * Add a nested operation.
  */
 
-void bitset_operation_add_nested(bitset_op *, bitset_op *, enum bitset_operation);
+void bitset_operation_add_nested(bitset_operation *, bitset_operation *, enum bitset_operation_type);
 
 /**
  * Execute the operation and return the result.
  */
 
-bitset *bitset_operation_exec(bitset_op *);
+bitset *bitset_operation_exec(bitset_operation *);
 
 /**
  * Get the population count of the operation result without using
  * a temporary bitset.
  */
 
-bitset_offset bitset_operation_count(bitset_op *);
+bitset_offset bitset_operation_count(bitset_operation *);
 
 /**
  * Create a new hash with the specified number of buckets.
