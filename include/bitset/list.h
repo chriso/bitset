@@ -1,5 +1,5 @@
-#ifndef list_H_
-#define list_H_
+#ifndef BITSET_LIST_H_
+#define BITSET_LIST_H_
 
 /**
  * Bitset buffers can be packed together into a list and compressed using

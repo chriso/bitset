@@ -1,5 +1,5 @@
-#ifndef BITSET_H_
-#define BITSET_H_
+#ifndef BITSET_BITSET_H_
+#define BITSET_BITSET_H_
 
 #include <stdint.h>
 
