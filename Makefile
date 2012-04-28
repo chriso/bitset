@@ -1,7 +1,7 @@
 CC?=gcc
 CFLAGS+=-Wall -std=c99 -O3
 
-SOURCE=src/bitset.c src/operation.c src/probabilistic.c src/list.c
+SOURCE=src/bitset.c src/operation.c src/probabilistic.c src/vector.c
 OBJ=$(SOURCE:.c=.o)
 
 TEST=test/test.o

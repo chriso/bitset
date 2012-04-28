@@ -9,7 +9,7 @@ void test_suite_count();
 void test_suite_operation();
 void test_suite_min();
 void test_suite_max();
-void test_suite_list();
+void test_suite_vector();
 
 void test_bool(char *, bool, bool);
 void test_ulong(char *, unsigned long, unsigned long);

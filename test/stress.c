@@ -6,16 +6,16 @@
 #include <assert.h>
 
 #include "bitset/operation.h"
-#include "bitset/list.h"
+#include "bitset/vector.h"
 #include "bitset/probabilistic.h"
 
-void stress_list(unsigned bitsets, unsigned bits, unsigned max) {
+void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     float start, end, size = 0;
     unsigned i;
 
     bitset **b = malloc(sizeof(bitset *) * bitsets);
     bitset_offset *offsets = malloc(sizeof(bitset_offset) * bits);
-    bitset_list *list = bitset_list_new();
+    bitset_vector *vector = bitset_vector_new();
 
     //Create the bitsets
     start = (float) clock();
@@ -24,7 +24,7 @@ void stress_list(unsigned bitsets, unsigned bits, unsigned max) {
             offsets[j] = rand() % max;
         }
         b[i] = bitset_new_bits(offsets, bits);
-        bitset_list_push(list, b[i], i);
+        bitset_vector_push(vector, b[i], i);
         size += b[i]->length * sizeof(bitset_word);
     }
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
@@ -41,10 +41,11 @@ void stress_list(unsigned bitsets, unsigned bits, unsigned max) {
     ucount = bitset_operation_count(o);
 
     //Popcnt bitsets using an iterator
-    bitset_list_iterator *iter = bitset_list_iterator_new(list, BITSET_LIST_START, BITSET_LIST_END);
+    bitset_vector_iterator *iter = bitset_vector_iterator_new(vector,
+        BITSET_VECTOR_START, BITSET_VECTOR_END);
     start = (float) clock();
     bitset_offset raw, unique;
-    bitset_list_iterator_count(iter, &raw, &unique);
+    bitset_vector_iterator_count(iter, &raw, &unique);
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
     printf("Counted " bitset_format " unique bits (" bitset_format " expected) from "
         bitset_format " (" bitset_format \
@@ -52,8 +53,8 @@ void stress_list(unsigned bitsets, unsigned bits, unsigned max) {
     for (i = 0; i < bitsets; i++) {
         bitset_free(b[i]);
     }
-    bitset_list_iterator_free(iter);
-    bitset_list_free(list);
+    bitset_vector_iterator_free(iter);
+    bitset_vector_free(vector);
     bitset_operation_free(o);
     free(b);
     free(offsets);
@@ -129,8 +130,8 @@ int main(int argc, char **argv) {
     printf("\nCreating 100k bitsets with 10M total bits between 1->10M\n");
     stress_exec(100000, 100, 10000000);
 
-    printf("\nStress testing list with 100k bitsets\n");
-    stress_list(100000, 100, 10000000);
+    printf("\nStress testing vector with 100k bitsets\n");
+    stress_vector(100000, 100, 10000000);
 
     printf("\nCreating 1M bitsets with 100M total bits between 1->100M\n");
     stress_exec(1000000, 100, 100000000);

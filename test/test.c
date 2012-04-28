@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "bitset/operation.h"
-#include "bitset/list.h"
+#include "bitset/vector.h"
 #include "test.h"
 
 void bitset_dump(bitset *b) {
@@ -72,8 +72,8 @@ int main(int argc, char **argv) {
     printf("Testing min / max\n");
     test_suite_min();
     test_suite_max();
-    printf("Testing list\n");
-    test_suite_list();
+    printf("Testing vector\n");
+    test_suite_vector();
     printf("Testing stress\n");
     test_suite_stress();
 }
@@ -711,46 +711,46 @@ void test_suite_operation() {
 #endif
 }
 
-void test_suite_list() {
-    bitset_list *l;
-    bitset_list_iterator *i, *i2;
+void test_suite_vector() {
+    bitset_vector *l;
+    bitset_vector_iterator *i, *i2;
     bitset *b;
     bitset_word *tmp;
     unsigned loop_count;
     unsigned offset;
 
-    l = bitset_list_new();
-    test_int("Checking list length is zero initially\n", 0, bitset_list_length(l));
-    test_int("Checking list count is zero initially\n", 0, bitset_list_count(l));
-    test_int("Checking list size is zero initially\n", 0, l->size);
-    test_int("Checking list tail offset is zero initially\n", 0, l->tail_offset);
-    i = bitset_list_iterator_new(l, BITSET_LIST_START, BITSET_LIST_END);
+    l = bitset_vector_new();
+    test_int("Checking vector length is zero initially\n", 0, bitset_vector_length(l));
+    test_int("Checking vector count is zero initially\n", 0, bitset_vector_count(l));
+    test_int("Checking vector size is zero initially\n", 0, l->size);
+    test_int("Checking vector tail offset is zero initially\n", 0, l->tail_offset);
+    i = bitset_vector_iterator_new(l, BITSET_VECTOR_START, BITSET_VECTOR_END);
     loop_count = 0;
-    BITSET_LIST_FOREACH(i, b, offset) {
+    BITSET_VECTOR_FOREACH(i, b, offset) {
         loop_count++;
     }
     test_int("Checking an empty iterator is safe to use with foreach\n", 0, loop_count);
-    bitset_list_iterator_free(i);
-    bitset_list_free(l);
+    bitset_vector_iterator_free(i);
+    bitset_vector_free(l);
 
-    l = bitset_list_new();
+    l = bitset_vector_new();
     b = bitset_new();
-    bitset_list_push(l, b, 0);
-    test_int("Checking list was resized properly\n", 2, l->size);
-    test_int("Checking list was resized properly\n", 2, l->length);
-    test_int("Checking list was resized properly\n", 1, l->count);
+    bitset_vector_push(l, b, 0);
+    test_int("Checking vector was resized properly\n", 2, l->size);
+    test_int("Checking vector was resized properly\n", 2, l->length);
+    test_int("Checking vector was resized properly\n", 1, l->count);
     test_int("Checking the offset is zero\n", 0, (unsigned char)l->buffer[0]);
     test_int("Checking the length is zero\n", 0, (unsigned char)l->buffer[1]);
     bitset_free(b);
-    bitset_list_free(l);
+    bitset_vector_free(l);
 
-    l = bitset_list_new();
+    l = bitset_vector_new();
     b = bitset_new();
     bitset_set_to(b, 10, true);
-    bitset_list_push(l, b, 3);
-    test_int("Checking list was resized properly 1\n", 8, l->size);
-    test_int("Checking list was resized properly 2\n", 6, l->length);
-    test_int("Checking list was resized properly 3\n", 1, l->count);
+    bitset_vector_push(l, b, 3);
+    test_int("Checking vector was resized properly 1\n", 8, l->size);
+    test_int("Checking vector was resized properly 2\n", 6, l->length);
+    test_int("Checking vector was resized properly 3\n", 1, l->count);
     test_int("Checking the offset is set properly 1\n", 3, (unsigned char)l->buffer[0]);
     test_int("Checking the length is set properly 1\n", 1, (unsigned char)l->buffer[1]);
     tmp = b->words;
@@ -763,10 +763,10 @@ void test_suite_list() {
     b = bitset_new();
     bitset_set_to(b, 100, true);
     bitset_set_to(b, 1000, true);
-    bitset_list_push(l, b, 10);
-    test_int("Checking list was resized properly 4\n", 16, l->size);
-    test_int("Checking list was resized properly 5\n", 16, l->length);
-    test_int("Checking list was resized properly 6\n", 2, l->count);
+    bitset_vector_push(l, b, 10);
+    test_int("Checking vector was resized properly 4\n", 16, l->size);
+    test_int("Checking vector was resized properly 5\n", 16, l->length);
+    test_int("Checking vector was resized properly 6\n", 2, l->count);
     test_int("Checking the offset is set properly 2\n", 7, (unsigned char)l->buffer[6]);
     test_int("Checking the length is set properly 2\n", 2, (unsigned char)l->buffer[7]);
     test_int("Check tail offset is set correctly\n", 10, l->tail_offset);
@@ -779,14 +779,14 @@ void test_suite_list() {
     b->words = tmp;
     bitset_free(b);
 
-    i = bitset_list_iterator_new(l, BITSET_LIST_START, BITSET_LIST_END);
+    i = bitset_vector_iterator_new(l, BITSET_VECTOR_START, BITSET_VECTOR_END);
     test_bool("Checking bitset was added properly to iter 1\n", true, bitset_get(i->bitsets[0], 10));
     test_bool("Checking bitset was added properly to iter 2\n", false, bitset_get(i->bitsets[0], 100));
     test_bool("Checking bitset was added properly to iter 3\n", false, bitset_get(i->bitsets[1], 10));
     test_bool("Checking bitset was added properly to iter 4\n", true, bitset_get(i->bitsets[1], 100));
     test_bool("Checking bitset was added properly to iter 5\n", true, bitset_get(i->bitsets[1], 1000));
     loop_count = 0;
-    BITSET_LIST_FOREACH(i, b, offset) {
+    BITSET_VECTOR_FOREACH(i, b, offset) {
         loop_count++;
         test_bool("Checking foreach works\n", true, offset == 3 || offset == 10);
         if (offset == 3) {
@@ -799,52 +799,52 @@ void test_suite_list() {
         }
     }
     test_int("Checking it looped the right number of times\n", 2, loop_count);
-    bitset_list_iterator_free(i);
+    bitset_vector_iterator_free(i);
 
-    i = bitset_list_iterator_new(l, 3, 10);
+    i = bitset_vector_iterator_new(l, 3, 10);
     test_bool("Checking bitset was added properly to iter 11\n", false, bitset_get(i->bitsets[0], 100));
     loop_count = 0;
-    BITSET_LIST_FOREACH(i, b, offset) {
+    BITSET_VECTOR_FOREACH(i, b, offset) {
         loop_count++;
         test_bool("Checking foreach works 2\n", true, offset == 3);
     }
     test_int("Checking it looped the right number of times 2\n", 1, loop_count);
-    bitset_list_iterator_free(i);
+    bitset_vector_iterator_free(i);
 
-    i = bitset_list_iterator_new(l, 4, 5);
+    i = bitset_vector_iterator_new(l, 4, 5);
     loop_count = 0;
-    BITSET_LIST_FOREACH(i, b, offset) {
+    BITSET_VECTOR_FOREACH(i, b, offset) {
         loop_count++;
     }
     test_int("Checking it looped the right number of times 3\n", 0, loop_count);
-    bitset_list_iterator_free(i);
+    bitset_vector_iterator_free(i);
 
-    i = bitset_list_iterator_new(l, BITSET_LIST_START, BITSET_LIST_END);
-    i2 = bitset_list_iterator_new(l, BITSET_LIST_START, BITSET_LIST_END);
-    bitset_list_iterator_concat(i, i2, 10);
+    i = bitset_vector_iterator_new(l, BITSET_VECTOR_START, BITSET_VECTOR_END);
+    i2 = bitset_vector_iterator_new(l, BITSET_VECTOR_START, BITSET_VECTOR_END);
+    bitset_vector_iterator_concat(i, i2, 10);
     loop_count = 0;
-    BITSET_LIST_FOREACH(i, b, offset) {
+    BITSET_VECTOR_FOREACH(i, b, offset) {
         loop_count++;
         test_bool("Checking foreach works 3\n", true, offset == 3 ||
             offset == 10 || offset == 13 || offset == 20);
     }
     test_int("Checking it looped the right number of times 4\n", 4, loop_count);
-    bitset_list_iterator_free(i);
+    bitset_vector_iterator_free(i);
 
     //Make a copy of the buffer
     char *buffer = malloc(sizeof(char) * l->length);
     memcpy(buffer, l->buffer, l->length);
     unsigned length = l->length;
 
-    bitset_list_free(l);
+    bitset_vector_free(l);
 
     //Check the copy is the same
-    l = bitset_list_new_buffer(buffer, length);
+    l = bitset_vector_new_buffer(buffer, length);
     test_int("Check size is copied\n", 16, l->size);
     test_int("Check length is copied\n", 16, l->length);
     test_int("Check count is copied\n", 2, l->count);
     test_int("Check tail offset is set correctly\n", 10, l->tail_offset);
     test_int("Check tail ptr is set correctly\n", (uintptr_t)l->buffer+6, (uintptr_t)l->tail);
-    bitset_list_free(l);
+    bitset_vector_free(l);
 }
 

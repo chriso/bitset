@@ -4,11 +4,11 @@
 #include <stdbool.h>
 
 #include "bitset/bitset.h"
-#include "bitset/list.h"
+#include "bitset/vector.h"
 #include "bitset/operation.h"
 
-bitset_list *bitset_list_new() {
-    bitset_list *l = (bitset_list *) malloc(sizeof(bitset_list));
+bitset_vector *bitset_vector_new() {
+    bitset_vector *l = (bitset_vector *) malloc(sizeof(bitset_vector));
     if (!l) {
         bitset_oom();
     }
@@ -17,14 +17,14 @@ bitset_list *bitset_list_new() {
     return l;
 }
 
-void bitset_list_free(bitset_list *l) {
+void bitset_vector_free(bitset_vector *l) {
     if (l->length) {
         free(l->buffer);
     }
     free(l);
 }
 
-static inline void bitset_list_resize(bitset_list *l, size_t length) {
+static inline void bitset_vector_resize(bitset_vector *l, size_t length) {
     if (length > l->size) {
         size_t next_size;
         BITSET_NEXT_POW2(next_size, length);
@@ -41,11 +41,11 @@ static inline void bitset_list_resize(bitset_list *l, size_t length) {
     l->length = length;
 }
 
-size_t bitset_list_length(bitset_list *l) {
+size_t bitset_vector_length(bitset_vector *l) {
     return l->length;
 }
 
-unsigned bitset_list_count(bitset_list *l) {
+unsigned bitset_vector_count(bitset_vector *l) {
     return l->count;
 }
 
@@ -113,8 +113,8 @@ static inline size_t bitset_encoded_length(const char *buffer) {
     return length;
 }
 
-bitset_list *bitset_list_new_buffer(const char *buffer, size_t length) {
-    bitset_list *l = (bitset_list *) malloc(sizeof(bitset_list));
+bitset_vector *bitset_vector_new_buffer(const char *buffer, size_t length) {
+    bitset_vector *l = (bitset_vector *) malloc(sizeof(bitset_vector));
     if (!l) {
         bitset_oom();
     }
@@ -143,9 +143,9 @@ bitset_list *bitset_list_new_buffer(const char *buffer, size_t length) {
     return l;
 }
 
-void bitset_list_push(bitset_list *l, bitset *b, unsigned offset) {
+void bitset_vector_push(bitset_vector *l, bitset *b, unsigned offset) {
     if (offset < l->tail_offset) {
-        fprintf(stderr, "Can only append to a bitset list\n");
+        fprintf(stderr, "Can only append to a bitset vector\n");
         exit(1);
     }
 
@@ -153,10 +153,10 @@ void bitset_list_push(bitset_list *l, bitset *b, unsigned offset) {
     unsigned relative_offset = offset - l->tail_offset;
     l->count++;
 
-    //Resize the list to accommodate the bitset
+    //Resize the vector to accommodate the bitset
     size_t length_bytes = bitset_encoded_length_required_bytes(b->length);
     size_t offset_bytes = bitset_encoded_length_required_bytes(relative_offset);
-    bitset_list_resize(l, length + length_bytes + offset_bytes + b->length * sizeof(bitset_word));
+    bitset_vector_resize(l, length + length_bytes + offset_bytes + b->length * sizeof(bitset_word));
 
     //Keep a reference to the tail bitset
     char *buffer = l->tail = l->buffer + length;
@@ -174,7 +174,7 @@ void bitset_list_push(bitset_list *l, bitset *b, unsigned offset) {
     }
 }
 
-static inline void bitset_list_iterator_resize(bitset_list_iterator *i, size_t length) {
+static inline void bitset_vector_iterator_resize(bitset_vector_iterator *i, size_t length) {
     if (length > i->size) {
         size_t next_size;
         BITSET_NEXT_POW2(next_size, length);
@@ -193,12 +193,12 @@ static inline void bitset_list_iterator_resize(bitset_list_iterator *i, size_t l
     i->length = length;
 }
 
-bitset_list_iterator *bitset_list_iterator_new(bitset_list *c, unsigned start, unsigned end) {
-    bitset_list_iterator *i = (bitset_list_iterator *) malloc(sizeof(bitset_list_iterator));
+bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *c, unsigned start, unsigned end) {
+    bitset_vector_iterator *i = (bitset_vector_iterator *) malloc(sizeof(bitset_vector_iterator));
     if (!i) {
         bitset_oom();
     }
-    if (start == BITSET_LIST_START && end == BITSET_LIST_END) {
+    if (start == BITSET_VECTOR_START && end == BITSET_VECTOR_END) {
         i->bitsets = (bitset **) malloc(sizeof(bitset*) * c->count);
         i->offsets = (unsigned *) malloc(sizeof(unsigned) * c->count);
         if (!i->bitsets || !i->offsets) {
@@ -221,7 +221,7 @@ bitset_list_iterator *bitset_list_iterator_new(bitset_list *c, unsigned start, u
         length_bytes = bitset_encoded_length_size(buffer);
         buffer += length_bytes;
         if (offset >= start && (!end || offset < end)) {
-            bitset_list_iterator_resize(i, b + 1);
+            bitset_vector_iterator_resize(i, b + 1);
             i->bitsets[b] = (bitset *) malloc(sizeof(bitset));
             if (!i->bitsets[b]) {
                 bitset_oom();
@@ -238,10 +238,10 @@ bitset_list_iterator *bitset_list_iterator_new(bitset_list *c, unsigned start, u
     return i;
 }
 
-void bitset_list_iterator_concat(bitset_list_iterator *i, bitset_list_iterator *c, unsigned offset) {
+void bitset_vector_iterator_concat(bitset_vector_iterator *i, bitset_vector_iterator *c, unsigned offset) {
     if (c->length) {
         unsigned previous_length = i->length;
-        bitset_list_iterator_resize(i, previous_length + c->length);
+        bitset_vector_iterator_resize(i, previous_length + c->length);
         for (unsigned j = 0; j < c->length; j++) {
             i->bitsets[j + previous_length] = c->bitsets[j];
             i->offsets[j + previous_length] = c->offsets[j] + offset;
@@ -251,11 +251,11 @@ void bitset_list_iterator_concat(bitset_list_iterator *i, bitset_list_iterator *
     }
 }
 
-void bitset_list_iterator_count(bitset_list_iterator *i, unsigned *raw, unsigned *unique) {
+void bitset_vector_iterator_count(bitset_vector_iterator *i, unsigned *raw, unsigned *unique) {
     unsigned raw_count = 0, offset;
     bitset *b;
     bitset_operation *o = bitset_operation_new(NULL);
-    BITSET_LIST_FOREACH(i, b, offset) {
+    BITSET_VECTOR_FOREACH(i, b, offset) {
         raw_count += bitset_count(b);
         bitset_operation_add(o, b, BITSET_OR);
     }
@@ -264,7 +264,7 @@ void bitset_list_iterator_count(bitset_list_iterator *i, unsigned *raw, unsigned
     bitset_operation_free(o);
 }
 
-void bitset_list_iterator_free(bitset_list_iterator *i) {
+void bitset_vector_iterator_free(bitset_vector_iterator *i) {
     for (unsigned j = 0; j < i->length; j++) {
         free(i->bitsets[j]);
     }
