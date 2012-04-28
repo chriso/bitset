@@ -713,7 +713,7 @@ void test_suite_operation() {
 
 void test_suite_list() {
     bitset_list *l;
-    bitset_list_iterator *i;
+    bitset_list_iterator *i, *i2;
     bitset *b;
     bitset_word *tmp;
     unsigned loop_count;
@@ -817,6 +817,18 @@ void test_suite_list() {
         loop_count++;
     }
     test_int("Checking it looped the right number of times 3\n", 0, loop_count);
+    bitset_list_iterator_free(i);
+
+    i = bitset_list_iterator_new(l, BITSET_LIST_START, BITSET_LIST_END);
+    i2 = bitset_list_iterator_new(l, BITSET_LIST_START, BITSET_LIST_END);
+    bitset_list_iterator_concat(i, i2, 10);
+    loop_count = 0;
+    BITSET_LIST_FOREACH(i, b, offset) {
+        loop_count++;
+        test_bool("Checking foreach works 3\n", true, offset == 3 ||
+            offset == 10 || offset == 13 || offset == 20);
+    }
+    test_int("Checking it looped the right number of times 4\n", 4, loop_count);
     bitset_list_iterator_free(i);
 
     //Make a copy of the buffer

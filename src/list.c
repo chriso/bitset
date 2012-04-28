@@ -5,6 +5,7 @@
 
 #include "bitset/bitset.h"
 #include "bitset/list.h"
+#include "bitset/operation.h"
 
 bitset_list *bitset_list_new() {
     bitset_list *c = (bitset_list *) malloc(sizeof(bitset_list));
@@ -220,7 +221,6 @@ bitset_list_iterator *bitset_list_iterator_new(bitset_list *c, unsigned start, u
         length_bytes = bitset_encoded_length_size(buffer);
         buffer += length_bytes;
         if (offset >= start && (!end || offset < end)) {
-            printf("Adding offset %d\n", offset);
             bitset_list_iterator_resize(i, b + 1);
             i->bitsets[b] = (bitset *) malloc(sizeof(bitset));
             if (!i->bitsets[b]) {
@@ -236,6 +236,33 @@ bitset_list_iterator *bitset_list_iterator_new(bitset_list *c, unsigned start, u
         buffer += length;
     }
     return i;
+}
+
+void bitset_list_iterator_concat(bitset_list_iterator *i, bitset_list_iterator *c, unsigned offset) {
+    if (c->length) {
+        unsigned previous_length = i->length;
+        bitset_list_iterator_resize(i, previous_length + c->length);
+        for (unsigned j = 0; j < c->length; j++) {
+            i->bitsets[j + previous_length] = c->bitsets[j];
+            i->offsets[j + previous_length] = c->offsets[j] + offset;
+        }
+        free(c->bitsets);
+        free(c->offsets);
+    }
+    free(c);
+}
+
+void bitset_list_iterator_count(bitset_list_iterator *i, unsigned *raw, unsigned *unique) {
+    unsigned raw_count = 0, offset;
+    bitset *b;
+    bitset_operation *o = bitset_operation_new(NULL);
+    BITSET_LIST_FOREACH(i, b, offset) {
+        raw_count += bitset_count(b);
+        bitset_operation_add(o, b, BITSET_OR);
+    }
+    *raw = raw_count;
+    *unique = bitset_operation_count(o);
+    bitset_operation_free(o);
 }
 
 void bitset_list_iterator_free(bitset_list_iterator *i) {

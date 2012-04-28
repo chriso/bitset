@@ -12,7 +12,9 @@ bitset_operation *bitset_operation_new(bitset *initial) {
         bitset_oom();
     }
     ops->length = 0;
-    bitset_operation_add(ops, initial, BITSET_OR);
+    if (initial) {
+        bitset_operation_add(ops, initial, BITSET_OR);
+    }
     ops->words = NULL;
     return ops;
 }

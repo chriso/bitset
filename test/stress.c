@@ -32,27 +32,29 @@ void stress_list(unsigned bitsets, unsigned bits, unsigned max) {
     printf("Created %.2fMB in %.2fs (%.2fMB/s)\n", size, end, size/end);
 
     //Popcnt bitsets
-    bitset_offset count = 0, actual = 0;
+    bitset_offset count = 0, ucount = 0;
+    bitset_operation *o = bitset_operation_new(NULL);
     for (i = 0; i < bitsets; i++) {
         count += bitset_count(b[i]);
+        bitset_operation_add(o, b[i], BITSET_OR);
     }
+    ucount = bitset_operation_count(o);
 
     //Popcnt bitsets using an iterator
     bitset_list_iterator *iter = bitset_list_iterator_new(list, BITSET_LIST_START, BITSET_LIST_END);
-    bitset *bs;
     start = (float) clock();
-    BITSET_LIST_FOREACH(iter, bs, i) {
-        actual += bitset_count(bs);
-    }
+    bitset_offset raw, unique;
+    bitset_list_iterator_count(iter, &raw, &unique);
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
-    printf("Counted " bitset_format " (" bitset_format \
-        " expected) bits using an iterator in %.2fs\n", count, actual, end);
-
+    printf("Counted " bitset_format " unique bits (" bitset_format " expected) from "
+        bitset_format " (" bitset_format \
+        " expected) bits using an iterator in %.2fs\n", unique, ucount, raw, count, end);
     for (i = 0; i < bitsets; i++) {
         bitset_free(b[i]);
     }
     bitset_list_iterator_free(iter);
     bitset_list_free(list);
+    bitset_operation_free(o);
     free(b);
     free(offsets);
 }
@@ -128,7 +130,7 @@ int main(int argc, char **argv) {
     stress_exec(100000, 100, 10000000);
 
     printf("\nStress testing list with 100k bitsets\n");
-    stress_list(100000, 100, 100000000);
+    stress_list(100000, 100, 10000000);
 
     printf("\nCreating 1M bitsets with 100M total bits between 1->100M\n");
     stress_exec(1000000, 100, 100000000);

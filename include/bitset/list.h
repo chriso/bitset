@@ -104,6 +104,12 @@ bitset_list_iterator *bitset_list_iterator_new(bitset_list *, unsigned, unsigned
 void bitset_list_iterator_concat(bitset_list_iterator *, bitset_list_iterator *, unsigned);
 
 /**
+ * Count bits in each bitset.
+ */
+
+void bitset_list_iterator_count(bitset_list_iterator *, unsigned *, unsigned *);
+
+/**
  * Free the list iterator.
  */
 
