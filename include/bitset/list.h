@@ -98,6 +98,12 @@ bitset_list_iterator *bitset_list_iterator_new(bitset_list *);
          BITSET_TMPVAR(i, __LINE__)++)
 
 /**
+ * Concatenate an iterator to another at the specified offset.
+ */
+
+void bitset_list_iterator_concat(bitset_list_iterator *, bitset_list_iterator *, unsigned);
+
+/**
  * Free the list iterator.
  */
 

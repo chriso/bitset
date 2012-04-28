@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#include "probabilistic.h"
+#include "bitset/probabilistic.h"
 
 bitset_linear *bitset_linear_new(unsigned size) {
     bitset_linear *e = (bitset_linear *) malloc(sizeof(bitset_linear));

@@ -5,9 +5,9 @@
 #include <time.h>
 #include <assert.h>
 
-#include "operation.h"
-#include "list.h"
-#include "probabilistic.h"
+#include "bitset/operation.h"
+#include "bitset/list.h"
+#include "bitset/probabilistic.h"
 
 void stress_list(unsigned bitsets, unsigned bits, unsigned max) {
     float start, end, size = 0;

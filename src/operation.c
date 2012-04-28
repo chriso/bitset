@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <assert.h>
 
-#include "operation.h"
+#include "bitset/operation.h"
 
 bitset_operation *bitset_operation_new(bitset *initial) {
     bitset_operation *ops = (bitset_operation *) malloc(sizeof(bitset_operation));

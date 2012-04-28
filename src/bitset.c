@@ -5,8 +5,8 @@
 #include <string.h>
 #include <limits.h>
 
-#include "bitset.h"
-#include "operation.h"
+#include "bitset/bitset.h"
+#include "bitset/operation.h"
 
 bitset *bitset_new() {
     bitset *b = (bitset *) malloc(sizeof(bitset));

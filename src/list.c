@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "bitset.h"
-#include "list.h"
+#include "bitset/bitset.h"
+#include "bitset/list.h"
 
 bitset_list *bitset_list_new() {
     bitset_list *c = (bitset_list *) malloc(sizeof(bitset_list));

@@ -5,8 +5,8 @@
 #include <time.h>
 #include <string.h>
 
-#include "operation.h"
-#include "list.h"
+#include "bitset/operation.h"
+#include "bitset/list.h"
 #include "test.h"
 
 void bitset_dump(bitset *b) {
