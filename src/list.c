@@ -249,7 +249,6 @@ void bitset_list_iterator_concat(bitset_list_iterator *i, bitset_list_iterator *
         free(c->bitsets);
         free(c->offsets);
     }
-    free(c);
 }
 
 void bitset_list_iterator_count(bitset_list_iterator *i, unsigned *raw, unsigned *unique) {
