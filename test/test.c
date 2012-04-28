@@ -724,7 +724,7 @@ void test_suite_list() {
     test_int("Checking list count is zero initially\n", 0, bitset_list_count(l));
     test_int("Checking list size is zero initially\n", 0, l->size);
     test_int("Checking list tail offset is zero initially\n", 0, l->tail_offset);
-    i = bitset_list_iterator_new(l);
+    i = bitset_list_iterator_new(l, BITSET_LIST_START, BITSET_LIST_END);
     loop_count = 0;
     BITSET_LIST_FOREACH(i, b, offset) {
         loop_count++;
@@ -779,13 +779,12 @@ void test_suite_list() {
     b->words = tmp;
     bitset_free(b);
 
-    i = bitset_list_iterator_new(l);
+    i = bitset_list_iterator_new(l, BITSET_LIST_START, BITSET_LIST_END);
     test_bool("Checking bitset was added properly to iter 1\n", true, bitset_get(i->bitsets[0], 10));
     test_bool("Checking bitset was added properly to iter 2\n", false, bitset_get(i->bitsets[0], 100));
     test_bool("Checking bitset was added properly to iter 3\n", false, bitset_get(i->bitsets[1], 10));
     test_bool("Checking bitset was added properly to iter 4\n", true, bitset_get(i->bitsets[1], 100));
     test_bool("Checking bitset was added properly to iter 5\n", true, bitset_get(i->bitsets[1], 1000));
-
     loop_count = 0;
     BITSET_LIST_FOREACH(i, b, offset) {
         loop_count++;
@@ -800,7 +799,24 @@ void test_suite_list() {
         }
     }
     test_int("Checking it looped the right number of times\n", 2, loop_count);
+    bitset_list_iterator_free(i);
 
+    i = bitset_list_iterator_new(l, 3, 10);
+    test_bool("Checking bitset was added properly to iter 11\n", false, bitset_get(i->bitsets[0], 100));
+    loop_count = 0;
+    BITSET_LIST_FOREACH(i, b, offset) {
+        loop_count++;
+        test_bool("Checking foreach works 2\n", true, offset == 3);
+    }
+    test_int("Checking it looped the right number of times 2\n", 1, loop_count);
+    bitset_list_iterator_free(i);
+
+    i = bitset_list_iterator_new(l, 4, 5);
+    loop_count = 0;
+    BITSET_LIST_FOREACH(i, b, offset) {
+        loop_count++;
+    }
+    test_int("Checking it looped the right number of times 3\n", 0, loop_count);
     bitset_list_iterator_free(i);
 
     //Make a copy of the buffer

@@ -35,10 +35,10 @@ typedef struct bitset_list_ {
 } bitset_list;
 
 typedef struct bitset_list_iterator_ {
-    bitset_list *c;
     bitset **bitsets;
     unsigned *offsets;
-    unsigned count;
+    unsigned length;
+    unsigned size;
 } bitset_list_iterator;
 
 #define BITSET_LIST_START 0
@@ -81,10 +81,10 @@ unsigned bitset_list_count(bitset_list *);
 void bitset_list_push(bitset_list *, bitset *, unsigned);
 
 /**
- * Create a new bitset list iterator using the specified start/end offsets.
+ * Create a new bitset list iterator over the range [start,end).
  */
 
-bitset_list_iterator *bitset_list_iterator_new(bitset_list *);
+bitset_list_iterator *bitset_list_iterator_new(bitset_list *, unsigned, unsigned);
 
 /**
  * Iterate over all bitsets.
@@ -94,7 +94,7 @@ bitset_list_iterator *bitset_list_iterator_new(bitset_list *);
     for (unsigned BITSET_TMPVAR(i, __LINE__) = 0; \
          offset = iterator->offsets[BITSET_TMPVAR(i, __LINE__)], \
          bitset = iterator->bitsets[BITSET_TMPVAR(i, __LINE__)], \
-         BITSET_TMPVAR(i, __LINE__) < iterator->count; \
+         BITSET_TMPVAR(i, __LINE__) < iterator->length; \
          BITSET_TMPVAR(i, __LINE__)++)
 
 /**

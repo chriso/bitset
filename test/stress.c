@@ -38,7 +38,7 @@ void stress_list(unsigned bitsets, unsigned bits, unsigned max) {
     }
 
     //Popcnt bitsets using an iterator
-    bitset_list_iterator *iter = bitset_list_iterator_new(list);
+    bitset_list_iterator *iter = bitset_list_iterator_new(list, BITSET_LIST_START, BITSET_LIST_END);
     bitset *bs;
     start = (float) clock();
     BITSET_LIST_FOREACH(iter, bs, i) {
