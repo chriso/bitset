@@ -470,7 +470,7 @@ void test_suite_stress() {
 }
 
 void test_suite_operation() {
-    bitset_op *ops;
+    bitset_operation *ops;
     bitset *b1, *b2, *b3, *b4;
 
     b1 = bitset_new();
@@ -513,9 +513,9 @@ void test_suite_operation() {
     bitset_operation_add(ops, b3, BITSET_OR);
     test_int("Checking op length increases\n", 3, ops->length);
     test_bool("Checking bitset was added correctly\n", true, bitset_get(ops->steps[1]->data.b, 20));
-    test_int("Checking op was added correctly\n", BITSET_OR, ops->steps[1]->operation);
+    test_int("Checking op was added correctly\n", BITSET_OR, ops->steps[1]->type);
     test_bool("Checking bitset was added correctly\n", true, bitset_get(ops->steps[2]->data.b, 12));
-    test_int("Checking op was added correctly\n", BITSET_OR, ops->steps[2]->operation);
+    test_int("Checking op was added correctly\n", BITSET_OR, ops->steps[2]->type);
     test_ulong("Checking operation count 1\n", 3, bitset_operation_count(ops));
     bitset_operation_free(ops);
     bitset_free(b1);
@@ -653,7 +653,7 @@ void test_suite_operation() {
     bitset_set(b3, 300, true);
     bitset_set(b3, 400, true);
     ops = bitset_operation_new(b1);
-    bitset_op *op2 = bitset_operation_new(b2);
+    bitset_operation *op2 = bitset_operation_new(b2);
     bitset_operation_add(op2, b3, BITSET_OR);
     bitset_operation_add_nested(ops, op2, BITSET_AND);
     b4 = bitset_operation_exec(ops);
@@ -713,7 +713,7 @@ void test_suite_operation() {
 
 void test_suite_list() {
     bitset_list *l;
-    bitset_list_iter *i;
+    bitset_list_iterator *i;
     bitset *b;
     bitset_word *tmp;
     unsigned loop_count;
@@ -724,13 +724,13 @@ void test_suite_list() {
     test_int("Checking list count is zero initially\n", 0, bitset_list_count(l));
     test_int("Checking list size is zero initially\n", 0, l->size);
     test_int("Checking list tail offset is zero initially\n", 0, l->tail_offset);
-    i = bitset_list_iter_new(l);
+    i = bitset_list_iterator_new(l);
     loop_count = 0;
     BITSET_LIST_FOREACH(i, b, offset) {
         loop_count++;
     }
     test_int("Checking an empty iterator is safe to use with foreach\n", 0, loop_count);
-    bitset_list_iter_free(i);
+    bitset_list_iterator_free(i);
     bitset_list_free(l);
 
     l = bitset_list_new();
@@ -779,7 +779,7 @@ void test_suite_list() {
     b->words = tmp;
     bitset_free(b);
 
-    i = bitset_list_iter_new(l);
+    i = bitset_list_iterator_new(l);
     test_bool("Checking bitset was added properly to iter 1\n", true, bitset_get(i->bitsets[0], 10));
     test_bool("Checking bitset was added properly to iter 2\n", false, bitset_get(i->bitsets[0], 100));
     test_bool("Checking bitset was added properly to iter 3\n", false, bitset_get(i->bitsets[1], 10));
@@ -801,7 +801,7 @@ void test_suite_list() {
     }
     test_int("Checking it looped the right number of times\n", 2, loop_count);
 
-    bitset_list_iter_free(i);
+    bitset_list_iterator_free(i);
 
     //Make a copy of the buffer
     char *buffer = malloc(sizeof(char) * l->length);

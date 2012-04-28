@@ -38,7 +38,7 @@ void stress_list(unsigned bitsets, unsigned bits, unsigned max) {
     }
 
     //Popcnt bitsets using an iterator
-    bitset_list_iter *iter = bitset_list_iter_new(list);
+    bitset_list_iterator *iter = bitset_list_iterator_new(list);
     bitset *bs;
     start = (float) clock();
     BITSET_LIST_FOREACH(iter, bs, i) {
@@ -51,7 +51,7 @@ void stress_list(unsigned bitsets, unsigned bits, unsigned max) {
     for (i = 0; i < bitsets; i++) {
         bitset_free(b[i]);
     }
-    bitset_list_iter_free(iter);
+    bitset_list_iterator_free(iter);
     bitset_list_free(list);
     free(b);
     free(offsets);
@@ -88,13 +88,16 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
 
     //Bitwise OR + pop count
     start = (float) clock();
-    bitset_op *op = bitset_operation_new(b[0]);
+    bitset_operation *op = bitset_operation_new(b[0]);
     for (unsigned i = 1; i < bitsets; i++) {
         bitset_operation_add(op, b[i], BITSET_OR);
     }
     printf("Unique bit count => " bitset_format "\n", bitset_operation_count(op));
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
     printf("Executed bitwise OR + pop count operation in %.2fs (%.2fMB/s)\n", end, size/end);
+    printf("Unique bit count => " bitset_format "\n", bitset_count(bitset_operation_exec(op)));
+    end = ((float) clock() - start) / CLOCKS_PER_SEC;
+    printf("Executed bitwise OR into temporary + pop count operation in %.2fs (%.2fMB/s)\n", end, size/end);
     bitset_operation_free(op);
 
     //Use linear counting

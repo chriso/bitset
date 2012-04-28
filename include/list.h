@@ -34,12 +34,12 @@ typedef struct bitset_list_ {
     unsigned tail_offset;
 } bitset_list;
 
-typedef struct bitset_list_iter_ {
+typedef struct bitset_list_iterator_ {
     bitset_list *c;
     bitset **bitsets;
     unsigned *offsets;
     unsigned count;
-} bitset_list_iter;
+} bitset_list_iterator;
 
 /**
  * Create a new bitset list.
@@ -81,31 +81,31 @@ void bitset_list_push(bitset_list *, bitset *, unsigned);
  * Create a new bitset list iterator using the specified start/end offsets.
  */
 
-bitset_list_iter *bitset_list_iter_new(bitset_list *);
+bitset_list_iterator *bitset_list_iterator_new(bitset_list *);
 
 /**
  * Iterate over all bitsets.
  */
 
 #define BITSET_LIST_FOREACH(iterator, bitset, offset) \
-    for (unsigned TMPVAR(i, __LINE__) = 0; \
-         offset = iterator->offsets[TMPVAR(i, __LINE__)], \
-         bitset = iterator->bitsets[TMPVAR(i, __LINE__)], \
-         TMPVAR(i, __LINE__) < iterator->count; \
-         TMPVAR(i, __LINE__)++)
+    for (unsigned BITSET_TMPVAR(i, __LINE__) = 0; \
+         offset = iterator->offsets[BITSET_TMPVAR(i, __LINE__)], \
+         bitset = iterator->bitsets[BITSET_TMPVAR(i, __LINE__)], \
+         BITSET_TMPVAR(i, __LINE__) < iterator->count; \
+         BITSET_TMPVAR(i, __LINE__)++)
 
 /**
  * Free the list iterator.
  */
 
-void bitset_list_iter_free(bitset_list_iter *);
+void bitset_list_iterator_free(bitset_list_iterator *);
 
 /**
  * Helpers for foreach macro.
  */
 
-#define TMPSTRINGIFY(a,b) a__##b
-#define TMPVAR(i, line) TMPSTRINGIFY(i, line)
+#define BITSET_TMPVAR(i, line) BITSET_TMPVAR_(i, line)
+#define BITSET_TMPVAR_(a,b) a__##b
 
 #endif
 

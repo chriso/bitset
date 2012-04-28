@@ -174,8 +174,8 @@ void bitset_list_push(bitset_list *c, bitset *b, unsigned offset) {
     }
 }
 
-bitset_list_iter *bitset_list_iter_new(bitset_list *c) {
-    bitset_list_iter *i = (bitset_list_iter *) malloc(sizeof(bitset_list_iter));
+bitset_list_iterator *bitset_list_iterator_new(bitset_list *c) {
+    bitset_list_iterator *i = (bitset_list_iterator *) malloc(sizeof(bitset_list_iterator));
     if (!i) {
         bitset_oom();
     }
@@ -209,7 +209,7 @@ bitset_list_iter *bitset_list_iter_new(bitset_list *c) {
     return i;
 }
 
-void bitset_list_iter_free(bitset_list_iter *i) {
+void bitset_list_iterator_free(bitset_list_iterator *i) {
     for (unsigned j = 0; j < i->c->count; j++) {
         free(i->bitsets[j]);
     }
