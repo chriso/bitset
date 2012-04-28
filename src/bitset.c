@@ -178,7 +178,15 @@ bitset_offset bitset_max(const bitset *b) {
     return offset + BITSET_LITERAL_LENGTH - bitset_ffs(word);
 }
 
-bool bitset_set(bitset *b, bitset_offset bit, bool value) {
+bool bitset_set(bitset *b, bitset_offset bit) {
+    return bitset_set_to(b, bit, true);
+}
+
+bool bitset_unset(bitset *b, bitset_offset bit) {
+    return bitset_set_to(b, bit, false);
+}
+
+bool bitset_set_to(bitset *b, bitset_offset bit, bool value) {
     bitset_offset word_offset = bit / BITSET_LITERAL_LENGTH;
     bit %= BITSET_LITERAL_LENGTH;
 

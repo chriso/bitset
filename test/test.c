@@ -145,122 +145,122 @@ void test_suite_count() {
 
 void test_suite_min() {
     bitset *b = bitset_new();
-    bitset_set(b, 1000, true);
+    bitset_set_to(b, 1000, true);
     test_ulong("Test find first set 1", 1000, bitset_min(b));
-    bitset_set(b, 300, true);
+    bitset_set_to(b, 300, true);
     test_ulong("Test find first set 2", 300, bitset_min(b));
-    bitset_set(b, 299, true);
+    bitset_set_to(b, 299, true);
     test_ulong("Test find first set 3", 299, bitset_min(b));
-    bitset_set(b, 298, true);
+    bitset_set_to(b, 298, true);
     test_ulong("Test find first set 4", 298, bitset_min(b));
-    bitset_set(b, 290, true);
+    bitset_set_to(b, 290, true);
     test_ulong("Test find first set 5", 290, bitset_min(b));
-    bitset_set(b, 240, true);
+    bitset_set_to(b, 240, true);
     test_ulong("Test find first set 6", 240, bitset_min(b));
-    bitset_set(b, 12, true);
+    bitset_set_to(b, 12, true);
     test_ulong("Test find first set 7", 12, bitset_min(b));
-    bitset_set(b, 3, true);
+    bitset_set_to(b, 3, true);
     test_ulong("Test find first set 8", 3, bitset_min(b));
     bitset_free(b);
 }
 
 void test_suite_max() {
     bitset *b = bitset_new();
-    bitset_set(b, 3, true);
+    bitset_set_to(b, 3, true);
     test_ulong("Test find last set 8", 3, bitset_max(b));
-    bitset_set(b, 12, true);
+    bitset_set_to(b, 12, true);
     test_ulong("Test find last set 7", 12, bitset_max(b));
-    bitset_set(b, 240, true);
+    bitset_set_to(b, 240, true);
     test_ulong("Test find last set 6", 240, bitset_max(b));
-    bitset_set(b, 290, true);
+    bitset_set_to(b, 290, true);
     test_ulong("Test find last set 5", 290, bitset_max(b));
-    bitset_set(b, 298, true);
+    bitset_set_to(b, 298, true);
     test_ulong("Test find last set 4", 298, bitset_max(b));
-    bitset_set(b, 299, true);
+    bitset_set_to(b, 299, true);
     test_ulong("Test find last set 3", 299, bitset_max(b));
-    bitset_set(b, 300, true);
+    bitset_set_to(b, 300, true);
     test_ulong("Test find last set 2", 300, bitset_max(b));
-    bitset_set(b, 1000, true);
+    bitset_set_to(b, 1000, true);
     test_ulong("Test find last set 1", 1000, bitset_max(b));
     bitset_free(b);
 }
 
 void test_suite_set() {
     bitset *b = bitset_new();
-    test_bool("Testing set on empty set 1\n", false, bitset_set(b, 0, true));
+    test_bool("Testing set on empty set 1\n", false, bitset_set_to(b, 0, true));
     test_bool("Testing set on empty set 2\n", true, bitset_get(b, 0));
     test_bool("Testing set on empty set 3\n", false, bitset_get(b, 1));
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing unset on empty set 1\n", false, bitset_set(b, 100, false));
+    test_bool("Testing unset on empty set 1\n", false, bitset_set_to(b, 100, false));
     test_ulong("Testing unset on empty set doesn't create it\n", 0, b->length);
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing set on empty set 4\n", false, bitset_set(b, 31, true));
+    test_bool("Testing set on empty set 4\n", false, bitset_set_to(b, 31, true));
     test_bool("Testing set on empty set 5\n", true, bitset_get(b, 31));
     bitset_free(b);
 
     uint32_t p1[] = { 0x80000001 };
     b = bitset_new_array(1, p1);
-    test_bool("Testing append after fill 1\n", false, bitset_set(b, 93, true));
+    test_bool("Testing append after fill 1\n", false, bitset_set_to(b, 93, true));
     uint32_t e1[] = { 0x80000001, 0x82000002 };
     test_bitset("Testing append after fill 2", b, 2, e1);
     bitset_free(b);
 
     uint32_t p2[] = { 0x82000001 };
     b = bitset_new_array(1, p2);
-    test_bool("Testing append after fill 3\n", false, bitset_set(b, 93, true));
+    test_bool("Testing append after fill 3\n", false, bitset_set_to(b, 93, true));
     uint32_t e2[] = { 0x82000001, 0x82000001 };
     test_bitset("Testing append after fill 4", b, 2, e2);
     bitset_free(b);
 
     uint32_t p3[] = { 0x80000001, 0x00000000 };
     b = bitset_new_array(2, p3);
-    test_bool("Testing set in literal 1\n", false, bitset_set(b, 32, true));
-    test_bool("Testing set in literal 2\n", false, bitset_set(b, 38, true));
-    test_bool("Testing set in literal 3\n", false, bitset_set(b, 45, true));
-    test_bool("Testing set in literal 4\n", false, bitset_set(b, 55, true));
-    test_bool("Testing set in literal 5\n", false, bitset_set(b, 61, true));
+    test_bool("Testing set in literal 1\n", false, bitset_set_to(b, 32, true));
+    test_bool("Testing set in literal 2\n", false, bitset_set_to(b, 38, true));
+    test_bool("Testing set in literal 3\n", false, bitset_set_to(b, 45, true));
+    test_bool("Testing set in literal 4\n", false, bitset_set_to(b, 55, true));
+    test_bool("Testing set in literal 5\n", false, bitset_set_to(b, 61, true));
     uint32_t e3[] = { 0x80000001, 0x20810041 };
     test_bitset("Testing set in literal 6", b, 2, e3);
-    test_bool("Testing set in literal 7\n", true, bitset_set(b, 61, false));
+    test_bool("Testing set in literal 7\n", true, bitset_set_to(b, 61, false));
     uint32_t e4[] = { 0x80000001, 0x20810040 };
     test_bitset("Testing set in literal 8", b, 2, e4);
     bitset_free(b);
 
     uint32_t p5[] = { 0x82000001 };
     b = bitset_new_array(1, p5);
-    test_bool("Testing partition of fill 1\n", false, bitset_set(b, 32, true));
+    test_bool("Testing partition of fill 1\n", false, bitset_set_to(b, 32, true));
     uint32_t e5[] = { 0x80000001, 0x60000000 };
     test_bitset("Testing partition of fill 2", b, 2, e5);
     bitset_free(b);
 
     uint32_t p6[] = { 0x82000001, 0x82000001 };
     b = bitset_new_array(2, p6);
-    test_bool("Testing partition of fill 3\n", false, bitset_set(b, 32, true));
+    test_bool("Testing partition of fill 3\n", false, bitset_set_to(b, 32, true));
     uint32_t e6[] = { 0x80000001, 0x60000000, 0x82000001 };
     test_bitset("Testing partition of fill 4", b, 3, e6);
     bitset_free(b);
 
     uint32_t p7[] = { 0x80000001 };
     b = bitset_new_array(1, p7);
-    test_bool("Testing partition of fill 5\n", false, bitset_set(b, 31, true));
+    test_bool("Testing partition of fill 5\n", false, bitset_set_to(b, 31, true));
     uint32_t e7[] = { 0x82000001 };
     test_bitset("Testing partition of fill 6", b, 1, e7);
     bitset_free(b);
 
     uint32_t p8[] = { 0x82000001, 0x86000001 };
     b = bitset_new_array(2, p8);
-    test_bool("Testing partition of fill 7\n", false, bitset_set(b, 0, true));
+    test_bool("Testing partition of fill 7\n", false, bitset_set_to(b, 0, true));
     uint32_t e8[] = { 0x40000000, 0x40000000, 0x86000001 };
     test_bitset("Testing partition of fill 7", b, 3, e8);
     bitset_free(b);
 
     uint32_t p8b[] = { 0x82000002, 0x86000001 };
     b = bitset_new_array(2, p8b);
-    test_bool("Testing partition of fill 7b\n", false, bitset_set(b, 32, true));
+    test_bool("Testing partition of fill 7b\n", false, bitset_set_to(b, 32, true));
     uint32_t e8b[] = { 0x84000001, 0x40000000, 0x86000001 };
     test_bitset("Testing partition of fill 7b - 3", b, 3, e8b);
     test_bool("Testing partition of fill 7b - 1\n", true, bitset_get(b, 32));
@@ -269,60 +269,60 @@ void test_suite_set() {
 
     uint32_t p9[] = { 0x82000003, 0x86000001 };
     b = bitset_new_array(2, p9);
-    test_bool("Testing partition of fill 8\n", false, bitset_set(b, 32, true));
+    test_bool("Testing partition of fill 8\n", false, bitset_set_to(b, 32, true));
     uint32_t e9[] = { 0x84000001, 0x82000001, 0x86000001 };
     test_bitset("Testing partition of fill 9", b, 3, e9);
     bitset_free(b);
 
     uint32_t p10[] = { 0x80000001, 0x82000001 };
     b = bitset_new_array(2, p10);
-    test_bool("Testing partition of fill 10\n", false, bitset_set(b, 1, true));
+    test_bool("Testing partition of fill 10\n", false, bitset_set_to(b, 1, true));
     uint32_t e10[] = { 0x20000000, 0x82000001 };
     test_bitset("Testing partition of fill 11", b, 2, e10);
     bitset_free(b);
 
     uint32_t p11[] = { 0x82000001 };
     b = bitset_new_array(1, p11);
-    test_bool("Testing setting position bit 1\n", true, bitset_set(b, 31, true));
+    test_bool("Testing setting position bit 1\n", true, bitset_set_to(b, 31, true));
     test_bitset("Testing setting position bit 2", b, 1, p11);
     uint32_t e11[] = { 0x80000001 };
-    test_bool("Testing setting position bit 3\n", true, bitset_set(b, 31, false));
+    test_bool("Testing setting position bit 3\n", true, bitset_set_to(b, 31, false));
     test_bitset("Testing setting position bit 4", b, 1, e11);
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 0, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 36, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 4, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 0, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 36, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 4, true));
     test_bool("Testing random set/get 2\n", true, bitset_get(b, 0));
     test_bool("Testing random set/get 2\n", true, bitset_get(b, 36));
     test_bool("Testing random set/get 2\n", true, bitset_get(b, 4));
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 47, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 58, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 34, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 47, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 58, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 34, true));
     test_bool("Testing random set/get 3\n", true, bitset_get(b, 47));
     test_bool("Testing random set/get 4\n", true, bitset_get(b, 58));
     test_bool("Testing random set/get 5\n", true, bitset_get(b, 34));
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 99, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 85, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 27, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 99, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 85, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 27, true));
     test_bool("Testing random set/get 6\n", true, bitset_get(b, 99));
     test_bool("Testing random set/get 7\n", true, bitset_get(b, 85));
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 27));
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 62, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 29, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 26, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 65, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 54, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 62, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 29, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 26, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 65, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 54, true));
     test_bool("Testing random set/get 6\n", true, bitset_get(b, 62));
     test_bool("Testing random set/get 7\n", true, bitset_get(b, 29));
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 26));
@@ -331,11 +331,11 @@ void test_suite_set() {
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 73, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 83, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 70, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 48, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 11, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 73, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 83, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 70, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 48, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 11, true));
     test_bool("Testing random set/get 6\n", true, bitset_get(b, 73));
     test_bool("Testing random set/get 7\n", true, bitset_get(b, 83));
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 70));
@@ -344,11 +344,11 @@ void test_suite_set() {
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 10, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 20, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 96, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 52, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 32, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 10, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 20, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 96, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 52, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 32, true));
     test_bool("Testing random set/get 6\n", true, bitset_get(b, 10));
     test_bool("Testing random set/get 7\n", true, bitset_get(b, 20));
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 96));
@@ -357,11 +357,11 @@ void test_suite_set() {
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 62, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 96, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 55, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 88, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 19, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 62, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 96, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 55, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 88, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 19, true));
     test_bool("Testing random set/get 6\n", true, bitset_get(b, 62));
     test_bool("Testing random set/get 7\n", true, bitset_get(b, 96));
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 55));
@@ -370,11 +370,11 @@ void test_suite_set() {
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 73, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 93, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 14, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 51, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 41, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 73, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 93, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 14, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 51, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 41, true));
     test_bool("Testing random set/get 6\n", true, bitset_get(b, 73));
     test_bool("Testing random set/get 7\n", true, bitset_get(b, 93));
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 14));
@@ -383,11 +383,11 @@ void test_suite_set() {
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 99, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 23, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 45, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 57, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 67, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 99, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 23, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 45, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 57, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 67, true));
     test_bool("Testing random set/get 6\n", true, bitset_get(b, 99));
     test_bool("Testing random set/get 7\n", true, bitset_get(b, 23));
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 45));
@@ -396,10 +396,10 @@ void test_suite_set() {
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 71, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 74, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 94, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 19, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 71, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 74, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 94, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 19, true));
     test_bool("Testing random set/get 6\n", true, bitset_get(b, 71));
     test_bool("Testing random set/get 7\n", true, bitset_get(b, 74));
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 94));
@@ -407,11 +407,11 @@ void test_suite_set() {
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 85, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 25, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 93, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 88, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 54, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 85, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 25, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 93, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 88, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 54, true));
     test_bool("Testing random set/get 6\n", true, bitset_get(b, 85));
     test_bool("Testing random set/get 7\n", true, bitset_get(b, 25));
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 93));
@@ -420,11 +420,11 @@ void test_suite_set() {
     bitset_free(b);
 
     b = bitset_new();
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 94, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 47, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 79, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 67, true));
-    test_bool("Testing random set/get 1\n", false, bitset_set(b, 24, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 94, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 47, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 79, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 67, true));
+    test_bool("Testing random set/get 1\n", false, bitset_set_to(b, 24, true));
     test_bool("Testing random set/get 6\n", true, bitset_get(b, 94));
     test_bool("Testing random set/get 7\n", true, bitset_get(b, 47));
     test_bool("Testing random set/get 8\n", true, bitset_get(b, 79));
@@ -434,8 +434,8 @@ void test_suite_set() {
 
 #ifdef BITSET_64BIT_OFFSETS
     b = bitset_new(b);
-    bitset_set(b, 1, true);
-    bitset_set(b, 1000000000000, true);
+    bitset_set_to(b, 1, true);
+    bitset_set_to(b, 1000000000000, true);
     test_bool("Testing set where a chain of fills is required 1\n", true, bitset_get(b, 1));
     test_bool("Testing set where a chain of fills is required 2\n", true, bitset_get(b, 1000000000000));
     test_ulong("Testing set where a chain of fills is required 3\n", 2, bitset_count(b));
@@ -457,7 +457,7 @@ void test_suite_stress() {
     for (unsigned i = 0; i < num; i++) {
         bits[i] = rand() % max;
         //bits[i] = i;
-        bitset_set(b, bits[i], true);
+        bitset_set_to(b, bits[i], true);
     }
     for (unsigned i = 0; i < num; i++) {
         test_bool("Checking stress test bits were set", true, bitset_get(b, bits[i]));
@@ -476,14 +476,14 @@ void test_suite_operation() {
     b1 = bitset_new();
     b2 = bitset_new();
     b3 = bitset_new();
-    bitset_set(b1, 100, true);
-    //bitset_set(b1, 138, true);
-    //bitset_set(b1, 169, true);
-    bitset_set(b1, 200, true);
-    bitset_set(b1, 300, true);
-    bitset_set(b2, 100, true);
-    bitset_set(b3, 300, true);
-    bitset_set(b3, 400, true);
+    bitset_set_to(b1, 100, true);
+    //bitset_set_to(b1, 138, true);
+    //bitset_set_to(b1, 169, true);
+    bitset_set_to(b1, 200, true);
+    bitset_set_to(b1, 300, true);
+    bitset_set_to(b2, 100, true);
+    bitset_set_to(b3, 300, true);
+    bitset_set_to(b3, 400, true);
     ops = bitset_operation_new(b1);
     bitset_operation_add(ops, b2, BITSET_OR);
     bitset_operation_add(ops, b3, BITSET_OR);
@@ -500,11 +500,11 @@ void test_suite_operation() {
     bitset_free(b4);
 
     b1 = bitset_new();
-    bitset_set(b1, 10, true);
+    bitset_set_to(b1, 10, true);
     b2 = bitset_new();
-    bitset_set(b2, 20, true);
+    bitset_set_to(b2, 20, true);
     b3 = bitset_new();
-    bitset_set(b3, 12, true);
+    bitset_set_to(b3, 12, true);
     ops = bitset_operation_new(b1);
     test_int("Checking initial operation length is one\n", 1, ops->length);
     test_bool("Checking primary bitset is added\n", true, bitset_get(ops->steps[0]->data.b, 10));
@@ -525,9 +525,9 @@ void test_suite_operation() {
     b1 = bitset_new();
     b2 = bitset_new();
     b3 = bitset_new();
-    bitset_set(b1, 1000, true);
-    bitset_set(b2, 100, true);
-    bitset_set(b3, 20, true);
+    bitset_set_to(b1, 1000, true);
+    bitset_set_to(b2, 100, true);
+    bitset_set_to(b3, 20, true);
     ops = bitset_operation_new(b1);
     bitset_operation_add(ops, b2, BITSET_OR);
     bitset_operation_add(ops, b3, BITSET_OR);
@@ -540,12 +540,12 @@ void test_suite_operation() {
     b1 = bitset_new();
     b2 = bitset_new();
     b3 = bitset_new();
-    bitset_set(b1, 102, true);
-    bitset_set(b1, 10000, true);
-    bitset_set(b2, 100, true);
-    bitset_set(b3, 20, true);
-    bitset_set(b3, 101, true);
-    bitset_set(b3, 20000, true);
+    bitset_set_to(b1, 102, true);
+    bitset_set_to(b1, 10000, true);
+    bitset_set_to(b2, 100, true);
+    bitset_set_to(b3, 20, true);
+    bitset_set_to(b3, 101, true);
+    bitset_set_to(b3, 20000, true);
     ops = bitset_operation_new(b1);
     bitset_operation_add(ops, b2, BITSET_OR);
     bitset_operation_add(ops, b3, BITSET_OR);
@@ -558,12 +558,12 @@ void test_suite_operation() {
     b1 = bitset_new();
     b2 = bitset_new();
     b3 = bitset_new();
-    bitset_set(b1, 101, true);
-    bitset_set(b1, 8000, true);
-    bitset_set(b2, 100, true);
-    bitset_set(b3, 20, true);
-    bitset_set(b3, 101, true);
-    bitset_set(b3, 8001, true);
+    bitset_set_to(b1, 101, true);
+    bitset_set_to(b1, 8000, true);
+    bitset_set_to(b2, 100, true);
+    bitset_set_to(b3, 20, true);
+    bitset_set_to(b3, 101, true);
+    bitset_set_to(b3, 8001, true);
     ops = bitset_operation_new(b1);
     bitset_operation_add(ops, b2, BITSET_OR);
     bitset_operation_add(ops, b3, BITSET_OR);
@@ -576,11 +576,11 @@ void test_suite_operation() {
     b1 = bitset_new();
     b2 = bitset_new();
     b3 = bitset_new();
-    bitset_set(b1, 101, true);
-    bitset_set(b1, 102, true);
-    bitset_set(b2, 1000, true);
-    bitset_set(b3, 101, true);
-    bitset_set(b3, 1000, true);
+    bitset_set_to(b1, 101, true);
+    bitset_set_to(b1, 102, true);
+    bitset_set_to(b2, 1000, true);
+    bitset_set_to(b3, 101, true);
+    bitset_set_to(b3, 1000, true);
     ops = bitset_operation_new(b1);
     bitset_operation_add(ops, b2, BITSET_OR);
     bitset_operation_add(ops, b3, BITSET_AND);
@@ -593,11 +593,11 @@ void test_suite_operation() {
     b1 = bitset_new();
     b2 = bitset_new();
     b3 = bitset_new();
-    bitset_set(b1, 1000, true);
-    bitset_set(b2, 100, true);
-    bitset_set(b2, 105, true);
-    bitset_set(b2, 130, true);
-    bitset_set(b3, 20, true);
+    bitset_set_to(b1, 1000, true);
+    bitset_set_to(b2, 100, true);
+    bitset_set_to(b2, 105, true);
+    bitset_set_to(b2, 130, true);
+    bitset_set_to(b3, 20, true);
     ops = bitset_operation_new(b1);
     bitset_operation_add(ops, b2, BITSET_OR);
     bitset_operation_add(ops, b3, BITSET_OR);
@@ -617,15 +617,15 @@ void test_suite_operation() {
     b1 = bitset_new();
     b2 = bitset_new();
     b3 = bitset_new();
-    bitset_set(b1, 1000, true);
-    bitset_set(b1, 1001, true);
-    bitset_set(b1, 1100, true);
-    bitset_set(b1, 3, true);
-    bitset_set(b2, 1000, true);
-    bitset_set(b2, 1101, true);
-    bitset_set(b2, 3, true);
-    bitset_set(b2, 130, true);
-    bitset_set(b3, 1000, true);
+    bitset_set_to(b1, 1000, true);
+    bitset_set_to(b1, 1001, true);
+    bitset_set_to(b1, 1100, true);
+    bitset_set_to(b1, 3, true);
+    bitset_set_to(b2, 1000, true);
+    bitset_set_to(b2, 1101, true);
+    bitset_set_to(b2, 3, true);
+    bitset_set_to(b2, 130, true);
+    bitset_set_to(b3, 1000, true);
     ops = bitset_operation_new(b1);
     bitset_operation_add(ops, b2, BITSET_AND);
     bitset_operation_add(ops, b3, BITSET_ANDNOT);
@@ -646,12 +646,12 @@ void test_suite_operation() {
     b1 = bitset_new();
     b2 = bitset_new();
     b3 = bitset_new();
-    bitset_set(b1, 100, true);
-    bitset_set(b1, 200, true);
-    bitset_set(b1, 300, true);
-    bitset_set(b2, 100, true);
-    bitset_set(b3, 300, true);
-    bitset_set(b3, 400, true);
+    bitset_set_to(b1, 100, true);
+    bitset_set_to(b1, 200, true);
+    bitset_set_to(b1, 300, true);
+    bitset_set_to(b2, 100, true);
+    bitset_set_to(b3, 300, true);
+    bitset_set_to(b3, 400, true);
     ops = bitset_operation_new(b1);
     bitset_operation *op2 = bitset_operation_new(b2);
     bitset_operation_add(op2, b3, BITSET_OR);
@@ -669,12 +669,12 @@ void test_suite_operation() {
     b1 = bitset_new();
     b2 = bitset_new();
     b3 = bitset_new();
-    bitset_set(b1, 100, true);
-    bitset_set(b1, 200, true);
-    bitset_set(b1, 300, true);
-    bitset_set(b2, 100, true);
-    bitset_set(b3, 300, true);
-    bitset_set(b3, 400, true);
+    bitset_set_to(b1, 100, true);
+    bitset_set_to(b1, 200, true);
+    bitset_set_to(b1, 300, true);
+    bitset_set_to(b2, 100, true);
+    bitset_set_to(b3, 300, true);
+    bitset_set_to(b3, 400, true);
     ops = bitset_operation_new(b1);
     op2 = bitset_operation_new(b2);
     bitset_operation_add(op2, b3, BITSET_OR);
@@ -694,9 +694,9 @@ void test_suite_operation() {
 #ifdef BITSET_64BIT_OFFSETS
     b1 = bitset_new();
     b2 = bitset_new();
-    bitset_set(b1, 1, true);
-    bitset_set(b2, 10000000000, true);
-    bitset_set(b2, 100000000000, true);
+    bitset_set_to(b1, 1, true);
+    bitset_set_to(b2, 10000000000, true);
+    bitset_set_to(b2, 100000000000, true);
     ops = bitset_operation_new(b1);
     bitset_operation_add(ops, b2, BITSET_OR);
     b4 = bitset_operation_exec(ops);
@@ -746,7 +746,7 @@ void test_suite_list() {
 
     l = bitset_list_new();
     b = bitset_new();
-    bitset_set(b, 10, true);
+    bitset_set_to(b, 10, true);
     bitset_list_push(l, b, 3);
     test_int("Checking list was resized properly 1\n", 8, l->size);
     test_int("Checking list was resized properly 2\n", 6, l->length);
@@ -761,8 +761,8 @@ void test_suite_list() {
     bitset_free(b);
 
     b = bitset_new();
-    bitset_set(b, 100, true);
-    bitset_set(b, 1000, true);
+    bitset_set_to(b, 100, true);
+    bitset_set_to(b, 1000, true);
     bitset_list_push(l, b, 10);
     test_int("Checking list was resized properly 4\n", 16, l->size);
     test_int("Checking list was resized properly 5\n", 16, l->length);

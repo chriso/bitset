@@ -148,7 +148,19 @@ bitset_offset bitset_count(const bitset *);
  * Set or unset the specified bit.
  */
 
-bool bitset_set(bitset *, bitset_offset, bool);
+bool bitset_set_to(bitset *, bitset_offset, bool);
+
+/**
+ * Set the specified bit.
+ */
+
+bool bitset_set(bitset *, bitset_offset);
+
+/**
+ * Unset the specified bit.
+ */
+
+bool bitset_unset(bitset *, bitset_offset);
 
 /**
  * Find the lowest set bit in the bitset.
@@ -167,7 +179,7 @@ bitset_offset bitset_max(const bitset *);
  */
 
 #ifndef bitset_oom
-#  define bitset_oom() fprintf(stderr, "Out of memory\n"); exit(1)
+#  define bitset_oom() fprintf(stderr, "Out of memory\n"), exit(1)
 #endif
 
 #endif
