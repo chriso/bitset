@@ -24,9 +24,9 @@ void bitset_free(bitset *b) {
     free(b);
 }
 
-void bitset_resize(bitset *b, unsigned length) {
+void bitset_resize(bitset *b, size_t length) {
     if (length > b->size) {
-        unsigned next_size;
+        size_t next_size;
         BITSET_NEXT_POW2(next_size, length);
         if (!b->length) {
             b->words = (bitset_word *) malloc(sizeof(bitset_word) * next_size);
@@ -45,8 +45,8 @@ void bitset_clear(bitset *b) {
     b->length = 0;
 }
 
-unsigned bitset_length(bitset *b) {
-    return b->length;
+size_t bitset_length(bitset *b) {
+    return b->length * sizeof(bitset_word);
 }
 
 bitset *bitset_copy(const bitset *b) {
@@ -297,17 +297,17 @@ bool bitset_set_to(bitset *b, bitset_offset bit, bool value) {
     return false;
 }
 
-bitset *bitset_new_array(unsigned length, const bitset_word *words) {
+bitset *bitset_new_buffer(const char *buffer, size_t length) {
     bitset *b = (bitset *) malloc(sizeof(bitset));
     if (!b) {
         bitset_oom();
     }
-    b->words = (bitset_word *) malloc(length * sizeof(bitset_word));
+    b->words = (bitset_word *) malloc(length * sizeof(char));
     if (!b->words) {
         bitset_oom();
     }
-    memcpy(b->words, words, length * sizeof(bitset_word));
-    b->length = b->size = length;
+    memcpy(b->words, buffer, length * sizeof(char));
+    b->length = b->size = length / sizeof(bitset_word);
     return b;
 }
 
@@ -316,22 +316,22 @@ static int bitset_new_bits_sort(const void *a, const void *b) {
     return al > bl ? 1 : -1;
 }
 
-bitset *bitset_new_bits(unsigned length, bitset_offset *bits) {
+bitset *bitset_new_bits(bitset_offset *bits, size_t count) {
     bitset *b = bitset_new();
-    if (!length) {
+    if (!count) {
         return b;
     }
     unsigned pos = 0, rem, next_rem, i;
     bitset_offset word_offset = 0, div, next_div, fills, last_bit;
     bitset_word fill = BITSET_CREATE_EMPTY_FILL(BITSET_MAX_LENGTH);
-    qsort(bits, length, sizeof(bitset_offset), bitset_new_bits_sort);
+    qsort(bits, count, sizeof(bitset_offset), bitset_new_bits_sort);
     last_bit = bits[0];
     div = bits[0] / BITSET_LITERAL_LENGTH;
     rem = bits[0] % BITSET_LITERAL_LENGTH;
     bitset_resize(b, 1);
     b->words[0] = 0;
 
-    for (i = 1; i < length; i++) {
+    for (i = 1; i < count; i++) {
         if (bits[i] == last_bit) continue;
         last_bit = bits[i];
 
@@ -371,7 +371,7 @@ bitset *bitset_new_bits(unsigned length, bitset_offset *bits) {
         rem = next_rem;
     }
 
-    if (length == 1 || div == bits[i-2] / BITSET_LITERAL_LENGTH) {
+    if (count == 1 || div == bits[i-2] / BITSET_LITERAL_LENGTH) {
         b->words[pos] |= BITSET_CREATE_LITERAL(rem);
     } else {
         b->words[pos] = BITSET_CREATE_FILL(div - word_offset, rem);

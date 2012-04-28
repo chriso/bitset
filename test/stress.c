@@ -23,7 +23,7 @@ void stress_list(unsigned bitsets, unsigned bits, unsigned max) {
         for (unsigned j = 0; j < bits; j++) {
             offsets[j] = rand() % max;
         }
-        b[i] = bitset_new_bits(bits, offsets);
+        b[i] = bitset_new_bits(offsets, bits);
         bitset_list_push(list, b[i], i);
         size += b[i]->length * sizeof(bitset_word);
     }
@@ -71,7 +71,7 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
         for (unsigned j = 0; j < bits; j++) {
             offsets[j] = rand() % max;
         }
-        b[i] = bitset_new_bits(bits, offsets);
+        b[i] = bitset_new_bits(offsets, bits);
         size += b[i]->length * sizeof(bitset_word);
     }
     end = ((float) clock() - start) / CLOCKS_PER_SEC;

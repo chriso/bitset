@@ -81,8 +81,8 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
     bitset_offset word_offset, max = 0, next_max;
     bitset_operation_step *step;
     bitset_word word, *hashed;
-    unsigned position;
-    unsigned size, count = 0;
+    unsigned position, count = 0;
+    size_t size;
     bitset_hash *and_words = NULL;
     bitset *tmp;
 
@@ -306,7 +306,7 @@ bitset_offset bitset_operation_count(bitset_operation *op) {
     return count;
 }
 
-bitset_hash *bitset_hash_new(unsigned buckets) {
+bitset_hash *bitset_hash_new(size_t buckets) {
     bitset_hash *hash = (bitset_hash *) malloc(sizeof(bitset_hash));
     if (!hash) {
         bitset_oom();

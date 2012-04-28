@@ -10,7 +10,7 @@
 typedef struct bitset_linear_ {
     bitset_word *words;
     unsigned count;
-    unsigned size;
+    size_t size;
 } bitset_linear;
 
 /**
@@ -20,7 +20,7 @@ typedef struct bitset_linear_ {
 typedef struct bitset_loglog_ {
     bitset_word *words;
     unsigned count;
-    unsigned size;
+    size_t size;
 } bitset_loglog;
 
 /**
@@ -28,7 +28,7 @@ typedef struct bitset_loglog_ {
  * (bloom filter where n=1).
  */
 
-bitset_linear *bitset_linear_new(unsigned);
+bitset_linear *bitset_linear_new(size_t);
 
 /**
  * Estimate unique bits in the bitset.
@@ -53,7 +53,7 @@ void bitset_linear_free(bitset_linear *);
  * See: algo.inria.fr/flajolet/Publications/FlFuGaMe07.pdf
  */
 
-bitset_loglog *bitset_loglog_new(unsigned);
+bitset_loglog *bitset_loglog_new(size_t);
 
 /**
  * Estimate unique bits in the bitset.

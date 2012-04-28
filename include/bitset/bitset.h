@@ -80,8 +80,8 @@
 
 typedef struct bitset_ {
     bitset_word *words;
-    unsigned length;
-    unsigned size;
+    size_t length;
+    size_t size;
 } bitset;
 
 /**
@@ -106,25 +106,25 @@ void bitset_free(bitset *);
  * Resize the bitset buffer.
  */
 
-void bitset_resize(bitset *, unsigned);
+void bitset_resize(bitset *, size_t);
 
 /**
  * Get the byte length of the bitset buffer.
  */
 
-unsigned bitset_length(bitset *);
+size_t bitset_length(bitset *);
 
 /**
- * Create a new bitset from an array of compressed words.
+ * Create a new bitset from an existing buffer.
  */
 
-bitset *bitset_new_array(unsigned, const bitset_word *);
+bitset *bitset_new_buffer(const char *, size_t);
 
 /**
  * Create a new bitset from an array of bits.
  */
 
-bitset *bitset_new_bits(unsigned, bitset_offset *);
+bitset *bitset_new_bits(bitset_offset *, size_t);
 
 /**
  * Create a copy of the specified bitset.

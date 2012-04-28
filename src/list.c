@@ -8,48 +8,48 @@
 #include "bitset/operation.h"
 
 bitset_list *bitset_list_new() {
-    bitset_list *c = (bitset_list *) malloc(sizeof(bitset_list));
-    if (!c) {
+    bitset_list *l = (bitset_list *) malloc(sizeof(bitset_list));
+    if (!l) {
         bitset_oom();
     }
-    c->length = c->size = c->count = c->tail_offset = 0;
-    c->buffer = c->tail = NULL;
-    return c;
+    l->length = l->size = l->count = l->tail_offset = 0;
+    l->buffer = l->tail = NULL;
+    return l;
 }
 
-void bitset_list_free(bitset_list *c) {
-    if (c->length) {
-        free(c->buffer);
+void bitset_list_free(bitset_list *l) {
+    if (l->length) {
+        free(l->buffer);
     }
-    free(c);
+    free(l);
 }
 
-static inline void bitset_list_resize(bitset_list *c, unsigned length) {
-    if (length > c->size) {
-        unsigned next_size;
+static inline void bitset_list_resize(bitset_list *l, size_t length) {
+    if (length > l->size) {
+        size_t next_size;
         BITSET_NEXT_POW2(next_size, length);
-        if (!c->length) {
-            c->buffer = (char *) malloc(sizeof(char) * next_size);
+        if (!l->length) {
+            l->buffer = (char *) malloc(sizeof(char) * next_size);
         } else {
-            c->buffer = (char *) realloc(c->buffer, sizeof(char) * next_size);
+            l->buffer = (char *) realloc(l->buffer, sizeof(char) * next_size);
         }
-        if (!c->buffer) {
+        if (!l->buffer) {
             bitset_oom();
         }
-        c->size = next_size;
+        l->size = next_size;
     }
-    c->length = length;
+    l->length = length;
 }
 
-unsigned bitset_list_length(bitset_list *c) {
-    return c->length;
+size_t bitset_list_length(bitset_list *l) {
+    return l->length;
 }
 
-unsigned bitset_list_count(bitset_list *c) {
-    return c->count;
+unsigned bitset_list_count(bitset_list *l) {
+    return l->count;
 }
 
-static inline unsigned bitset_encoded_length_required_bytes(unsigned length) {
+static inline size_t bitset_encoded_length_required_bytes(size_t length) {
     if (length < (1 << 6)) {
         return 1;
     } else if (length < (1 << 14)) {
@@ -61,7 +61,7 @@ static inline unsigned bitset_encoded_length_required_bytes(unsigned length) {
     }
 }
 
-static inline void bitset_encoded_length_bytes(unsigned length, char *buffer) {
+static inline void bitset_encoded_length_bytes(char *buffer, size_t length) {
     if (length < (1 << 6)) {
         buffer[0] = (unsigned char)length;
     } else if (length < (1 << 14)) {
@@ -79,9 +79,8 @@ static inline void bitset_encoded_length_bytes(unsigned length, char *buffer) {
     }
 }
 
-static inline unsigned bitset_encoded_length_size(const char *buffer) {
-    unsigned type = buffer[0] & 0xC0;
-    switch (type) {
+static inline size_t bitset_encoded_length_size(const char *buffer) {
+    switch (buffer[0] & 0xC0) {
         case 0x00: return 1;
         case 0x40: return 2;
         case 0x80: return 3;
@@ -89,9 +88,9 @@ static inline unsigned bitset_encoded_length_size(const char *buffer) {
     }
 }
 
-static inline unsigned bitset_encoded_length(const char *buffer) {
-    unsigned length, type = buffer[0] & 0xC0;
-    switch (type) {
+static inline size_t bitset_encoded_length(const char *buffer) {
+    size_t length;
+    switch (buffer[0] & 0xC0) {
         case 0x00:
             length = (unsigned char)buffer[0];
             break;
@@ -114,24 +113,24 @@ static inline unsigned bitset_encoded_length(const char *buffer) {
     return length;
 }
 
-bitset_list *bitset_list_new_buffer(unsigned length, const char *buffer) {
-    bitset_list *c = (bitset_list *) malloc(sizeof(bitset_list));
-    if (!c) {
+bitset_list *bitset_list_new_buffer(const char *buffer, size_t length) {
+    bitset_list *l = (bitset_list *) malloc(sizeof(bitset_list));
+    if (!l) {
         bitset_oom();
     }
-    c->buffer = (char *) malloc(length * sizeof(char));
-    if (!c->buffer) {
+    l->buffer = (char *) malloc(length * sizeof(char));
+    if (!l->buffer) {
         bitset_oom();
     }
-    memcpy(c->buffer, buffer, length * sizeof(char));
-    c->length = c->size = length;
-    c->count = c->tail_offset = 0;
-    unsigned length_bytes, offset_bytes;
+    memcpy(l->buffer, buffer, length * sizeof(char));
+    l->length = l->size = length;
+    l->count = l->tail_offset = 0;
+    size_t length_bytes, offset_bytes;
     length = 0;
-    char *buf = c->buffer;
-    for (unsigned i = 0; i < c->length; c->count++) {
-        c->tail = buf;
-        c->tail_offset += bitset_encoded_length(buf);
+    char *buf = l->buffer;
+    for (unsigned i = 0; i < l->length; l->count++) {
+        l->tail = buf;
+        l->tail_offset += bitset_encoded_length(buf);
         offset_bytes = bitset_encoded_length_size(buf);
         buf += offset_bytes;
         length = bitset_encoded_length(buf);
@@ -141,32 +140,32 @@ bitset_list *bitset_list_new_buffer(unsigned length, const char *buffer) {
         i += offset_bytes + length_bytes + length;
         buf += length;
     }
-    return c;
+    return l;
 }
 
-void bitset_list_push(bitset_list *c, bitset *b, unsigned offset) {
-    if (offset < c->tail_offset) {
+void bitset_list_push(bitset_list *l, bitset *b, unsigned offset) {
+    if (offset < l->tail_offset) {
         fprintf(stderr, "Can only append to a bitset list\n");
         exit(1);
     }
 
-    unsigned length = c->length;
-    unsigned relative_offset = offset - c->tail_offset;
-    c->count++;
+    size_t length = l->length;
+    unsigned relative_offset = offset - l->tail_offset;
+    l->count++;
 
     //Resize the list to accommodate the bitset
-    unsigned length_bytes = bitset_encoded_length_required_bytes(b->length);
-    unsigned offset_bytes = bitset_encoded_length_required_bytes(relative_offset);
-    bitset_list_resize(c, length + length_bytes + offset_bytes + b->length * sizeof(bitset_word));
+    size_t length_bytes = bitset_encoded_length_required_bytes(b->length);
+    size_t offset_bytes = bitset_encoded_length_required_bytes(relative_offset);
+    bitset_list_resize(l, length + length_bytes + offset_bytes + b->length * sizeof(bitset_word));
 
     //Keep a reference to the tail bitset
-    char *buffer = c->tail = c->buffer + length;
-    c->tail_offset = offset;
+    char *buffer = l->tail = l->buffer + length;
+    l->tail_offset = offset;
 
     //Encode the offset and length
-    bitset_encoded_length_bytes(relative_offset, buffer);
+    bitset_encoded_length_bytes(buffer, relative_offset);
     buffer += offset_bytes;
-    bitset_encoded_length_bytes(b->length, buffer);
+    bitset_encoded_length_bytes(buffer, b->length);
     buffer += length_bytes;
 
     //Copy the bitset
@@ -175,9 +174,9 @@ void bitset_list_push(bitset_list *c, bitset *b, unsigned offset) {
     }
 }
 
-static inline void bitset_list_iterator_resize(bitset_list_iterator *i, unsigned length) {
+static inline void bitset_list_iterator_resize(bitset_list_iterator *i, size_t length) {
     if (length > i->size) {
-        unsigned next_size;
+        size_t next_size;
         BITSET_NEXT_POW2(next_size, length);
         if (!i->length) {
             i->bitsets = (bitset **) malloc(sizeof(bitset*) * next_size);
@@ -211,7 +210,8 @@ bitset_list_iterator *bitset_list_iterator_new(bitset_list *c, unsigned start, u
         i->bitsets = NULL;
         i->offsets = NULL;
     }
-    unsigned length = 0, length_bytes, offset = 0, offset_bytes;
+    unsigned length = 0, offset = 0;
+    size_t length_bytes, offset_bytes;
     char *buffer = c->buffer;
     for (unsigned j = 0, b = 0; j < c->length; ) {
         offset += bitset_encoded_length(buffer);

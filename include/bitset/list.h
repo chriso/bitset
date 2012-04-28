@@ -27,8 +27,8 @@
 
 typedef struct bitset_list_ {
     char *buffer;
-    unsigned length;
-    unsigned size;
+    size_t length;
+    size_t size;
     unsigned count;
     char *tail;
     unsigned tail_offset;
@@ -37,8 +37,8 @@ typedef struct bitset_list_ {
 typedef struct bitset_list_iterator_ {
     bitset **bitsets;
     unsigned *offsets;
-    unsigned length;
-    unsigned size;
+    size_t length;
+    size_t size;
 } bitset_list_iterator;
 
 #define BITSET_LIST_START 0
@@ -54,7 +54,7 @@ bitset_list *bitset_list_new();
  * Create a new bitset list based on an existing buffer.
  */
 
-bitset_list *bitset_list_new_buffer(unsigned, const char *);
+bitset_list *bitset_list_new_buffer(const char *, size_t);
 
 /**
  * Free the specified list.
@@ -66,7 +66,7 @@ void bitset_list_free(bitset_list *);
  * Get the byte length of the list buffer.
  */
 
-unsigned bitset_list_length(bitset_list *);
+size_t bitset_list_length(bitset_list *);
 
 /**
  * Get the number of bitsets in the list.

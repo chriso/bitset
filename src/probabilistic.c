@@ -6,14 +6,14 @@
 
 #include "bitset/probabilistic.h"
 
-bitset_linear *bitset_linear_new(unsigned size) {
+bitset_linear *bitset_linear_new(size_t size) {
     bitset_linear *e = (bitset_linear *) malloc(sizeof(bitset_linear));
     if (!e) {
         bitset_oom();
     }
     e->count = 0;
     assert(size);
-    size = (unsigned)(size / sizeof(bitset_word) / 8) + 1;
+    size = (size_t)(size / sizeof(bitset_word) / 8) + 1;
     e->size = size;
     e->words = (bitset_word *) calloc(1, e->size * sizeof(bitset_word));
     if (!e->words) {

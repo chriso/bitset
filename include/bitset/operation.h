@@ -16,7 +16,7 @@ typedef struct bucket_ {
 typedef struct hash_ {
     bitset_hash_bucket **buckets;
     bitset_word *words;
-    unsigned size;
+    size_t size;
     unsigned count;
 } bitset_hash;
 
@@ -45,7 +45,7 @@ typedef struct bitset_operation_step_ {
 struct bitset_operation_ {
     bitset_operation_step **steps;
     bitset_hash *words;
-    unsigned length;
+    size_t length;
 };
 
 /**
@@ -89,7 +89,7 @@ bitset_offset bitset_operation_count(bitset_operation *);
  * Create a new hash with the specified number of buckets.
  */
 
-bitset_hash *bitset_hash_new(unsigned);
+bitset_hash *bitset_hash_new(size_t);
 
 /**
  * Free the specified hash.
