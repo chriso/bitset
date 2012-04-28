@@ -4,17 +4,6 @@
 #include "bitset.h"
 
 /**
- * Bitset operations.
- */
-
-enum bitset_operation_type {
-    BITSET_AND,
-    BITSET_OR,
-    BITSET_XOR,
-    BITSET_ANDNOT
-};
-
-/**
  * Bitset hash types.
  */
 
@@ -34,6 +23,13 @@ typedef struct hash_ {
 /**
  * Bitset operation types.
  */
+
+enum bitset_operation_type {
+    BITSET_AND,
+    BITSET_OR,
+    BITSET_XOR,
+    BITSET_ANDNOT
+};
 
 typedef struct bitset_operation_ bitset_operation;
 

@@ -41,6 +41,9 @@ typedef struct bitset_list_iterator_ {
     unsigned count;
 } bitset_list_iterator;
 
+#define BITSET_LIST_START 0
+#define BITSET_LIST_END 0
+
 /**
  * Create a new bitset list.
  */
