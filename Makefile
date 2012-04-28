@@ -1,5 +1,5 @@
 CC?=gcc
-CFLAGS+=-Wall -std=c99
+CFLAGS+=-Wall -std=c99 -O3
 
 SOURCE=src/bitset.c src/operation.c src/probabilistic.c src/list.c
 OBJ=$(SOURCE:.c=.o)
@@ -7,23 +7,24 @@ OBJ=$(SOURCE:.c=.o)
 TEST=test/test.o
 STRESS=test/stress.o
 
-stress: $(OBJ) $(STRESS)
+libbitset: $(OBJ) init
+	ar -r lib/libbitset.a $(OBJ)
+
+stress: $(OBJ) $(STRESS) init
 	$(CC) $(LDFLAGS) $(OBJ) $(STRESS) -o ./bin/$@
-	./bin/$@
+	@./bin/$@
 
-test: $(OBJ) $(TEST)
+test: $(OBJ) $(TEST) init
 	$(CC) $(LDFLAGS) $(OBJ) $(TEST) -o ./bin/$@
-	./bin/$@
+	@./bin/$@
 
-.c.o: init
+.c.o:
 	$(CC) -c $(CFLAGS) -Iinclude $< -o $@
 
 init:
-	test -d bin || mkdir bin
+	@mkdir -p bin lib
 
 clean:
-	rm -rf $(OBJ) $(TEST) $(STRESS) bin
-
+	rm -rf $(OBJ) $(TEST) $(STRESS) bin lib
 
 .PHONY: test stress
-.SILENT: 
