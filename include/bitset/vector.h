@@ -1,12 +1,15 @@
 #ifndef BITSET_VECTOR_H_
 #define BITSET_VECTOR_H_
 
+#include "bitset/bitset.h"
+#include "bitset/operation.h"
+
 /**
  * Bitset buffers can be packed together into a vector which is compressed
  * using length encoding.  Each vector buffer consists of zero or more bitsets
  * prefixed with their offset and length
  *
- *    <offset1><length1><bitset_buffer1><offsetN><lengthN><bitset_bufferN>
+ *    <offset1><length1><bitset_buffer1>...<offsetN><lengthN><bitset_bufferN>
  *
  * For example, adding a bitset with a length of 12 bytes at position 3
  * followed by a bitset with a length of 4 bytes at position 12 would result in
@@ -40,6 +43,22 @@ typedef struct bitset_vector_iterator_ {
     size_t length;
     size_t size;
 } bitset_vector_iterator;
+
+typedef struct bitset_vector_operation_ bitset_vector_operation;
+
+typedef struct bitset_vector_operation_step_ {
+    union {
+        bitset_vector_iterator *i;
+        bitset_vector_operation *o;
+    } data;
+    bool is_nested;
+    enum bitset_operation_type type;
+} bitset_vector_operation_step;
+
+struct bitset_vector_operation_ {
+    bitset_vector_operation_step **steps;
+    size_t length;
+};
 
 #define BITSET_VECTOR_START 0
 #define BITSET_VECTOR_END 0
@@ -97,6 +116,9 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *, unsigned, un
          BITSET_TMPVAR(i, __LINE__) < iterator->length; \
          BITSET_TMPVAR(i, __LINE__)++)
 
+#define BITSET_TMPVAR(i, line) BITSET_TMPVAR_(i, line)
+#define BITSET_TMPVAR_(a,b) a__##b
+
 /**
  * Concatenate an iterator to another at the specified offset.
  */
@@ -128,11 +150,36 @@ bitset *bitset_vector_iterator_merge(bitset_vector_iterator *);
 void bitset_vector_iterator_free(bitset_vector_iterator *);
 
 /**
- * Helpers for foreach macro.
+ * Create a new vector operation.
  */
 
-#define BITSET_TMPVAR(i, line) BITSET_TMPVAR_(i, line)
-#define BITSET_TMPVAR_(a,b) a__##b
+bitset_vector_operation *bitset_vector_operation_new(bitset_vector_iterator *);
+
+/**
+ * Free the specified vector operation.
+ */
+
+void bitset_vector_operation_free(bitset_vector_operation *);
+
+/**
+ * Add a vector to the operation.
+ */
+
+void bitset_vector_operation_add(bitset_vector_operation *,
+    bitset_vector_iterator *, enum bitset_operation_type);
+
+/**
+ * Add a nested operation.
+ */
+
+void bitset_vector_operation_add_nested(bitset_vector_operation *,
+    bitset_vector_operation *, enum bitset_operation_type);
+
+/**
+ * Execute the operation and return the result.
+ */
+
+bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *);
 
 #endif
 

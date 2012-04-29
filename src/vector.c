@@ -298,3 +298,27 @@ void bitset_vector_iterator_free(bitset_vector_iterator *i) {
     free(i);
 }
 
+bitset_vector_operation *bitset_vector_operation_new(bitset_vector_iterator *i) {
+    //TODO
+    return NULL;
+}
+
+void bitset_vector_operation_free(bitset_vector_operation *o) {
+    //TODO
+}
+
+void bitset_vector_operation_add(bitset_vector_operation *o,
+        bitset_vector_iterator *i, enum bitset_operation_type type) {
+    //TODO
+}
+
+void bitset_vector_operation_add_nested(bitset_vector_operation *o,
+        bitset_vector_operation *i, enum bitset_operation_type type) {
+    //TODO
+}
+
+bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o) {
+    //TODO
+    return NULL;
+}
+
