@@ -259,9 +259,34 @@ void bitset_vector_iterator_count(bitset_vector_iterator *i, unsigned *raw, unsi
         raw_count += bitset_count(b);
         bitset_operation_add(o, b, BITSET_OR);
     }
+    (void)offset;
     *raw = raw_count;
     *unique = bitset_operation_count(o);
     bitset_operation_free(o);
+}
+
+bitset_vector *bitset_vector_iterator_compact(bitset_vector_iterator *i) {
+    bitset_vector *v = bitset_vector_new();
+    unsigned offset;
+    bitset *b;
+    BITSET_VECTOR_FOREACH(i, b, offset) {
+        bitset_vector_push(v, b, offset);
+    }
+    (void)offset;
+    return v;
+}
+
+bitset *bitset_vector_iterator_merge(bitset_vector_iterator *i) {
+    unsigned offset;
+    bitset *b;
+    bitset_operation *o = bitset_operation_new(NULL);
+    BITSET_VECTOR_FOREACH(i, b, offset) {
+        bitset_operation_add(o, b, BITSET_OR);
+    }
+    (void)offset;
+    b = bitset_operation_exec(o);
+    bitset_operation_free(o);
+    return b;
 }
 
 void bitset_vector_iterator_free(bitset_vector_iterator *i) {

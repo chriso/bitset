@@ -712,7 +712,7 @@ void test_suite_operation() {
 }
 
 void test_suite_vector() {
-    bitset_vector *l;
+    bitset_vector *l, *l2;
     bitset_vector_iterator *i, *i2;
     bitset *b;
     bitset_word *tmp;
@@ -799,6 +799,19 @@ void test_suite_vector() {
         }
     }
     test_int("Checking it looped the right number of times\n", 2, loop_count);
+
+    b = bitset_vector_iterator_merge(i);
+    test_int("Checking vector merge 1\n", 3, bitset_count(b));
+    test_bool("Checking vector merge 2\n", true, bitset_get(b, 10));
+    test_bool("Checking vector merge 2\n", true, bitset_get(b, 100));
+    test_bool("Checking vector merge 2\n", true, bitset_get(b, 1000));
+    bitset_free(b);
+
+    l2 = bitset_vector_iterator_compact(i);
+    test_int("Checking vector iterator compact 1\n", l->length, l2->length);
+    test_int("Checking vector iterator compact 2\n", 0, memcmp(l->buffer, l2->buffer, l->length));
+    bitset_vector_free(l2);
+
     bitset_vector_iterator_free(i);
 
     i = bitset_vector_iterator_new(l, 3, 10);

@@ -110,6 +110,18 @@ void bitset_vector_iterator_concat(bitset_vector_iterator *, bitset_vector_itera
 void bitset_vector_iterator_count(bitset_vector_iterator *, unsigned *, unsigned *);
 
 /**
+ * Compact the iterator into a vector.
+ */
+
+bitset_vector *bitset_vector_iterator_compact(bitset_vector_iterator *);
+
+/**
+ * Merge (bitwise OR) each vector bitset.
+ */
+
+bitset *bitset_vector_iterator_merge(bitset_vector_iterator *);
+
+/**
  * Free the vector iterator.
  */
 
