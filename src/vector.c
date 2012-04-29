@@ -145,8 +145,8 @@ bitset_vector *bitset_vector_new_buffer(const char *buffer, size_t length) {
 
 void bitset_vector_push(bitset_vector *l, bitset *b, unsigned offset) {
     if (offset < l->tail_offset) {
-        fprintf(stderr, "Can only append to a bitset vector\n");
-        exit(1);
+        fprintf(stderr, "libbitset: bitset_vector_push() only supports appends\n");
+        return;
     }
 
     size_t length = l->length;
