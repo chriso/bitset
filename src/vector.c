@@ -299,22 +299,65 @@ void bitset_vector_iterator_free(bitset_vector_iterator *i) {
 }
 
 bitset_vector_operation *bitset_vector_operation_new(bitset_vector_iterator *i) {
-    //TODO
-    return NULL;
+    bitset_vector_operation *ops = (bitset_vector_operation *)
+        malloc(sizeof(bitset_vector_operation));
+    if (!ops) {
+        bitset_oom();
+    }
+    ops->length = 0;
+    if (i) {
+        bitset_vector_operation_add(ops, i, BITSET_OR);
+    }
+    return ops;
 }
 
-void bitset_vector_operation_free(bitset_vector_operation *o) {
-    //TODO
+void bitset_vector_operation_free(bitset_vector_operation *ops) {
+    if (ops->length) {
+        for (unsigned i = 0; i < ops->length; i++) {
+            free(ops->steps[i]);
+        }
+        free(ops->steps);
+    }
+    free(ops);
+}
+
+static inline bitset_vector_operation_step *
+        bitset_vector_operation_add_step(bitset_vector_operation *ops) {
+    bitset_vector_operation_step *step = (bitset_vector_operation_step *)
+        malloc(sizeof(bitset_vector_operation_step));
+    if (!step) {
+        bitset_oom();
+    }
+    if (ops->length % 2 == 0) {
+        if (!ops->length) {
+            ops->steps = (bitset_vector_operation_step **)
+                malloc(sizeof(bitset_vector_operation_step *) * 2);
+        } else {
+            ops->steps = (bitset_vector_operation_step **) realloc(ops->steps,
+                sizeof(bitset_vector_operation_step *) * ops->length * 2);
+        }
+        if (!ops->steps) {
+            bitset_oom();
+        }
+    }
+    ops->steps[ops->length++] = step;
+    return step;
 }
 
 void bitset_vector_operation_add(bitset_vector_operation *o,
         bitset_vector_iterator *i, enum bitset_operation_type type) {
-    //TODO
+    bitset_vector_operation_step *step = bitset_vector_operation_add_step(o);
+    step->is_nested = false;
+    step->data.i = i;
+    step->type = type;
 }
 
 void bitset_vector_operation_add_nested(bitset_vector_operation *o,
-        bitset_vector_operation *i, enum bitset_operation_type type) {
-    //TODO
+        bitset_vector_operation *op, enum bitset_operation_type type) {
+    bitset_vector_operation_step *step = bitset_vector_operation_add_step(o);
+    step->is_nested = true;
+    step->data.o = op;
+    step->type = type;
 }
 
 bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o) {
