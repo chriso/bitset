@@ -1,18 +1,17 @@
-**A compressed bitset with supporting structures and algorithms**
-
-`GPLv3` license with commercial licenses available.
+**A compressed bitset** - `GPLv3` with commercial licenses available.
 
 ### About
 
 The bitset is [compressed](https://github.com/chriso/bitset/blob/master/include/bitset/bitset.h#L6-24) and supports the same operations as its uncompressed counterpart without requiring a decompression step, it's therefore a [succinct data structure](http://en.wikipedia.org/wiki/Succinct_data_structure). Unlike most succinct structures which are append-only and then immutable, the bitset includes support for setting random bit offsets. 64-bit offsets are also supported for very sparse bitsets.
 
-### Supporting operations, structures and algorithms
+### Supporting structures and algorithms
 
 - Complex bitwise operations between one or more bitsets, e.g. `A & (B & ~C) | (D ^ E)`
 - Pack multiple bitsets together using the included [vector abstraction](https://github.com/chriso/bitset/blob/master/include/bitset/vector.h#L4-22)
 - Bitwise operations between one or more vectors is supported, e.g. `V1 | (V2 & V3) => V4`
 - Probabilistic algorithms for estimating cardinality, top-k, etc.
-- C++ class wrappers
+- [C++ class
+  wrappers](https://github.com/chriso/bitset/blob/master/include/bitset/bitset.hpp)
 
 ### License
 
