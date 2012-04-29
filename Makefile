@@ -11,11 +11,11 @@ libbitset: $(OBJ) init
 	ar -r lib/libbitset.a $(OBJ)
 
 stress: $(OBJ) $(STRESS) init
-	$(CC) $(LDFLAGS) $(OBJ) $(STRESS) -o ./bin/$@
+	@$(CC) $(LDFLAGS) $(OBJ) $(STRESS) -o ./bin/$@
 	@./bin/$@
 
 test: $(OBJ) $(TEST) init
-	$(CC) $(LDFLAGS) $(OBJ) $(TEST) -o ./bin/$@
+	@$(CC) $(LDFLAGS) $(OBJ) $(TEST) -o ./bin/$@
 	@./bin/$@
 
 .c.o:
