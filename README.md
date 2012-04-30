@@ -1,13 +1,11 @@
-**A compressed bitset** - `GPLv3`
+**bitset** - `GPLv3`
 
 ### About
 
 The bitset is
 [compressed](https://github.com/chriso/bitset/blob/master/include/bitset/bitset.h#L6-24)
 and supports the same operations as its uncompressed counterpart without
-requiring a decompression step
-([succinct](http://en.wikipedia.org/wiki/Succinct_data_structure)).
-Unlike most succinct data structures which are append-only and then immutable, the bitset includes support for setting random bit offsets. 64-bit offsets are also supported for very sparse bitsets.
+requiring a decompression step. Unlike most [succinct data structures](http://en.wikipedia.org/wiki/Succinct_data_structure) which are append-only and then immutable, the bitset includes support for setting random bit offsets. 64-bit offsets are also supported for very sparse bitsets.
 
 ### What's included
 
