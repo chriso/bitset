@@ -314,6 +314,9 @@ bitset_vector_operation *bitset_vector_operation_new(bitset_vector_iterator *i) 
 void bitset_vector_operation_free(bitset_vector_operation *ops) {
     if (ops->length) {
         for (unsigned i = 0; i < ops->length; i++) {
+            if (ops->steps[i]->is_nested) {
+                bitset_vector_operation_free(ops->steps[i]->data.o);
+            }
             free(ops->steps[i]);
         }
         free(ops->steps);
