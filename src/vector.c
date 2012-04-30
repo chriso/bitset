@@ -126,7 +126,6 @@ bitset_vector *bitset_vector_new_buffer(const char *buffer, size_t length) {
     l->length = l->size = length;
     l->count = l->tail_offset = 0;
     size_t length_bytes, offset_bytes;
-    length = 0;
     char *buf = l->buffer;
     for (unsigned i = 0; i < l->length; l->count++) {
         l->tail = buf;
