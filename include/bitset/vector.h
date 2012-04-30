@@ -60,6 +60,20 @@ struct bitset_vector_operation_ {
     size_t length;
 };
 
+typedef struct bitset_vector_hash_node_ bitset_vector_hash_node;
+
+struct bitset_vector_hash_node_ {
+    unsigned offset;
+    bitset_operation *o;
+    bitset_vector_hash_node *next;
+};
+
+typedef struct bitset_vector_hash_ {
+    bitset_vector_hash_node **buckets;
+    size_t size;
+    size_t count;
+} bitset_vector_hash;
+
 #define BITSET_VECTOR_START 0
 #define BITSET_VECTOR_END 0
 
