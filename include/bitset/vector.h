@@ -42,6 +42,7 @@ typedef struct bitset_vector_iterator_ {
     unsigned *offsets;
     size_t length;
     size_t size;
+    bool is_mutable;
 } bitset_vector_iterator;
 
 typedef struct bitset_vector_operation_ bitset_vector_operation;

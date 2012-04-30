@@ -847,6 +847,7 @@ void test_suite_vector() {
     }
     test_int("Checking it looped the right number of times 4\n", 4, loop_count);
     bitset_vector_iterator_free(i);
+    bitset_vector_iterator_free(i2);
 
     //Make a copy of the buffer
     char *buffer = malloc(sizeof(char) * l->length);
@@ -978,6 +979,7 @@ void test_suite_vector_operation() {
         } else {
             test_bool("", false, true);
         }
+        bitset_free(b1);
     }
 
     bitset_vector_iterator_free(i1);

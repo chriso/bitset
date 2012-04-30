@@ -198,6 +198,7 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *c, unsigned st
     if (!i) {
         bitset_oom();
     }
+    i->is_mutable = false;
     if (start == BITSET_VECTOR_START && end == BITSET_VECTOR_END) {
         i->bitsets = (bitset **) malloc(sizeof(bitset*) * c->count);
         i->offsets = (unsigned *) malloc(sizeof(unsigned) * c->count);
@@ -248,6 +249,9 @@ void bitset_vector_iterator_concat(bitset_vector_iterator *i, bitset_vector_iter
         }
         free(c->bitsets);
         free(c->offsets);
+        c->bitsets = NULL;
+        c->offsets = NULL;
+        c->length = c->size = 0;
     }
 }
 
@@ -290,8 +294,10 @@ bitset *bitset_vector_iterator_merge(bitset_vector_iterator *i) {
 }
 
 void bitset_vector_iterator_free(bitset_vector_iterator *i) {
-    for (unsigned j = 0; j < i->length; j++) {
-        free(i->bitsets[j]);
+    if (!i->is_mutable) {
+        for (unsigned j = 0; j < i->length; j++) {
+            free(i->bitsets[j]);
+        }
     }
     if (i->bitsets) free(i->bitsets);
     if (i->offsets) free(i->offsets);
@@ -463,6 +469,7 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
     bitset_operation *op;
     unsigned offset;
 
+    //Prepare the result iterator
     i = (bitset_vector_iterator *) malloc(sizeof(bitset_vector_iterator));
     if (!i) {
         bitset_oom();
@@ -470,6 +477,7 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
     i->bitsets = NULL;
     i->offsets = NULL;
     i->length = i->size = 0;
+    i->is_mutable = true;
 
     if (!o->length) return i;
 
@@ -480,7 +488,6 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
         //Recursively flatten nested operations
         if (o->steps[j]->is_nested) {
             tmp = bitset_vector_operation_exec(o->steps[j]->data.o);
-            o->steps[j]->is_nested = false;
             bitset_vector_operation_free(o->steps[j]->data.o);
             o->steps[j]->data.i = tmp;
         }
@@ -544,6 +551,18 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
 
     free(offsets);
     bitset_vector_hash_free(h);
+
+    //Free temporaries created by nested operations
+    for (unsigned j = 0; j < o->length; j++) {
+        if (o->steps[j]->is_nested) {
+            step = o->steps[j]->data.i;
+            for (unsigned k = 0; k < step->length; k++) {
+                bitset_free(step->bitsets[k]);
+            }
+            bitset_vector_iterator_free(o->steps[j]->data.i);
+            o->steps[j]->is_nested = false;
+        }
+    }
 
     return i;
 }

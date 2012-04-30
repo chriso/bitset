@@ -94,7 +94,6 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
     for (unsigned i = 0; i < op->length; i++) {
         if (op->steps[i]->is_nested) {
             tmp = bitset_operation_exec(op->steps[i]->data.op);
-            op->steps[i]->is_nested = false;
             bitset_operation_free(op->steps[i]->data.op);
             op->steps[i]->data.b = tmp;
         }
@@ -180,6 +179,14 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
                     bitset_hash_insert(op->words, word_offset, word);
                 }
             }
+        }
+    }
+
+    //Free temporaries from nested operations
+    for (unsigned i = 0; i < op->length; i++) {
+        if (op->steps[i]->is_nested) {
+            bitset_free(op->steps[i]->data.b);
+            op->steps[i]->is_nested = false;
         }
     }
 
