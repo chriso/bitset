@@ -74,6 +74,8 @@ int main(int argc, char **argv) {
     test_suite_max();
     printf("Testing vector\n");
     test_suite_vector();
+    printf("Testing vector operations\n");
+    test_suite_vector_operation();
     printf("Testing stress\n");
     test_suite_stress();
 }
@@ -790,12 +792,14 @@ void test_suite_vector() {
         loop_count++;
         test_bool("Checking foreach works\n", true, offset == 3 || offset == 10);
         if (offset == 3) {
+            test_int("Checking bitset count 1\n", 1, bitset_count(b));
             test_bool("Checking bitset was added properly to iter 6\n", true, bitset_get(b, 10));
             test_bool("Checking bitset was added properly to iter 7\n", false, bitset_get(b, 100));
         } else if (offset == 10) {
-            test_bool("Checking bitset was added properly to iter 8\n", false, bitset_get(i->bitsets[1], 10));
-            test_bool("Checking bitset was added properly to iter 9\n", true, bitset_get(i->bitsets[1], 100));
-            test_bool("Checking bitset was added properly to iter 10\n", true, bitset_get(i->bitsets[1], 1000));
+            test_int("Checking bitset count 2\n", 2, bitset_count(b));
+            test_bool("Checking bitset was added properly to iter 8\n", false, bitset_get(b, 10));
+            test_bool("Checking bitset was added properly to iter 9\n", true, bitset_get(b, 100));
+            test_bool("Checking bitset was added properly to iter 10\n", true, bitset_get(b, 1000));
         }
     }
     test_int("Checking it looped the right number of times\n", 2, loop_count);
@@ -859,5 +863,131 @@ void test_suite_vector() {
     test_int("Check tail offset is set correctly\n", 10, l->tail_offset);
     test_int("Check tail ptr is set correctly\n", (uintptr_t)l->buffer+6, (uintptr_t)l->tail);
     bitset_vector_free(l);
+    free(buffer);
+}
+
+void test_suite_vector_operation() {
+    bitset_vector_operation *o1, *o2;
+    bitset_vector *v1, *v2, *v3, *v4;
+    bitset_vector_iterator *i1, *i2, *i3, *i4, *i5;
+    bitset *b1, *b2, *b3, *b4;
+    unsigned offset;
+
+    b1 = bitset_new();
+    bitset_set(b1, 100);
+    b2 = bitset_new();
+    bitset_set(b2, 100);
+    b3 = bitset_new();
+    bitset_set(b3, 100);
+    b4 = bitset_new();
+    bitset_set(b4, 100);
+    v1 = bitset_vector_new();
+    bitset_vector_push(v1, b1, 1);
+    bitset_vector_push(v1, b2, 2);
+    bitset_vector_push(v1, b3, 3);
+    bitset_vector_push(v1, b4, 4);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b3);
+    bitset_free(b4);
+    i1 = bitset_vector_iterator_new(v1, BITSET_VECTOR_START, BITSET_VECTOR_END);
+
+    b1 = bitset_new();
+    bitset_set(b1, 200);
+    b2 = bitset_new();
+    bitset_set(b2, 100);
+    bitset_set(b2, 200);
+    b3 = bitset_new();
+    bitset_set(b3, 200);
+    b4 = bitset_new();
+    bitset_set(b4, 200);
+    v2 = bitset_vector_new();
+    bitset_vector_push(v2, b1, 2);
+    bitset_vector_push(v2, b2, 4);
+    bitset_vector_push(v2, b3, 6);
+    bitset_vector_push(v2, b4, 8);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b3);
+    bitset_free(b4);
+    i2 = bitset_vector_iterator_new(v2, BITSET_VECTOR_START, BITSET_VECTOR_END);
+
+    b1 = bitset_new();
+    bitset_set(b1, 300);
+    b2 = bitset_new();
+    bitset_set(b2, 100);
+    bitset_set(b2, 300);
+    b3 = bitset_new();
+    bitset_set(b3, 300);
+    b4 = bitset_new();
+    bitset_set(b4, 300);
+    v3 = bitset_vector_new();
+    bitset_vector_push(v3, b1, 1);
+    bitset_vector_push(v3, b2, 2);
+    bitset_vector_push(v3, b3, 3);
+    bitset_vector_push(v3, b4, 4);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b3);
+    bitset_free(b4);
+    i3 = bitset_vector_iterator_new(v3, BITSET_VECTOR_START, BITSET_VECTOR_END);
+
+    b1 = bitset_new();
+    bitset_set(b1, 400);
+    b2 = bitset_new();
+    bitset_set(b2, 400);
+    b3 = bitset_new();
+    bitset_set(b3, 400);
+    b4 = bitset_new();
+    bitset_set(b4, 400);
+    v4 = bitset_vector_new();
+    bitset_vector_push(v4, b1, 1);
+    bitset_vector_push(v4, b2, 2);
+    bitset_vector_push(v4, b3, 3);
+    bitset_vector_push(v4, b4, 4);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b3);
+    bitset_free(b4);
+    i4 = bitset_vector_iterator_new(v4, BITSET_VECTOR_START, BITSET_VECTOR_END);
+
+    //V1 AND (V2 | V3) OR V4
+    o1 = bitset_vector_operation_new(i1);
+    o2 = bitset_vector_operation_new(i2);
+    bitset_vector_operation_add(o2, i3, BITSET_OR);
+    bitset_vector_operation_add_nested(o1, o2, BITSET_AND);
+    bitset_vector_operation_add(o1, i4, BITSET_OR);
+    i5 = bitset_vector_operation_exec(o1);
+    bitset_vector_operation_free(o1);
+
+    BITSET_VECTOR_FOREACH(i5, b1, offset) {
+        if (offset == 1) {
+            test_int("Check vector operation count 1\n", 1, bitset_count(b1));
+            test_int("Check vector operation bitset 1\n", true, bitset_get(b1, 400));
+        } else if (offset == 2) {
+            test_int("Check vector operation count 2\n", 2, bitset_count(b1));
+            test_int("Check vector operation bitset 2\n", true, bitset_get(b1, 100));
+            test_int("Check vector operation bitset 3\n", true, bitset_get(b1, 400));
+        } else if (offset == 3) {
+            test_int("Check vector operation count 3\n", 1, bitset_count(b1));
+            test_int("Check vector operation bitset 4\n", true, bitset_get(b1, 400));
+        } else if (offset ==4 ) {
+            test_int("Check vector operation count 4\n", 2, bitset_count(b1));
+            test_int("Check vector operation bitset 5\n", true, bitset_get(b1, 100));
+            test_int("Check vector operation bitset 6\n", true, bitset_get(b1, 400));
+        } else {
+            test_bool("", false, true);
+        }
+    }
+
+    bitset_vector_iterator_free(i1);
+    bitset_vector_iterator_free(i2);
+    bitset_vector_iterator_free(i3);
+    bitset_vector_iterator_free(i4);
+    bitset_vector_iterator_free(i5);
+    bitset_vector_free(v1);
+    bitset_vector_free(v2);
+    bitset_vector_free(v3);
+    bitset_vector_free(v4);
 }
 
