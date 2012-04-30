@@ -293,8 +293,10 @@ bitset *bitset_vector_iterator_merge(bitset_vector_iterator *i) {
 }
 
 void bitset_vector_iterator_free(bitset_vector_iterator *i) {
-    if (!i->is_mutable) {
-        for (unsigned j = 0; j < i->length; j++) {
+    for (unsigned j = 0; j < i->length; j++) {
+        if (i->is_mutable) {
+            bitset_free(i->bitsets[j]);
+        } else {
             free(i->bitsets[j]);
         }
     }
@@ -555,9 +557,6 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
     for (unsigned j = 0; j < o->length; j++) {
         if (o->steps[j]->is_nested) {
             step = o->steps[j]->data.i;
-            for (unsigned k = 0; k < step->length; k++) {
-                bitset_free(step->bitsets[k]);
-            }
             bitset_vector_iterator_free(o->steps[j]->data.i);
             o->steps[j]->is_nested = false;
         }

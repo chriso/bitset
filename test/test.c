@@ -979,7 +979,6 @@ void test_suite_vector_operation() {
         } else {
             test_bool("", false, true);
         }
-        bitset_free(b1);
     }
 
     bitset_vector_iterator_free(i1);
