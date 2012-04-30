@@ -22,6 +22,9 @@ bitset_operation *bitset_operation_new(bitset *initial) {
 void bitset_operation_free(bitset_operation *ops) {
     if (ops->length) {
         for (unsigned i = 0; i < ops->length; i++) {
+            if (ops->steps[i]->is_nested) {
+                bitset_operation_free(ops->steps[i]->data.op);
+            }
             free(ops->steps[i]);
         }
         free(ops->steps);
