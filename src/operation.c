@@ -15,7 +15,6 @@ bitset_operation *bitset_operation_new(bitset *initial) {
     if (initial) {
         bitset_operation_add(ops, initial, BITSET_OR);
     }
-    ops->words = NULL;
     return ops;
 }
 
@@ -32,9 +31,6 @@ void bitset_operation_free(bitset_operation *ops) {
             free(ops->steps[i]);
         }
         free(ops->steps);
-    }
-    if (ops->words) {
-        bitset_hash_free(ops->words);
     }
     free(ops);
 }
@@ -87,14 +83,12 @@ void bitset_operation_add_nested(bitset_operation *ops, bitset_operation *o,
 }
 
 static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
-    if (op->words) return op->words;
-
     bitset_offset word_offset, max = 0, next_max;
     bitset_operation_step *step;
     bitset_word word, *hashed;
     unsigned position, count = 0;
     size_t size;
-    bitset_hash *and_words = NULL;
+    bitset_hash *words, *and_words = NULL;
     bitset *tmp;
 
     if (!op->length) {
@@ -127,7 +121,7 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
         max /= 50;
     }
     size = size < 32 ? 32 : size > 16777216 ? 16777216 : size;
-    op->words = bitset_hash_new(size);
+    words = bitset_hash_new(size);
 
     for (unsigned i = 0; i < op->length; i++) {
 
@@ -136,7 +130,7 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
 
         if (step->type == BITSET_AND) {
 
-            and_words = bitset_hash_new(op->words->size);
+            and_words = bitset_hash_new(words->size);
 
             for (unsigned j = 0; j < step->data.b->length; j++) {
                 if (j > 10) break;
@@ -150,7 +144,7 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
                     word = BITSET_CREATE_LITERAL(position - 1);
                 }
                 word_offset++;
-                hashed = bitset_hash_get(op->words, word_offset);
+                hashed = bitset_hash_get(words, word_offset);
                 if (hashed && *hashed) {
                     word &= *hashed;
                     if (word) {
@@ -159,8 +153,8 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
                 }
             }
 
-            bitset_hash_free(op->words);
-            op->words = and_words;
+            bitset_hash_free(words);
+            words = and_words;
             and_words = NULL;
 
         } else {
@@ -179,7 +173,7 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
 
                 word_offset++;
 
-                hashed = bitset_hash_get(op->words, word_offset);
+                hashed = bitset_hash_get(words, word_offset);
 
                 if (hashed) {
                     switch (step->type) {
@@ -189,13 +183,13 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
                         default: break;
                     }
                 } else if (step->type != BITSET_ANDNOT) {
-                    bitset_hash_insert(op->words, word_offset, word);
+                    bitset_hash_insert(words, word_offset, word);
                 }
             }
         }
     }
 
-    return op->words;
+    return words;
 }
 
 static int bitset_operation_offset_sort(const void *a, const void *b) {
@@ -232,6 +226,7 @@ bitset *bitset_operation_exec(bitset_operation *op) {
     bitset_word word, *hashed, fill = BITSET_CREATE_EMPTY_FILL(BITSET_MAX_LENGTH);
 
     if (!words->count) {
+        bitset_hash_free(words);
         return result;
     }
 
@@ -254,7 +249,7 @@ bitset *bitset_operation_exec(bitset_operation *op) {
 
     for (unsigned i = 0; i < words->count; i++) {
         offset = offsets[i];
-        hashed = bitset_hash_get(op->words, offset);
+        hashed = bitset_hash_get(words, offset);
         word = *hashed;
         if (!word) continue;
 
@@ -284,6 +279,7 @@ bitset *bitset_operation_exec(bitset_operation *op) {
     }
 
     free(offsets);
+    bitset_hash_free(words);
 
     return result;
 }
@@ -315,6 +311,7 @@ bitset_offset bitset_operation_count(bitset_operation *op) {
     fprintf(stderr, "HASH: %u buckets, %u tagged, %u linked-list nodes\n",
         words->size, tagged, nodes);
 #endif
+    bitset_hash_free(words);
     return count;
 }
 

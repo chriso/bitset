@@ -45,7 +45,6 @@ typedef struct bitset_operation_step_ {
 
 struct bitset_operation_ {
     bitset_operation_step **steps;
-    bitset_hash *words;
     size_t length;
 };
 
