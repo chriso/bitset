@@ -374,6 +374,14 @@ bitset *bitset_new_bits(bitset_offset *bits, size_t count) {
     if (count > 1 && div == bits[i-2] / BITSET_LITERAL_LENGTH) {
         b->words[pos] |= BITSET_CREATE_LITERAL(rem);
     } else {
+        if (div - word_offset > BITSET_MAX_LENGTH) {
+            fills = (div - word_offset) / BITSET_MAX_LENGTH;
+            bitset_resize(b, b->length + fills);
+            for (bitset_offset j = 0; j < fills; j++) {
+                b->words[pos++] = fill;
+            }
+            word_offset += fills * BITSET_MAX_LENGTH;
+        }
         b->words[pos] = BITSET_CREATE_FILL(div - word_offset, rem);
     }
 

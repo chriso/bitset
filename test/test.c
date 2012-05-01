@@ -130,6 +130,11 @@ void test_suite_get() {
     test_bool("Testing BITSET_NEW macro 6\n", true, bitset_get(b3, 300));
     bitset_free(b3);
 
+    BITSET_NEW(b4b, { 4000000000 });
+    test_int("Testing BITSET_NEW macro 7\n", 1, bitset_count(b3));
+    test_bool("Testing BITSET_NEW macro 8\n", true, bitset_get(b3, 4000000000));
+    bitset_free(b4b);
+
     BITSET_NEW(b4, { 100, 300, 302, 305, 1000 });
     bitset_iterator *i = bitset_iterator_new(b4);
     unsigned o, iters = 0;
