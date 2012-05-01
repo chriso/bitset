@@ -23,7 +23,11 @@ void bitset_operation_free(bitset_operation *ops) {
     if (ops->length) {
         for (unsigned i = 0; i < ops->length; i++) {
             if (ops->steps[i]->is_nested) {
-                bitset_operation_free(ops->steps[i]->data.op);
+                if (ops->steps[i]->is_operation) {
+                    bitset_operation_free(ops->steps[i]->data.op);
+                } else {
+                    bitset_free(ops->steps[i]->data.b);
+                }
             }
             free(ops->steps[i]);
         }
@@ -68,6 +72,7 @@ void bitset_operation_add(bitset_operation *ops, bitset *b, enum bitset_operatio
     }
     bitset_operation_step *step = bitset_operation_add_step(ops);
     step->is_nested = false;
+    step->is_operation = false;
     step->data.b = b;
     step->type = type;
 }
@@ -76,6 +81,7 @@ void bitset_operation_add_nested(bitset_operation *ops, bitset_operation *o,
         enum bitset_operation_type type) {
     bitset_operation_step *step = bitset_operation_add_step(ops);
     step->is_nested = true;
+    step->is_operation = true;
     step->data.op = o;
     step->type = type;
 }
@@ -95,10 +101,11 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
 
     //Recursively flatten nested operations
     for (unsigned i = 0; i < op->length; i++) {
-        if (op->steps[i]->is_nested) {
+        if (op->steps[i]->is_operation) {
             tmp = bitset_operation_exec(op->steps[i]->data.op);
             bitset_operation_free(op->steps[i]->data.op);
             op->steps[i]->data.b = tmp;
+            op->steps[i]->is_operation = false;
         }
     }
 
@@ -130,6 +137,7 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
             and_words = bitset_hash_new(op->words->size);
 
             for (unsigned j = 0; j < step->data.b->length; j++) {
+                if (j > 10) break;
                 word = step->data.b->words[j];
                 if (BITSET_IS_FILL_WORD(word)) {
                     word_offset += BITSET_GET_LENGTH(word);
@@ -182,14 +190,6 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
                     bitset_hash_insert(op->words, word_offset, word);
                 }
             }
-        }
-    }
-
-    //Free temporaries from nested operations
-    for (unsigned i = 0; i < op->length; i++) {
-        if (op->steps[i]->is_nested) {
-            bitset_free(op->steps[i]->data.b);
-            op->steps[i]->is_nested = false;
         }
     }
 

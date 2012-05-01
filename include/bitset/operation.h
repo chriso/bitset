@@ -39,6 +39,7 @@ typedef struct bitset_operation_step_ {
         bitset_operation *op;
     } data;
     bool is_nested;
+    bool is_operation;
     enum bitset_operation_type type;
 } bitset_operation_step;
 

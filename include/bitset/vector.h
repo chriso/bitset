@@ -53,6 +53,7 @@ typedef struct bitset_vector_operation_step_ {
         bitset_vector_operation *o;
     } data;
     bool is_nested;
+    bool is_operation;
     enum bitset_operation_type type;
 } bitset_vector_operation_step;
 

@@ -322,7 +322,11 @@ void bitset_vector_operation_free(bitset_vector_operation *ops) {
     if (ops->length) {
         for (unsigned i = 0; i < ops->length; i++) {
             if (ops->steps[i]->is_nested) {
-                bitset_vector_operation_free(ops->steps[i]->data.o);
+                if (ops->steps[i]->is_operation) {
+                    bitset_vector_operation_free(ops->steps[i]->data.o);
+                } else {
+                    bitset_vector_iterator_free(ops->steps[i]->data.i);
+                }
             }
             free(ops->steps[i]);
         }
@@ -358,6 +362,7 @@ void bitset_vector_operation_add(bitset_vector_operation *o,
         bitset_vector_iterator *i, enum bitset_operation_type type) {
     bitset_vector_operation_step *step = bitset_vector_operation_add_step(o);
     step->is_nested = false;
+    step->is_operation = false;
     step->data.i = i;
     step->type = type;
 }
@@ -366,6 +371,7 @@ void bitset_vector_operation_add_nested(bitset_vector_operation *o,
         bitset_vector_operation *op, enum bitset_operation_type type) {
     bitset_vector_operation_step *step = bitset_vector_operation_add_step(o);
     step->is_nested = true;
+    step->is_operation = true;
     step->data.o = op;
     step->type = type;
 }
@@ -487,10 +493,11 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
     for (unsigned j = 0; j < o->length; j++) {
 
         //Recursively flatten nested operations
-        if (o->steps[j]->is_nested) {
+        if (o->steps[j]->is_operation) {
             tmp = bitset_vector_operation_exec(o->steps[j]->data.o);
             bitset_vector_operation_free(o->steps[j]->data.o);
             o->steps[j]->data.i = tmp;
+            o->steps[j]->is_operation = false;
         }
 
         step = o->steps[j]->data.i;
@@ -552,15 +559,6 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
 
     free(offsets);
     bitset_vector_hash_free(h);
-
-    //Free temporaries created by nested operations
-    for (unsigned j = 0; j < o->length; j++) {
-        if (o->steps[j]->is_nested) {
-            step = o->steps[j]->data.i;
-            bitset_vector_iterator_free(o->steps[j]->data.i);
-            o->steps[j]->is_nested = false;
-        }
-    }
 
     return i;
 }
