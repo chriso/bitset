@@ -117,6 +117,13 @@ void test_suite_get() {
     test_bool("Testing get with position following a fill 2\n", true, bitset_get(b, 31));
     test_bool("Testing get with position following a fill 3\n", false, bitset_get(b, 32));
     bitset_free(b);
+
+    BITSET_NEW(b2, { 1, 10, 100 });
+    test_int("Testing BITSET_NEW macro 1\n", 3, bitset_count(b2));
+    test_bool("Testing BITSET_NEW macro 2\n", true, bitset_get(b2, 1));
+    test_bool("Testing BITSET_NEW macro 3\n", true, bitset_get(b2, 10));
+    test_bool("Testing BITSET_NEW macro 4\n", true, bitset_get(b2, 100));
+    bitset_free(b2);
 }
 
 void test_suite_count() {

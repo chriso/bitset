@@ -132,9 +132,6 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *, unsigned, un
          BITSET_TMPVAR(i, __LINE__) < iterator->length; \
          BITSET_TMPVAR(i, __LINE__)++)
 
-#define BITSET_TMPVAR(i, line) BITSET_TMPVAR_(i, line)
-#define BITSET_TMPVAR_(a,b) a__##b
-
 /**
  * Concatenate an iterator to another at the specified offset.
  */

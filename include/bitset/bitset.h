@@ -49,6 +49,9 @@
 #define BITSET_CREATE_LITERAL(bit)     (BITSET_COLOUR_BIT >> (bit))
 #define BITSET_MAX_LENGTH              BITSET_LENGTH_MASK
 
+#define BITSET_TMPVAR(i, line)         BITSET_TMPVAR_(i, line)
+#define BITSET_TMPVAR_(a,b)            a__##b
+
 #define BITSET_MAX(a, b)               ((a) > (b) ? (a) : (b));
 #define BITSET_MIN(a, b)               ((a) < (b) ? (a) : (b));
 #define BITSET_IS_POW2(word)           ((word & (word - 1)) == 0)
@@ -125,6 +128,15 @@ bitset *bitset_new_buffer(const char *, size_t);
  */
 
 bitset *bitset_new_bits(bitset_offset *, size_t);
+
+/**
+ * A helper for creating bitsets: BITSET_NEW(b1, { 1, 10, 100 });
+ */
+
+#define BITSET_NEW(name, ...) \
+    bitset_offset BITSET_TMPVAR(o, __LINE__)[] = __VA_ARGS__; \
+    bitset *name = bitset_new_bits((bitset_offset*)BITSET_TMPVAR(o, __LINE__), \
+      sizeof(BITSET_TMPVAR(o, __LINE__))/sizeof(BITSET_TMPVAR(o, __LINE__)[0]));
 
 /**
  * Create a copy of the specified bitset.
