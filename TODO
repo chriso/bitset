@@ -4,3 +4,4 @@ Implement bitset_iterator for iterating over bits
 Implement probabilistic HyperLogLog and Top-k algorithms for streams of bitsets
 Consider merging bitset_hash_* and bitset_vector_hash_* using macros/void*
 Use builtin ffs(), fls(), POPCNT if available
+Encode lengths > 2^26 using a fill with P=0 followed by another. Length is L1 << 26 & L2
