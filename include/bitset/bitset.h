@@ -87,6 +87,19 @@ typedef struct bitset_ {
     size_t size;
 } bitset;
 
+typedef struct bitset_iterator_ {
+    bitset_offset *offsets;
+    size_t length;
+} bitset_iterator;
+
+/**
+ * Custom out of memory behaviour.
+ */
+
+#ifndef bitset_oom
+#  define bitset_oom() fprintf(stderr, "Out of memory\n"), exit(1)
+#endif
+
 /**
  * Create a new bitset.
  */
@@ -187,12 +200,26 @@ bitset_offset bitset_min(const bitset *);
 bitset_offset bitset_max(const bitset *);
 
 /**
- * Custom out of memory behaviour.
+ * Create a new bitset iterator.
  */
 
-#ifndef bitset_oom
-#  define bitset_oom() fprintf(stderr, "Out of memory\n"), exit(1)
-#endif
+bitset_iterator *bitset_iterator_new(const bitset *);
+
+/**
+ * Iterate over all bits.
+ */
+
+#define BITSET_FOREACH(iterator, offset) \
+    for (unsigned BITSET_TMPVAR(i, __LINE__) = 0; \
+         offset = iterator->length ? iterator->offsets[BITSET_TMPVAR(i, __LINE__)] : 0, \
+         BITSET_TMPVAR(i, __LINE__) < iterator->length; \
+         BITSET_TMPVAR(i, __LINE__)++)
+
+/**
+ * Free the bitset iterator.
+ */
+
+void bitset_iterator_free(bitset_iterator *);
 
 #endif
 

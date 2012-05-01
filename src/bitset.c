@@ -380,3 +380,50 @@ bitset *bitset_new_bits(bitset_offset *bits, size_t count) {
     return b;
 }
 
+bitset_iterator *bitset_iterator_new(const bitset *b) {
+    bitset_iterator *i = (bitset_iterator *) malloc(sizeof(bitset_iterator));
+    if (!i) {
+        bitset_oom();
+    }
+    i->length = bitset_count(b);
+    if (i->length) {
+        i->offsets = (bitset_offset *) malloc(sizeof(bitset_offset) * i->length);
+        if (!i->offsets) {
+            bitset_oom();
+        }
+        bitset_offset offset = 0, tmp;
+        bitset_word word, mask;
+        unsigned position;
+        for (unsigned j = 0, k = 0; j < b->length; j++) {
+            word = b->words[j];
+            if (BITSET_IS_FILL_WORD(word)) {
+                offset += BITSET_GET_LENGTH(word);
+                position = BITSET_GET_POSITION(word);
+                if (!position) {
+                    continue;
+                }
+                i->offsets[k++] = BITSET_LITERAL_LENGTH * offset + position - 1;
+            } else {
+                tmp = BITSET_LITERAL_LENGTH * offset;
+                for (unsigned x = BITSET_LITERAL_LENGTH - 1; x; x--) {
+                    mask = 1 << x;
+                    if (word & mask) {
+                        i->offsets[k++] = tmp + BITSET_LITERAL_LENGTH - x - 1;
+                    }
+                }
+            }
+            offset++;
+        }
+    } else {
+        i->offsets = NULL;
+    }
+    return i;
+}
+
+void bitset_iterator_free(bitset_iterator *i) {
+    if (i->length) {
+        free(i->offsets);
+    }
+    free(i);
+}
+

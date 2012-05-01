@@ -129,6 +129,18 @@ void test_suite_get() {
     test_int("Testing BITSET_NEW macro 5\n", 1, bitset_count(b3));
     test_bool("Testing BITSET_NEW macro 6\n", true, bitset_get(b3, 300));
     bitset_free(b3);
+
+    BITSET_NEW(b4, { 100, 300, 302, 305, 1000 });
+    bitset_iterator *i = bitset_iterator_new(b4);
+    unsigned o, iters = 0;
+    BITSET_FOREACH(i, o) {
+        test_bool("Checking bitset iterator", true, o==100 || o==300 || o==302 || o==305 || o==1000);
+        iters++;
+    }
+    test_int("Checking bitset iterator 2\n", 5, iters);
+    (void)o;
+    bitset_iterator_free(i);
+    bitset_free(b4);
 }
 
 void test_suite_count() {
@@ -455,12 +467,6 @@ void test_suite_set() {
     test_ulong("Testing set where a chain of fills is required 3\n", 2, bitset_count(b));
     bitset_free(b);
 #endif
-
-    //Test unsetting of position bit of 0-colour => fill_length++
-    //Test setting & unsetting the position bit of a 1-colour fill word
-    //Test append where bit becomes position in 1-colour fill
-    //Test append where unset requires break of 1-colour fill position
-    //Test partition where 1-colour position has to be split out
 }
 
 void test_suite_stress() {
