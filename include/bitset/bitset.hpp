@@ -14,6 +14,19 @@
 
 namespace compressedbitset {
 
+class Bitset;
+class BitsetOperation;
+class Vector;
+class VectorIterator;
+class VectorOperation;
+
+const enum bitset_operation_type AND = BITSET_AND;
+const enum bitset_operation_type OR = BITSET_OR;
+const enum bitset_operation_type XOR = BITSET_XOR;
+const enum bitset_operation_type ANDNOT = BITSET_ANDNOT;
+const unsigned START = BITSET_VECTOR_START;
+const unsigned END = BITSET_VECTOR_END;
+
 class Bitset {
   public:
     Bitset() { b = bitset_new(); }
@@ -49,10 +62,11 @@ class Bitset {
     void clear() {
         bitset_clear(b);
     }
+    BitsetOperation *getOperation();
     char *getBuffer() const {
         return (char *) b->words;
     }
-    bitset *getBitset() {
+    bitset *getBitset() const {
         return b;
     }
   protected:
@@ -64,34 +78,21 @@ class BitsetOperation {
     BitsetOperation() {
         o = bitset_operation_new(NULL);
     }
-    BitsetOperation(Bitset& b) {
+    BitsetOperation(const Bitset& b) {
         o = bitset_operation_new(b.getBitset());
     }
     ~BitsetOperation() {
-        bitset_operation_free(o);
+        if (o) bitset_operation_free(o);
     }
-    BitsetOperation& add(Bitset& b, enum bitset_operation_type op) {
+    BitsetOperation& add(const Bitset& b, enum bitset_operation_type op) {
         bitset_operation_add(o, b.getBitset(), op);
         return *this;
     }
     BitsetOperation& add(BitsetOperation& nested, enum bitset_operation_type op) {
         bitset_operation_add_nested(o, nested.getBitsetOperation(), op);
+        //Note: parent operation takes control of the pointer
+        nested.removeBitsetOperation();
         return *this;
-    }
-    BitsetOperation& And(Bitset& b) {
-        return add(b, BitsetOperation::AND);
-    }
-    BitsetOperation& Or(Bitset& b) {
-        return add(b, BitsetOperation::OR);
-    }
-    BitsetOperation& Xor(Bitset& b) {
-        return add(b, BitsetOperation::XOR);
-    }
-    BitsetOperation& AndNot(Bitset& b) {
-        return add(b, BitsetOperation::ANDNOT);
-    }
-    bitset_operation *getBitsetOperation() {
-        return o;
     }
     Bitset *exec() {
         return new Bitset(bitset_operation_exec(o));
@@ -99,18 +100,13 @@ class BitsetOperation {
     unsigned count() {
         return bitset_operation_count(o);
     }
-    static enum bitset_operation_type AND;
-    static enum bitset_operation_type OR;
-    static enum bitset_operation_type XOR;
-    static enum bitset_operation_type ANDNOT;
+    bitset_operation *getBitsetOperation() const {
+        return o;
+    }
+    void removeBitsetOperation() { o = NULL; }
   protected:
     bitset_operation *o;
 };
-
-enum bitset_operation_type BitsetOperation::AND = BITSET_AND;
-enum bitset_operation_type BitsetOperation::OR = BITSET_OR;
-enum bitset_operation_type BitsetOperation::XOR = BITSET_XOR;
-enum bitset_operation_type BitsetOperation::ANDNOT = BITSET_ANDNOT;
 
 class Vector {
   public:
@@ -120,8 +116,9 @@ class Vector {
         v = bitset_vector_new_buffer(buffer, length);
     }
     ~Vector() { bitset_vector_free(v); }
-    void push(Bitset &b, unsigned offset) {
+    Vector& push(const Bitset &b, unsigned offset) {
         bitset_vector_push(v, b.getBitset(), offset);
+        return *this;
     }
     unsigned length() const {
         return bitset_vector_length(v);
@@ -129,43 +126,40 @@ class Vector {
     unsigned count() const {
         return bitset_vector_count(v);
     }
+    VectorIterator *getIterator(unsigned start, unsigned end);
     char *getBuffer() const {
         return v->buffer;
     }
     bitset_vector *getVector() const {
         return v;
     }
-    static unsigned START;
-    static unsigned END;
   protected:
     bitset_vector *v;
 };
 
-unsigned Vector::START = BITSET_VECTOR_START;
-unsigned Vector::END = BITSET_VECTOR_END;
-
 class VectorIterator {
   public:
     VectorIterator(bitset_vector_iterator *it) { i = it; }
-    VectorIterator(Vector& list, unsigned start=Vector::START, unsigned end=Vector::END) {
+    VectorIterator(const Vector& list, unsigned start=START, unsigned end=END) {
         i = bitset_vector_iterator_new(list.getVector(), start, end);
     }
     ~VectorIterator() {
         bitset_vector_iterator_free(i);
     }
-    VectorIterator& concat(VectorIterator& next, unsigned offset) {
+    VectorIterator& concat(const VectorIterator& next, unsigned offset) {
         bitset_vector_iterator_concat(i, next.getVectorIterator(), offset);
         return *this;
     }
     void count(unsigned *raw, unsigned *unique) const {
         bitset_vector_iterator_count(i, raw, unique);
     }
-    Bitset *merge() {
+    Bitset *merge() const {
         return new Bitset(bitset_vector_iterator_merge(i));
     }
-    Vector *compact() {
+    Vector *compact() const {
         return new Vector(bitset_vector_iterator_compact(i));
     }
+    VectorOperation *getOperation();
     bitset_vector_iterator *getVectorIterator() const {
         return i;
     }
@@ -174,30 +168,49 @@ class VectorIterator {
 };
 
 class VectorOperation {
+  public:
     VectorOperation() {
         o = bitset_vector_operation_new(NULL);
     }
-    VectorOperation(VectorIterator& i) {
+    VectorOperation(const VectorIterator& i) {
         o = bitset_vector_operation_new(i.getVectorIterator());
     }
-    ~VectorOperation() { bitset_vector_operation_free(o); }
-    VectorOperation& add(VectorIterator& v, enum bitset_operation_type op) {
+    ~VectorOperation() {
+        if (o) bitset_vector_operation_free(o);
+    }
+    VectorOperation& add(const VectorIterator& v, enum bitset_operation_type op) {
         bitset_vector_operation_add(o, v.getVectorIterator(), op);
         return *this;
     }
     VectorOperation& add(VectorOperation& nested, enum bitset_operation_type op) {
         bitset_vector_operation_add_nested(o, nested.getVectorOperation(), op);
+        nested.removeVectorOperation();
         return *this;
     }
     VectorIterator *exec() {
         return new VectorIterator(bitset_vector_operation_exec(o));
     }
-    bitset_vector_operation *getVectorOperation() {
+    bitset_vector_operation *getVectorOperation() const {
         return o;
+    }
+    void removeVectorOperation() {
+        o = NULL;
     }
   protected:
     bitset_vector_operation *o;
 };
+
+BitsetOperation *Bitset::getOperation() {
+    return new BitsetOperation(*this);
+}
+
+VectorIterator *Vector::getIterator(unsigned start=START, unsigned end=END) {
+    return new VectorIterator(*this, start, end);
+}
+
+VectorOperation *VectorIterator::getOperation() {
+    return new VectorOperation(*this);
+}
 
 } //namespace compressedbitset
 
