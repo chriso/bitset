@@ -87,6 +87,8 @@ void bitset_operation_add_nested(bitset_operation *ops, bitset_operation *o,
 }
 
 static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
+    if (op->words) return op->words;
+
     bitset_offset word_offset, max = 0, next_max;
     bitset_operation_step *step;
     bitset_word word, *hashed;
