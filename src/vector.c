@@ -549,13 +549,23 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
     qsort(offsets, h->count, sizeof(unsigned), bitset_vector_offset_sort);
 
     //Execute the operations and store the results
+    unsigned count = 0;
     for (unsigned j = 0; j < h->count; j++) {
         offset = offsets[j];
         op = bitset_vector_hash_get(h, offset);
-        i->bitsets[j] = bitset_operation_exec(op);
-        i->offsets[j] = offset;
+        if (op->length) {
+            b = bitset_operation_exec(op);
+            if (b->length) {
+                i->bitsets[count] = b;
+                i->offsets[count] = offset;
+                count++;
+            } else {
+                bitset_free(b);
+            }
+        }
         bitset_operation_free(op);
     }
+    i->length = count;
 
     free(offsets);
     bitset_vector_hash_free(h);
