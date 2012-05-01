@@ -124,6 +124,11 @@ void test_suite_get() {
     test_bool("Testing BITSET_NEW macro 3\n", true, bitset_get(b2, 10));
     test_bool("Testing BITSET_NEW macro 4\n", true, bitset_get(b2, 100));
     bitset_free(b2);
+
+    BITSET_NEW(b3, { 300 });
+    test_int("Testing BITSET_NEW macro 5\n", 1, bitset_count(b3));
+    test_bool("Testing BITSET_NEW macro 6\n", true, bitset_get(b3, 300));
+    bitset_free(b3);
 }
 
 void test_suite_count() {
