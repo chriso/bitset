@@ -22,34 +22,38 @@ bitset_linear *bitset_linear_new(size_t size) {
 };
 
 void bitset_linear_add(bitset_linear *e, bitset *b) {
-    bitset_offset offset = 0, tmp;
+    bitset_offset offset = 0;
     bitset_word word = 0, mask;
     unsigned position;
     for (unsigned i = 0; i < b->length; i++) {
         word = b->words[i];
         if (BITSET_IS_FILL_WORD(word)) {
             offset += BITSET_GET_LENGTH(word);
+            if (offset >= e->size) {
+                offset %= e->size;
+            }
             position = BITSET_GET_POSITION(word);
             if (!position) {
                 continue;
             }
-            tmp = offset % e->size;
             mask = BITSET_CREATE_LITERAL(position - 1);
-            if ((e->words[tmp] & mask) == 0) {
+            if ((e->words[offset] & mask) == 0) {
                 e->count++;
-                e->words[tmp] |= mask;
+                e->words[offset] |= mask;
             }
         } else {
-            tmp = offset % e->size;
             for (unsigned i = BITSET_LITERAL_LENGTH - 1; i; i--) {
                 mask = 1 << i;
-                if (word & mask && (e->words[tmp] & mask) == 0) {
+                if (word & mask && (e->words[offset] & mask) == 0) {
                     e->count++;
-                    e->words[tmp] |= mask;
+                    e->words[offset] |= mask;
                 }
             }
         }
         offset++;
+        if (offset >= e->size) {
+            offset -= e->size;
+        }
     }
 };
 
