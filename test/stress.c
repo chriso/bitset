@@ -32,7 +32,7 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     printf("Created %.2fMB in %.2fs (%.2fMB/s)\n", size, end, size/end);
 
     //Popcnt bitsets
-    bitset_offset count = 0, ucount = 0;
+    unsigned count = 0, ucount = 0;
     bitset_operation *o = bitset_operation_new(NULL);
     for (i = 0; i < bitsets; i++) {
         count += bitset_count(b[i]);
@@ -44,12 +44,11 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     bitset_vector_iterator *iter = bitset_vector_iterator_new(vector,
         BITSET_VECTOR_START, BITSET_VECTOR_END);
     start = (float) clock();
-    bitset_offset raw, unique;
+    unsigned raw, unique;
     bitset_vector_iterator_count(iter, &raw, &unique);
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
-    printf("Counted " bitset_format " unique bits (" bitset_format " expected) from "
-        bitset_format " (" bitset_format \
-        " expected) bits using an iterator in %.2fs\n", unique, ucount, raw, count, end);
+    printf("Counted %u unique bits (%u expected) from "
+        "%u (%u expected) bits using an iterator in %.2fs\n", unique, ucount, raw, count, end);
     for (i = 0; i < bitsets; i++) {
         bitset_free(b[i]);
     }
@@ -109,7 +108,7 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
     for (unsigned i = 0; i < bitsets; i++) {
         bitset_linear_add(e, b[i]);
     }
-    printf("Unique bit count => " bitset_format "\n", bitset_linear_count(e));
+    printf("Unique bit count => %u\n", bitset_linear_count(e));
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
     printf("Executed linear count in %.2fs (%.2fMB/s)\n", end, size/end);
     bitset_linear_free(e);
