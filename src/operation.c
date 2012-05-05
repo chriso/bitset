@@ -83,34 +83,33 @@ void bitset_operation_add_nested(bitset_operation *ops, bitset_operation *o,
 }
 
 static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
-    bitset_offset word_offset, max = 0, next_max;
+    bitset_offset word_offset, max = 0;
     bitset_operation_step *step;
     bitset_word word, *hashed;
     unsigned position, count = 0;
     size_t size;
     bitset_hash *words, *and_words = NULL;
-    bitset *tmp;
+    bitset *tmp, *b;
 
     if (!op->length) {
         return bitset_hash_new(1);
     }
 
-    //Recursively flatten nested operations
     for (unsigned i = 0; i < op->length; i++) {
+
+        //Recursively flatten nested operations
         if (op->steps[i]->is_operation) {
             tmp = bitset_operation_exec(op->steps[i]->data.op);
             bitset_operation_free(op->steps[i]->data.op);
             op->steps[i]->data.b = tmp;
             op->steps[i]->is_operation = false;
         }
-    }
 
-    //Work out the number of hash buckets required. Note that setting the right
-    //number of buckets to avoid collisions is the biggest available win here
-    for (unsigned i = 0; i < op->length; i++) {
+        //Work out the number of hash buckets required. Note that setting the right
+        //number of buckets to avoid collisions is the biggest available win here
         count += op->steps[i]->data.b->length / sizeof(bitset_word);
-        next_max = bitset_max(op->steps[i]->data.b);
-        if (next_max > max) max = next_max;
+        max = BITSET_MAX(max, bitset_max(op->steps[i]->data.b));
+
     }
 #ifdef HASH_DEBUG
     fprintf(stderr, "HASH: Bitsets count = %u, max = %u\n", count, max);
@@ -126,15 +125,15 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
     for (unsigned i = 0; i < op->length; i++) {
 
         step = op->steps[i];
+        b = step->data.b;
         word_offset = 0;
 
         if (step->type == BITSET_AND) {
 
             and_words = bitset_hash_new(words->size);
 
-            for (unsigned j = 0; j < step->data.b->length; j++) {
-                if (j > 10) break;
-                word = step->data.b->words[j];
+            for (unsigned j = 0; j < b->length; j++) {
+                word = b->words[j];
                 if (BITSET_IS_FILL_WORD(word)) {
                     word_offset += BITSET_GET_LENGTH(word);
                     position = BITSET_GET_POSITION(word);
@@ -159,8 +158,8 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
 
         } else {
 
-            for (unsigned j = 0; j < step->data.b->length; j++) {
-                word = step->data.b->words[j];
+            for (unsigned j = 0; j < b->length; j++) {
+                word = b->words[j];
 
                 if (BITSET_IS_FILL_WORD(word)) {
                     word_offset += BITSET_GET_LENGTH(word);
