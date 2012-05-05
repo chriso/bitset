@@ -86,32 +86,34 @@ void test_suite_get() {
         test_bool("Testing initial bits are unset\n", false, bitset_get(b, i));
     bitset_free(b);
 
-    uint32_t p1[] = { 0x80000000, BITSET_CREATE_LITERAL(30) };
+    uint32_t p1[] = { BITSET_CREATE_EMPTY_FILL(0), BITSET_CREATE_LITERAL(30) };
     b = bitset_new_buffer((const char *)p1, 8);
     test_bool("Testing get in the first literal 1\n", true, bitset_get(b, 30));
     test_bool("Testing get in the first literal 2\n", false, bitset_get(b, 31));
     bitset_free(b);
 
-    uint32_t p2[] = { 0x80000000, BITSET_CREATE_LITERAL(0) };
+    uint32_t p2[] = { BITSET_CREATE_EMPTY_FILL(0), BITSET_CREATE_LITERAL(0) };
     b = bitset_new_buffer((const char *)p2, 8);
     test_bool("Testing get in the first literal 3\n", true, bitset_get(b, 0));
     test_bool("Testing get in the first literal 4\n", false, bitset_get(b, 1));
     bitset_free(b);
 
-    uint32_t p3[] = { 0x80000001, BITSET_CREATE_LITERAL(0) };
+    uint32_t p3[] = { BITSET_CREATE_EMPTY_FILL(1), BITSET_CREATE_LITERAL(0) };
     b = bitset_new_buffer((const char *)p3, 8);
     test_bool("Testing get in the first literal with offset 1\n", false, bitset_get(b, 1));
     test_bool("Testing get in the first literal with offset 2\n", true, bitset_get(b, 31));
     bitset_free(b);
 
-    uint32_t p4[] = { 0x80000001, 0x80000001, 0x40000000 };
+    uint32_t p4[] = {
+        BITSET_CREATE_EMPTY_FILL(1), BITSET_CREATE_EMPTY_FILL(1), BITSET_CREATE_LITERAL(0)
+    };
     b = bitset_new_buffer((const char *)p4, 12);
     test_bool("Testing get in the first literal with offset 4\n", false, bitset_get(b, 0));
     test_bool("Testing get in the first literal with offset 5\n", false, bitset_get(b, 31));
     test_bool("Testing get in the first literal with offset 6\n", true, bitset_get(b, 62));
     bitset_free(b);
 
-    uint32_t p5[] = { 0x82000001 };
+    uint32_t p5[] = { BITSET_CREATE_FILL(1, 0) };
     b = bitset_new_buffer((const char *)p5, 4);
     test_bool("Testing get with position following a fill 1\n", false, bitset_get(b, 0));
     test_bool("Testing get with position following a fill 2\n", true, bitset_get(b, 31));
@@ -153,22 +155,22 @@ void test_suite_count() {
     test_ulong("Testing pop count of empty set\n", 0, bitset_count(b));
     bitset_free(b);
 
-    uint32_t p1[] = { 0x80000000, 0x00000001 };
+    uint32_t p1[] = { BITSET_CREATE_EMPTY_FILL(0), BITSET_CREATE_LITERAL(0) };
     b = bitset_new_buffer((const char *)p1, 8);
     test_ulong("Testing pop count of single literal 1\n", 1, bitset_count(b));
     bitset_free(b);
 
-    uint32_t p2[] = { 0x80000000, 0x11111111 };
+    uint32_t p2[] = { BITSET_CREATE_EMPTY_FILL(0), 0x11111111 };
     b = bitset_new_buffer((const char *)p2, 8);
     test_ulong("Testing pop count of single literal 2\n", 8, bitset_count(b));
     bitset_free(b);
 
-    uint32_t p3[] = { 0x80000001 };
+    uint32_t p3[] = { BITSET_CREATE_EMPTY_FILL(1) };
     b = bitset_new_buffer((const char *)p3, 4);
     test_ulong("Testing pop count of single fill 1\n", 0, bitset_count(b));
     bitset_free(b);
 
-    uint32_t p8[] = { 0x8C000011 };
+    uint32_t p8[] = { BITSET_CREATE_FILL(3, 4) };
     b = bitset_new_buffer((const char *)p8, 4);
     test_ulong("Testing pop count of fill with position 1\n", 1, bitset_count(b));
     bitset_free(b);
@@ -233,90 +235,90 @@ void test_suite_set() {
     test_bool("Testing set on empty set 5\n", true, bitset_get(b, 31));
     bitset_free(b);
 
-    uint32_t p1[] = { 0x80000001 };
+    uint32_t p1[] = { BITSET_CREATE_EMPTY_FILL(1) };
     b = bitset_new_buffer((const char *)p1, 4);
     test_bool("Testing append after fill 1\n", false, bitset_set_to(b, 93, true));
-    uint32_t e1[] = { 0x80000001, 0x82000002 };
+    uint32_t e1[] = { BITSET_CREATE_EMPTY_FILL(1), BITSET_CREATE_FILL(2, 0) };
     test_bitset("Testing append after fill 2", b, 2, e1);
     bitset_free(b);
 
-    uint32_t p2[] = { 0x82000001 };
+    uint32_t p2[] = { BITSET_CREATE_FILL(1, 0) };
     b = bitset_new_buffer((const char *)p2, 4);
     test_bool("Testing append after fill 3\n", false, bitset_set_to(b, 93, true));
-    uint32_t e2[] = { 0x82000001, 0x82000001 };
+    uint32_t e2[] = { BITSET_CREATE_FILL(1, 0), BITSET_CREATE_FILL(1, 0) };
     test_bitset("Testing append after fill 4", b, 2, e2);
     bitset_free(b);
 
-    uint32_t p3[] = { 0x80000001, 0x00000000 };
+    uint32_t p3[] = { BITSET_CREATE_EMPTY_FILL(1), 0 };
     b = bitset_new_buffer((const char *)p3, 8);
     test_bool("Testing set in literal 1\n", false, bitset_set_to(b, 32, true));
     test_bool("Testing set in literal 2\n", false, bitset_set_to(b, 38, true));
     test_bool("Testing set in literal 3\n", false, bitset_set_to(b, 45, true));
     test_bool("Testing set in literal 4\n", false, bitset_set_to(b, 55, true));
     test_bool("Testing set in literal 5\n", false, bitset_set_to(b, 61, true));
-    uint32_t e3[] = { 0x80000001, 0x20810041 };
+    uint32_t e3[] = { BITSET_CREATE_EMPTY_FILL(1), 0x20810041 };
     test_bitset("Testing set in literal 6", b, 2, e3);
     test_bool("Testing set in literal 7\n", true, bitset_set_to(b, 61, false));
-    uint32_t e4[] = { 0x80000001, 0x20810040 };
+    uint32_t e4[] = { BITSET_CREATE_EMPTY_FILL(1), 0x20810040 };
     test_bitset("Testing set in literal 8", b, 2, e4);
     bitset_free(b);
 
-    uint32_t p5[] = { 0x82000001 };
+    uint32_t p5[] = { BITSET_CREATE_FILL(1, 0) };
     b = bitset_new_buffer((const char *)p5, 4);
     test_bool("Testing partition of fill 1\n", false, bitset_set_to(b, 32, true));
-    uint32_t e5[] = { 0x80000001, 0x60000000 };
+    uint32_t e5[] = { BITSET_CREATE_EMPTY_FILL(1), BITSET_CREATE_LITERAL(0) | BITSET_CREATE_LITERAL(1) };
     test_bitset("Testing partition of fill 2", b, 2, e5);
     bitset_free(b);
 
-    uint32_t p6[] = { 0x82000001, 0x82000001 };
+    uint32_t p6[] = { BITSET_CREATE_FILL(1, 0), BITSET_CREATE_FILL(1, 0) };
     b = bitset_new_buffer((const char *)p6, 8);
     test_bool("Testing partition of fill 3\n", false, bitset_set_to(b, 32, true));
-    uint32_t e6[] = { 0x80000001, 0x60000000, 0x82000001 };
+    uint32_t e6[] = { BITSET_CREATE_EMPTY_FILL(1), BITSET_CREATE_LITERAL(0) | BITSET_CREATE_LITERAL(1), BITSET_CREATE_FILL(1, 0) };
     test_bitset("Testing partition of fill 4", b, 3, e6);
     bitset_free(b);
 
-    uint32_t p7[] = { 0x80000001 };
+    uint32_t p7[] = { BITSET_CREATE_EMPTY_FILL(1) };
     b = bitset_new_buffer((const char *)p7, 4);
     test_bool("Testing partition of fill 5\n", false, bitset_set_to(b, 31, true));
-    uint32_t e7[] = { 0x82000001 };
+    uint32_t e7[] = { BITSET_CREATE_FILL(1, 0) };
     test_bitset("Testing partition of fill 6", b, 1, e7);
     bitset_free(b);
 
-    uint32_t p8[] = { 0x82000001, 0x86000001 };
+    uint32_t p8[] = { BITSET_CREATE_FILL(1, 0), BITSET_CREATE_FILL(1, 2) };
     b = bitset_new_buffer((const char *)p8, 8);
     test_bool("Testing partition of fill 7\n", false, bitset_set_to(b, 0, true));
-    uint32_t e8[] = { 0x40000000, 0x40000000, 0x86000001 };
+    uint32_t e8[] = { BITSET_CREATE_LITERAL(0), BITSET_CREATE_LITERAL(0), BITSET_CREATE_FILL(1, 2) };
     test_bitset("Testing partition of fill 7", b, 3, e8);
     bitset_free(b);
 
-    uint32_t p8b[] = { 0x82000002, 0x86000001 };
+    uint32_t p8b[] = { BITSET_CREATE_FILL(2, 0), BITSET_CREATE_FILL(1, 2) };
     b = bitset_new_buffer((const char *)p8b, 8);
     test_bool("Testing partition of fill 7b\n", false, bitset_set_to(b, 32, true));
-    uint32_t e8b[] = { 0x84000001, 0x40000000, 0x86000001 };
+    uint32_t e8b[] = { BITSET_CREATE_FILL(1, 1), BITSET_CREATE_LITERAL(0), BITSET_CREATE_FILL(1, 2) };
     test_bitset("Testing partition of fill 7b - 3", b, 3, e8b);
     test_bool("Testing partition of fill 7b - 1\n", true, bitset_get(b, 32));
     test_bool("Testing partition of fill 7b - 2\n", true, bitset_get(b, 62));
     bitset_free(b);
 
-    uint32_t p9[] = { 0x82000003, 0x86000001 };
+    uint32_t p9[] = { BITSET_CREATE_FILL(3, 0), BITSET_CREATE_FILL(1, 2) };
     b = bitset_new_buffer((const char *)p9, 8);
     test_bool("Testing partition of fill 8\n", false, bitset_set_to(b, 32, true));
-    uint32_t e9[] = { 0x84000001, 0x82000001, 0x86000001 };
+    uint32_t e9[] = { BITSET_CREATE_FILL(1, 1), BITSET_CREATE_FILL(1, 0), BITSET_CREATE_FILL(1, 2) };
     test_bitset("Testing partition of fill 9", b, 3, e9);
     bitset_free(b);
 
-    uint32_t p10[] = { 0x80000001, 0x82000001 };
+    uint32_t p10[] = { BITSET_CREATE_EMPTY_FILL(1), BITSET_CREATE_FILL(1, 0) };
     b = bitset_new_buffer((const char *)p10, 8);
     test_bool("Testing partition of fill 10\n", false, bitset_set_to(b, 1, true));
-    uint32_t e10[] = { 0x20000000, 0x82000001 };
+    uint32_t e10[] = { BITSET_CREATE_LITERAL(1), BITSET_CREATE_FILL(1, 0) };
     test_bitset("Testing partition of fill 11", b, 2, e10);
     bitset_free(b);
 
-    uint32_t p11[] = { 0x82000001 };
+    uint32_t p11[] = { BITSET_CREATE_FILL(1, 0) };
     b = bitset_new_buffer((const char *)p11, 4);
     test_bool("Testing setting position bit 1\n", true, bitset_set_to(b, 31, true));
     test_bitset("Testing setting position bit 2", b, 1, p11);
-    uint32_t e11[] = { 0x80000001 };
+    uint32_t e11[] = { BITSET_CREATE_EMPTY_FILL(1) };
     test_bool("Testing setting position bit 3\n", true, bitset_set_to(b, 31, false));
     test_bitset("Testing setting position bit 4", b, 1, e11);
     bitset_free(b);

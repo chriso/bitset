@@ -1,4 +1,3 @@
-Rewrite tests that hardcode words to use BITSET_ macros
 Remove the (C)olour bit and add an extra (L)ength bit
 Encode lengths > 2^26 using a fill with P=0 followed by another. Length is L1 << 26 & L2
 Use builtin ffs(), fls(), POPCNT if available
