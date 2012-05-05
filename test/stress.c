@@ -104,7 +104,7 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
 
     //Use linear counting
     start = (float) clock();
-    bitset_linear *e = bitset_linear_new(330000000);
+    bitset_linear *e = bitset_linear_new(max);
     for (unsigned i = 0; i < bitsets; i++) {
         bitset_linear_add(e, b[i]);
     }

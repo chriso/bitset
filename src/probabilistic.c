@@ -12,8 +12,7 @@ bitset_linear *bitset_linear_new(size_t size) {
         bitset_oom();
     }
     e->count = 0;
-    assert(size);
-    size = (size_t)(size / sizeof(bitset_word) / 8) + 1;
+    size = (size_t)(size / BITSET_LITERAL_LENGTH) + 1;
     e->size = size;
     e->words = (bitset_word *) calloc(1, e->size * sizeof(bitset_word));
     if (!e->words) {
@@ -35,7 +34,7 @@ void bitset_linear_add(bitset_linear *e, bitset *b) {
                 continue;
             }
             tmp = offset % e->size;
-            mask = 1 << position;
+            mask = BITSET_CREATE_LITERAL(position - 1);
             if ((e->words[tmp] & mask) == 0) {
                 e->count++;
                 e->words[tmp] |= mask;
