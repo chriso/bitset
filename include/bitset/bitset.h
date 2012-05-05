@@ -17,10 +17,14 @@
  *        Fill word: 1PPPPPLL LLLLLLLL LLLLLLLL LLLLLLLL
  *
  * X = Uncompressed bits
- * L = represents the length of the span of clean words
+ * L = represents the length of the span of empty words
  * C = the colour of the span (all 1's or 0's)
  * P = if the word proceeding the span contains only 1 bit, this 5-bit length
  *     stores the position of the bit so that the next literal can be omitted
+ *
+ * Lengths of >= 2^26 can be encoded using a fill word (F1) with P=0 followed
+ * by another fill word (F2). The length from F1 is shifted << 26 and then
+ * added to the length from F2.
  */
 
 #define bitset_word                    uint32_t

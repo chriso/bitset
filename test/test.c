@@ -104,15 +104,6 @@ void test_suite_get() {
     test_bool("Testing get in the first literal with offset 2\n", true, bitset_get(b, 31));
     bitset_free(b);
 
-    uint32_t p4[] = {
-        BITSET_CREATE_EMPTY_FILL(1), BITSET_CREATE_EMPTY_FILL(1), BITSET_CREATE_LITERAL(0)
-    };
-    b = bitset_new_buffer((const char *)p4, 12);
-    test_bool("Testing get in the first literal with offset 4\n", false, bitset_get(b, 0));
-    test_bool("Testing get in the first literal with offset 5\n", false, bitset_get(b, 31));
-    test_bool("Testing get in the first literal with offset 6\n", true, bitset_get(b, 62));
-    bitset_free(b);
-
     uint32_t p5[] = { BITSET_CREATE_FILL(1, 0) };
     b = bitset_new_buffer((const char *)p5, 4);
     test_bool("Testing get with position following a fill 1\n", false, bitset_get(b, 0));
@@ -136,6 +127,24 @@ void test_suite_get() {
     test_int("Testing BITSET_NEW macro 7\n", 1, bitset_count(b3));
     test_bool("Testing BITSET_NEW macro 8\n", true, bitset_get(b3, 4000000000));
     bitset_free(b4b);
+
+    b = bitset_new();
+    bitset_set(b, 4000000000);
+    test_int("Testing multi fill 1\n", 1, bitset_count(b));
+    test_bool("Testing multi fill 2\n", true, bitset_get(b, 4000000000));
+    bitset_free(b);
+
+#ifdef BITSET_64BIT_OFFSETS
+    b = bitset_new();
+    bitset_set(b, 4000000000);
+    bitset_set(b, 8000000000);
+    bitset_set(b, 12000000000);
+    test_int("Testing multi fill 1\n", 3, bitset_count(b));
+    test_bool("Testing multi fill 2\n", true, bitset_get(b, 4000000000));
+    test_bool("Testing multi fill 3\n", true, bitset_get(b, 8000000000));
+    test_bool("Testing multi fill 4\n", true, bitset_get(b, 12000000000));
+    bitset_free(b);
+#endif
 
     BITSET_NEW(b4, { 100, 300, 302, 305, 1000 });
     bitset_iterator *i = bitset_iterator_new(b4);
@@ -483,7 +492,6 @@ void test_suite_stress() {
     srand(time(NULL));
     for (unsigned i = 0; i < num; i++) {
         bits[i] = rand() % max;
-        //bits[i] = i;
         bitset_set_to(b, bits[i], true);
     }
     for (unsigned i = 0; i < num; i++) {
@@ -504,8 +512,6 @@ void test_suite_operation() {
     b2 = bitset_new();
     b3 = bitset_new();
     bitset_set_to(b1, 100, true);
-    //bitset_set_to(b1, 138, true);
-    //bitset_set_to(b1, 169, true);
     bitset_set_to(b1, 200, true);
     bitset_set_to(b1, 300, true);
     bitset_set_to(b2, 100, true);

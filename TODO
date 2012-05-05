@@ -1,4 +1,3 @@
-Encode lengths > 2^26 using a fill with P=0 followed by another. Length is L1 << 26 & L2
 Use builtin ffs(), fls(), POPCNT if available
 Implement probabilistic HyperLogLog and Top-k algorithms for streams of bitsets
 Ensure const-correctness
