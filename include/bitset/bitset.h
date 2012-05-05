@@ -7,14 +7,14 @@
  * The bitset structure uses a form of word-aligned run-length encoding.
  *
  * The compression technique is optimised for sparse bitsets where runs of
- * clean words are typically followed by a word with only one set bit. We
+ * empty words are typically followed by a word with only one set bit. We
  * can exploit the fact that runs are usually less than 2^25 words long and
  * use the extra space in the previous word to encode the position of this bit.
  *
  * There are two types of words identified by the most significant bit
  *
  *     Literal word: 0XXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
- *        Fill word: 1CPPPPPL LLLLLLLL LLLLLLLL LLLLLLLL
+ *        Fill word: 1PPPPPLL LLLLLLLL LLLLLLLL LLLLLLLL
  *
  * X = Uncompressed bits
  * L = represents the length of the span of clean words
@@ -28,17 +28,13 @@
 #define BITSET_WORD_LENGTH             (sizeof(bitset_word) * 8)
 #define BITSET_POSITION_LENGTH         BITSET_LOG2(BITSET_WORD_LENGTH)
 #define BITSET_FILL_BIT                (1 << (BITSET_WORD_LENGTH - 1))
-#define BITSET_COLOUR_BIT              (1 << (BITSET_WORD_LENGTH - 2))
-#define BITSET_SPAN_LENGTH             (BITSET_WORD_LENGTH - BITSET_POSITION_LENGTH - 2)
+#define BITSET_SPAN_LENGTH             (BITSET_WORD_LENGTH - BITSET_POSITION_LENGTH - 1)
 #define BITSET_POSITION_MASK           (((1 << (BITSET_POSITION_LENGTH)) - 1) << (BITSET_SPAN_LENGTH))
 #define BITSET_LENGTH_MASK             ((1 << (BITSET_SPAN_LENGTH)) - 1)
 #define BITSET_LITERAL_LENGTH          (BITSET_WORD_LENGTH - 1)
 
 #define BITSET_IS_FILL_WORD(word)      ((word) & BITSET_FILL_BIT)
 #define BITSET_IS_LITERAL_WORD(word)   (((word) & BITSET_FILL_BIT) == 0)
-#define BITSET_GET_COLOUR(word)        ((word) & BITSET_COLOUR_BIT)
-#define BITSET_SET_COLOUR(word)        ((word) | BITSET_COLOUR_BIT)
-#define BITSET_UNSET_COLOUR(word)      ((word) & ~BITSET_COLOUR_BIT)
 #define BITSET_GET_LENGTH(word)        ((word) & BITSET_LENGTH_MASK)
 #define BITSET_SET_LENGTH(word, len)   ((word) | (len))
 #define BITSET_GET_POSITION(word)      (((word) & BITSET_POSITION_MASK) >> BITSET_SPAN_LENGTH)
@@ -46,7 +42,7 @@
 #define BITSET_UNSET_POSITION(word)    ((word) & ~BITSET_POSITION_MASK)
 #define BITSET_CREATE_FILL(len, pos)   BITSET_SET_POSITION(BITSET_FILL_BIT | (len), (pos) + 1)
 #define BITSET_CREATE_EMPTY_FILL(len)  (BITSET_FILL_BIT | (len))
-#define BITSET_CREATE_LITERAL(bit)     (BITSET_COLOUR_BIT >> (bit))
+#define BITSET_CREATE_LITERAL(bit)     ((1 << (BITSET_WORD_LENGTH - 2)) >> (bit))
 #define BITSET_MAX_LENGTH              BITSET_LENGTH_MASK
 
 #define BITSET_TMPVAR(i, line)         BITSET_TMPVAR_(i, line)
