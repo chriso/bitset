@@ -26,11 +26,11 @@ void bitset_dump(bitset *b) {
         } \
     }
 
-TEST_DEFINE(int, int, "%d");
-TEST_DEFINE(ulong, unsigned long, "%lu");
-TEST_DEFINE(bool, bool, "%d");
-TEST_DEFINE(str, char *, "%s");
-TEST_DEFINE(hex, int, "%#x");
+TEST_DEFINE(int, int, "%d")
+TEST_DEFINE(ulong, unsigned long, "%lu")
+TEST_DEFINE(bool, bool, "%d")
+TEST_DEFINE(str, char *, "%s")
+TEST_DEFINE(hex, int, "%#x")
 
 bool test_bitset(char *title, bitset *b, unsigned length, uint32_t *expected) {
     bool mismatch = length != b->length;

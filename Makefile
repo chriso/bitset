@@ -1,5 +1,6 @@
 CC?=gcc
-CFLAGS+=-Wall -std=c99 -O3
+OPTIMISATION?=-O3
+CFLAGS+=-Wall -std=c99 -pedantic $(OPTIMISATION)
 
 SOURCE=src/bitset.c src/operation.c src/probabilistic.c src/vector.c
 OBJ=$(SOURCE:.c=.o)

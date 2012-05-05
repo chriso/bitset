@@ -19,7 +19,7 @@ bitset_linear *bitset_linear_new(size_t size) {
         bitset_oom();
     }
     return e;
-};
+}
 
 void bitset_linear_add(bitset_linear *e, bitset *b) {
     bitset_offset offset = 0;
@@ -55,14 +55,14 @@ void bitset_linear_add(bitset_linear *e, bitset *b) {
             offset -= e->size;
         }
     }
-};
+}
 
 unsigned bitset_linear_count(bitset_linear *e) {
     return e->count;
-};
+}
 
 void bitset_linear_free(bitset_linear *e) {
     free(e->words);
     free(e);
-};
+}
 
