@@ -78,9 +78,19 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
     size /= 1024 * 1024;
     printf("Created %.2fMB in %.2fs (%.2fMB/s)\n", size, end, size/end);
 
-    //Pop count all bitsets
+    //Estimate count based on size
     start = (float) clock();
     bitset_offset count = 0;
+    for (unsigned i = 0; i < bitsets; i++) {
+        count += b[i]->length;
+    }
+    printf("Estimated bit count => " bitset_format "\n", count);
+    end = ((float) clock() - start) / CLOCKS_PER_SEC;
+    printf("Executed count estimate in %.2fs (%.2fMB/s)\n", end, size/end);
+
+    //Pop count all bitsets
+    start = (float) clock();
+    count = 0;
     for (unsigned i = 0; i < bitsets; i++) {
         count += bitset_count(b[i]);
     }
