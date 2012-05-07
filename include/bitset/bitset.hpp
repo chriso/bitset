@@ -12,7 +12,7 @@
  * C++ wrapper classes for bitset structures.
  */
 
-namespace compressedbitset {
+namespace bit {
 
 class Bitset;
 class BitsetOperation;
