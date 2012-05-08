@@ -127,9 +127,9 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *, unsigned, un
 
 #define BITSET_VECTOR_FOREACH(iterator, bitset, offset) \
     for (unsigned BITSET_TMPVAR(i, __LINE__) = 0; \
-         offset = iterator->offsets[BITSET_TMPVAR(i, __LINE__)], \
-         bitset = iterator->bitsets[BITSET_TMPVAR(i, __LINE__)], \
-         BITSET_TMPVAR(i, __LINE__) < iterator->length; \
+         (BITSET_TMPVAR(i, __LINE__) < iterator->length \
+            ? (offset = iterator->offsets[BITSET_TMPVAR(i, __LINE__)], \
+               bitset = iterator->bitsets[BITSET_TMPVAR(i, __LINE__)], 1) : 0); \
          BITSET_TMPVAR(i, __LINE__)++)
 
 /**
