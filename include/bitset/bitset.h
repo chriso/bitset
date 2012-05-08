@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * The bitset structure uses a form of word-aligned run-length encoding.
  *
@@ -216,6 +220,10 @@ bitset_iterator *bitset_iterator_new(const bitset *);
  */
 
 void bitset_iterator_free(bitset_iterator *);
+
+#ifdef __cplusplus
+} //extern "C"
+#endif
 
 #endif
 

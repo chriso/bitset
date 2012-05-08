@@ -24,6 +24,10 @@
  *    |11xxxxxx|xxxxxxxx|xxxxxxxx|xxxxxxxx| 30 bit length
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Bitset vector types.
  */
@@ -193,6 +197,10 @@ void bitset_vector_operation_add_nested(bitset_vector_operation *,
  */
 
 bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *);
+
+#ifdef __cplusplus
+} //extern "C"
+#endif
 
 #endif
 

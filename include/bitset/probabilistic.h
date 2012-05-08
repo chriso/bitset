@@ -3,6 +3,10 @@
 
 #include "bitset.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Bitset linear counting type.
  */
@@ -72,6 +76,10 @@ unsigned bitset_loglog_count(bitset_loglog *);
  */
 
 void bitset_loglog_free(bitset_loglog *);
+
+#ifdef __cplusplus
+} //extern "C"
+#endif
 
 #endif
 

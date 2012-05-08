@@ -3,6 +3,10 @@
 
 #include "bitset.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Bitset hash types.
  */
@@ -108,6 +112,10 @@ bool bitset_hash_insert(bitset_hash *, bitset_offset, bitset_offset, bitset_word
  */
 
 bitset_word *bitset_hash_get(const bitset_hash *, bitset_offset, bitset_offset);
+
+#ifdef __cplusplus
+} //extern "C"
+#endif
 
 #endif
 
