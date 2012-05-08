@@ -1,4 +1,8 @@
 *.o
-bin/*
-lib/*
 .AppleDouble
+test/test
+test/stress
+src/libbitset.*
+build/env
+build/bitset.pc
+Makefile
