@@ -18,9 +18,9 @@ stress: all
 	$(MAKE) -C test stress || exit
 
 install-headers:
-	mkdir -p $(DESTDIR)/$(HEADERS) || exit
-	cp -r include/bitset/* $(DESTDIR)/$(HEADERS) || exit
-	chmod 644 $(DESTDIR)/$(HEADERS)/*.h || exit
+	mkdir -p $(DESTDIR)/$(HEADERS)/bitset || exit
+	cp -r include/bitset/* $(DESTDIR)/$(HEADERS)/bitset/ || exit
+	chmod 644 $(DESTDIR)/$(HEADERS)/bitset/* || exit
 
 install: all install-headers
 	mkdir -p $(DESTDIR)/$(LIBRARY) || exit
@@ -32,10 +32,9 @@ install: all install-headers
 	chmod 644 $(DESTDIR)/$(LIBRARY)/libbitset.a || exit
 
 uninstall:
-	$(MAKE) -C doc uninstall
 	rm -f $(DESTDIR)/$(LIBRARY)/libbitset.so*
 	rm -f $(DESTDIR)/$(LIBRARY)/libbitset.a
-	rm -f $(DESTDIR)/$(HEADERS)/*.h
+	rm -rf $(DESTDIR)/$(HEADERS)/bitset
 	rm -f $(DESTDIR)/$(PKGCONFIG_DATA)/bitset.pc
 
 clean:
