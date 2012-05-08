@@ -1,0 +1,10 @@
+prefix=@PREFIX@
+includedir=@HEADERS@
+libdir=@LIBRARY@
+
+Name: Bitset
+Description: 
+URL: http://coming.soon/
+Version: @VERSION@
+Libs: -L${libdir} -lbitset
+Cflags: -I${includedir}
