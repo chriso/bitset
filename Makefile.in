@@ -24,7 +24,7 @@ install-headers:
 
 install: all install-headers
 	mkdir -p $(DESTDIR)/$(LIBRARY) || exit
-	cp lib/libbitset.so* $(DESTDIR)/$(LIBRARY)/ || exit
+	cp -d lib/libbitset.so* $(DESTDIR)/$(LIBRARY)/ || exit
 	mkdir -p $(DESTDIR)/$(PKGCONFIG_DATA) || exit
 	chmod 755 $(DESTDIR)/$(PKGCONFIG_DATA)
 	cp build/bitset.pc $(DESTDIR)/$(PKGCONFIG_DATA)/bitset.pc || exit
