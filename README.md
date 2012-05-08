@@ -18,6 +18,17 @@ requiring a decompression step. Unlike most [succinct data structures](http://en
 - [C++ class
   wrappers](https://github.com/chriso/bitset/blob/master/include/bitset/bitset.hpp)
 
+### Installing
+
+The build system is adapted from https://github.com/sbahra/ck.
+
+```bash
+$ ./configure
+$ make
+$ make test stress # optional
+$ sudo make install
+```
+
 ### License
 
 Copyright (C) 2012 Chris O'Hara <cohara87@gmail.com>
