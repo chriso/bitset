@@ -14,12 +14,6 @@
 
 namespace bit {
 
-class Bitset;
-class BitsetOperation;
-class Vector;
-class VectorIterator;
-class VectorOperation;
-
 const enum bitset_operation_type AND = BITSET_AND;
 const enum bitset_operation_type OR = BITSET_OR;
 const enum bitset_operation_type XOR = BITSET_XOR;
@@ -62,7 +56,6 @@ class Bitset {
     void clear() {
         bitset_clear(b);
     }
-    BitsetOperation *getOperation();
     char *getBuffer() const {
         return (char *) b->words;
     }
@@ -126,7 +119,6 @@ class Vector {
     unsigned count() const {
         return bitset_vector_count(v);
     }
-    VectorIterator *getIterator(unsigned start, unsigned end);
     char *getBuffer() const {
         return v->buffer;
     }
@@ -159,7 +151,6 @@ class VectorIterator {
     Vector *compact() const {
         return new Vector(bitset_vector_iterator_compact(i));
     }
-    VectorOperation *getOperation();
     bitset_vector_iterator *getVectorIterator() const {
         return i;
     }
@@ -199,18 +190,6 @@ class VectorOperation {
   protected:
     bitset_vector_operation *o;
 };
-
-BitsetOperation *Bitset::getOperation() {
-    return new BitsetOperation(*this);
-}
-
-VectorIterator *Vector::getIterator(unsigned start=START, unsigned end=END) {
-    return new VectorIterator(*this, start, end);
-}
-
-VectorOperation *VectorIterator::getOperation() {
-    return new VectorOperation(*this);
-}
 
 } //namespace bit
 
