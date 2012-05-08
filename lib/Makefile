@@ -6,8 +6,8 @@ all: libbitset.so libbitset.a
 
 libbitset.so: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o libbitset.so.$(VERSION) $(OBJECTS)
-	ln -s libbitset.so.$(VERSION) libbitset.so
-	ln -s libbitset.so.$(VERSION) libbitset.so.$(VERSION_MAJOR)
+	@ln -s libbitset.so.$(VERSION) libbitset.so
+	@ln -s libbitset.so.$(VERSION) libbitset.so.$(VERSION_MAJOR)
 	chmod 744 libbitset.so*
 
 libbitset.a: $(OBJECTS)
