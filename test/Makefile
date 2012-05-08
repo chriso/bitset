@@ -3,16 +3,16 @@
 all: test_o stress_o
 
 test_o:
-	$(CC) $(CFLAGS) -L../src -lbitset -o test test.c
+	$(CC) $(CFLAGS) -L../lib -lbitset -o test test.c
 
 stress_o:
-	$(CC) $(CFLAGS) -L../src -lbitset -o stress stress.c
+	$(CC) $(CFLAGS) -L../lib -lbitset -o stress stress.c
 
 test: test_o
-	@LD_LIBRARY_PATH=../src ./test
+	@LD_LIBRARY_PATH=../lib ./test
 
 stress: stress_o
-	@LD_LIBRARY_PATH=../src ./stress
+	@LD_LIBRARY_PATH=../lib ./stress
 
 clean:
 	rm -rf *.dSYM *~ *.o $(OBJECTS) stress test
