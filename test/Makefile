@@ -9,10 +9,10 @@ stress_o:
 	$(CC) $(CFLAGS) -L../lib -lbitset -o stress stress.c
 
 test: test_o
-	@LD_LIBRARY_PATH=../lib ./test
+	@DYLD_LIBRARY_PATH=../lib LD_LIBRARY_PATH=../lib ./test
 
 stress: stress_o
-	@LD_LIBRARY_PATH=../lib ./stress
+	@DYLD_LIBRARY_PATH=../lib LD_LIBRARY_PATH=../lib ./stress
 
 clean:
 	rm -rf *.dSYM *~ *.o $(OBJECTS) stress test
