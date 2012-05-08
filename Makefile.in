@@ -9,7 +9,7 @@ HEADERS=@HEADERS@
 PKGCONFIG_DATA=@LIBRARY@/pkgconfig
 
 all:
-	$(MAKE) -C src all || exit
+	$(MAKE) -C lib all || exit
 
 test: all
 	$(MAKE) -C test test || exit
@@ -24,11 +24,11 @@ install-headers:
 
 install: all install-headers
 	mkdir -p $(DESTDIR)/$(LIBRARY) || exit
-	cp src/libbitset.so* $(DESTDIR)/$(LIBRARY)/ || exit
+	cp lib/libbitset.so* $(DESTDIR)/$(LIBRARY)/ || exit
 	mkdir -p $(DESTDIR)/$(PKGCONFIG_DATA) || exit
 	chmod 755 $(DESTDIR)/$(PKGCONFIG_DATA)
 	cp build/bitset.pc $(DESTDIR)/$(PKGCONFIG_DATA)/bitset.pc || exit
-	cp src/libbitset.a $(DESTDIR)/$(LIBRARY)/libbitset.a || exit
+	cp lib/libbitset.a $(DESTDIR)/$(LIBRARY)/libbitset.a || exit
 	chmod 644 $(DESTDIR)/$(LIBRARY)/libbitset.a || exit
 
 uninstall:
@@ -39,6 +39,6 @@ uninstall:
 	rm -f $(DESTDIR)/$(PKGCONFIG_DATA)/bitset.pc
 
 clean:
-	$(MAKE) -C src clean
+	$(MAKE) -C lib clean
 	$(MAKE) -C test clean
 	rm -f *~ *.o
