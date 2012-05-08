@@ -212,7 +212,7 @@ VectorOperation *VectorIterator::getOperation() {
     return new VectorOperation(*this);
 }
 
-} //namespace compressedbitset
+} //namespace bit
 
 #endif
 
