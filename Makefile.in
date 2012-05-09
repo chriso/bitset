@@ -45,7 +45,7 @@ dist:
 	@mkdir -p $(PACKAGE)
 	@build/changelog.sh > $(PACKAGE)/CHANGES.md
 	@tar -rf $(PACKAGE).tar $(PACKAGE)/CHANGES.md
-	@bzip2 $(PACKAGE).tar
+	@bzip2 -f $(PACKAGE).tar
 	@rm -rf $(PACKAGE)
 	@echo "Created $(PACKAGE).tar.bz2"
 
