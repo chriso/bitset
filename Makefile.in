@@ -10,35 +10,43 @@ PKGCONFIG_DATA=@LIBRARY@/pkgconfig
 TAG=$(shell git describe --abbrev=0 --tags)
 PACKAGE="bitset-$(TAG)"
 
+B_CC=@printf ' CC: %b\n' $@ 1>&2; $(CC)
+
 all:
-	$(MAKE) -C lib all || exit
+	@$(MAKE) -C lib all || exit
 
 test: all
-	$(MAKE) -C test test || exit
+	@$(MAKE) -C test test || exit
 
 stress: all
-	$(MAKE) -C test stress || exit
+	@$(MAKE) -C test stress || exit
 
 install-headers:
-	mkdir -p $(DESTDIR)/$(HEADERS)/bitset || exit
-	cp -r include/bitset/* $(DESTDIR)/$(HEADERS)/bitset/ || exit
-	chmod 644 $(DESTDIR)/$(HEADERS)/bitset/* || exit
+	@mkdir -p $(DESTDIR)/$(HEADERS)/bitset || exit
+	@cp -r include/bitset/* $(DESTDIR)/$(HEADERS)/bitset/ || exit
+	@echo " INSTALL: $(DESTDIR)/$(HEADERS)/bitset"
+	@chmod 644 $(DESTDIR)/$(HEADERS)/bitset/* || exit
 
 install: all install-headers
-	mkdir -p $(DESTDIR)/$(LIBRARY) || exit
-	cp -d lib/libbitset.so* $(DESTDIR)/$(LIBRARY)/ || exit
-	strip $(DESTDIR)/$(LIBRARY)/libbitset.so.$(VERSION) || exit
-	mkdir -p $(DESTDIR)/$(PKGCONFIG_DATA) || exit
-	chmod 755 $(DESTDIR)/$(PKGCONFIG_DATA)
-	cp build/bitset.pc $(DESTDIR)/$(PKGCONFIG_DATA)/bitset.pc || exit
-	cp lib/libbitset.a $(DESTDIR)/$(LIBRARY)/libbitset.a || exit
-	chmod 644 $(DESTDIR)/$(LIBRARY)/libbitset.a || exit
+	@mkdir -p $(DESTDIR)/$(LIBRARY) || exit
+	@cp lib/libbitset.a $(DESTDIR)/$(LIBRARY)/libbitset.a || exit
+	@chmod 644 $(DESTDIR)/$(LIBRARY)/libbitset.a || exit
+	@echo " INSTALL: $(DESTDIR)/$(LIBRARY)/libbitset.a"
+	@cp -d lib/libbitset.so* $(DESTDIR)/$(LIBRARY)/ || exit
+	@echo " INSTALL: $(DESTDIR)/$(LIBRARY)/libbitset.so"
+	@strip $(DESTDIR)/$(LIBRARY)/libbitset.so.$(VERSION) || exit
+	@echo " STRIP: $(DESTDIR)/$(LIBRARY)/libbitset.so.$(VERSION)"
+	@mkdir -p $(DESTDIR)/$(PKGCONFIG_DATA) || exit
+	@chmod 755 $(DESTDIR)/$(PKGCONFIG_DATA)
+	@cp build/bitset.pc $(DESTDIR)/$(PKGCONFIG_DATA)/bitset.pc || exit
+	@echo " INSTALL: $(DESTDIR)/$(PKGCONFIG_DATA)/bitset.pc"
 
 uninstall:
-	rm -f $(DESTDIR)/$(LIBRARY)/libbitset.so*
-	rm -f $(DESTDIR)/$(LIBRARY)/libbitset.a
-	rm -rf $(DESTDIR)/$(HEADERS)/bitset
-	rm -f $(DESTDIR)/$(PKGCONFIG_DATA)/bitset.pc
+	@rm -f $(DESTDIR)/$(LIBRARY)/libbitset.so*
+	@rm -f $(DESTDIR)/$(LIBRARY)/libbitset.a
+	@rm -rf $(DESTDIR)/$(HEADERS)/bitset
+	@rm -f $(DESTDIR)/$(PKGCONFIG_DATA)/bitset.pc
+	@echo "bitset uninstalled"
 
 dist:
 	@git archive --prefix="$(PACKAGE)/" ${TAG} -o $(PACKAGE).tar
@@ -51,6 +59,5 @@ dist:
 
 
 clean:
-	$(MAKE) -C lib clean
-	$(MAKE) -C test clean
-	rm -f *~ *.o
+	@$(MAKE) -C lib clean
+	@$(MAKE) -C test clean

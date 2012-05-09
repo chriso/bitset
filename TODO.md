@@ -6,3 +6,5 @@
  - Consider merging bitset_hash_* and bitset_vector_hash_* using macros/void*
  - Consider renaming the "bitset" type to prevent keyword conflicts
  - Investigate behavior on illumos/smartos (read: its broken)
+ - Create macros for echo output
+ - Make newstyle compile output optional
