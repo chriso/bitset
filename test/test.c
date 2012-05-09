@@ -81,6 +81,7 @@ int main(int argc, char **argv) {
     test_suite_probabilistic();
     printf("Testing stress\n");
     test_suite_stress();
+    printf("OK\n");
 }
 
 void test_suite_get() {
