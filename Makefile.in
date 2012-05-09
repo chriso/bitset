@@ -7,6 +7,8 @@ PREFIX=@PREFIX@
 LIBRARY=@LIBRARY@
 HEADERS=@HEADERS@
 PKGCONFIG_DATA=@LIBRARY@/pkgconfig
+TAG=$(shell git describe --abbrev=0 --tags)
+PACKAGE="bitset-$(TAG)"
 
 all:
 	$(MAKE) -C lib all || exit
@@ -37,6 +39,16 @@ uninstall:
 	rm -f $(DESTDIR)/$(LIBRARY)/libbitset.a
 	rm -rf $(DESTDIR)/$(HEADERS)/bitset
 	rm -f $(DESTDIR)/$(PKGCONFIG_DATA)/bitset.pc
+
+dist:
+	@git archive --prefix="$(PACKAGE)/" ${TAG} -o $(PACKAGE).tar
+	@mkdir -p $(PACKAGE)
+	@./changelog.sh > $(PACKAGE)/CHANGES.md
+	@tar -rf $(PACKAGE).tar $(PACKAGE)/CHANGES.md
+	@bzip2 $(PACKAGE).tar
+	@rm -rf $(PACKAGE)
+	@echo "Created $(PACKAGE).tar.bz2"
+
 
 clean:
 	$(MAKE) -C lib clean
