@@ -41,7 +41,12 @@ uninstall:
 	rm -f $(DESTDIR)/$(PKGCONFIG_DATA)/bitset.pc
 
 dist:
-	@git archive --prefix="$(PACKAGE)/" ${TAG} | bzip2 > $(PACKAGE).tar.bz2
+	@git archive --prefix="$(PACKAGE)/" ${TAG} -o $(PACKAGE).tar
+	@mkdir -p $(PACKAGE)
+	@./changelog.sh > $(PACKAGE)/CHANGES.md
+	@tar -rf $(PACKAGE).tar $(PACKAGE)/CHANGES.md
+	@bzip2 $(PACKAGE).tar
+	@rm -rf $(PACKAGE)
 	@echo "Created $(PACKAGE).tar.bz2"
 
 
