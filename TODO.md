@@ -1,4 +1,6 @@
 # TODO
+
+ - Create bitset_vector_verify() to check vector buffer integrity
  - Encode lengths > 2^26 using a fill with P=0 followed by another. Length is L1 << 26 & L2
  - Return NULL / error code instead of dying on oom
  - Implement probabilistic HyperLogLog and Top-k algorithms for streams of bitsets
