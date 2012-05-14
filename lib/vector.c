@@ -65,17 +65,17 @@ static inline void bitset_encoded_length_bytes(char *buffer, size_t length) {
     if (length < (1 << 6)) {
         buffer[0] = (unsigned char)length;
     } else if (length < (1 << 14)) {
-        buffer[0] = 0x40 | ((unsigned char)length >> 8);
-        buffer[1] = (unsigned char)length & 0xFF;
+        buffer[0] = 0x40 | (unsigned char)(length >> 8);
+        buffer[1] = (unsigned char)length;
     } else if (length < (1 << 22)) {
-        buffer[0] = 0x80 | ((unsigned char)length >> 16);
-        buffer[1] = ((unsigned char)length >> 8) & 0xFF;
-        buffer[2] = (unsigned char)length & 0xFF;
+        buffer[0] = 0x80 | (unsigned char)(length >> 16);
+        buffer[1] = (unsigned char)(length >> 8);
+        buffer[2] = (unsigned char)length;
     } else {
-        buffer[0] = 0xC0 | ((unsigned char)length >> 24);
-        buffer[1] = ((unsigned char)length >> 16) & 0xFF;
-        buffer[2] = ((unsigned char)length >> 8) & 0xFF;
-        buffer[3] = (unsigned char)length & 0xFF;
+        buffer[0] = 0xC0 | (unsigned char)(length >> 24);
+        buffer[1] = (unsigned char)(length >> 16);
+        buffer[2] = (unsigned char)(length >> 8);
+        buffer[3] = (unsigned char)length;
     }
 }
 
@@ -163,6 +163,7 @@ void bitset_vector_push(bitset_vector *l, bitset *b, unsigned offset) {
 
     //Encode the offset and length
     bitset_encoded_length_bytes(buffer, relative_offset);
+
     buffer += offset_bytes;
     bitset_encoded_length_bytes(buffer, b->length);
     buffer += length_bytes;

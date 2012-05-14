@@ -810,6 +810,25 @@ void test_suite_vector() {
     b->words = tmp;
     bitset_free(b);
 
+    b = bitset_new();
+    bitset_set(b, 10000);
+    bitset_set(b, 20000);
+    l2 = bitset_vector_new();
+    bitset_vector_push(l2, b, 13600);
+    bitset_free(b);
+    i = bitset_vector_iterator_new(l2, BITSET_VECTOR_START, BITSET_VECTOR_END);
+    loop_count = 0;
+    BITSET_VECTOR_FOREACH(i, b, offset) {
+        loop_count++;
+        test_bool("Checking vector medium offset 1\n", true, offset == 13600);
+        test_bool("Checking vector medium offset 2\n", true, bitset_get(b, 10000));
+        test_bool("Checking vector medium offset 3\n", true, bitset_get(b, 20000));
+        test_int("Checking vector medium offset 4\n", 2, bitset_count(b));
+    }
+    test_int("Checking it looped the right number of times a\n", 1, loop_count);
+    bitset_vector_iterator_free(i);
+    bitset_vector_free(l2);
+
     i = bitset_vector_iterator_new(l, BITSET_VECTOR_START, BITSET_VECTOR_END);
     test_bool("Checking bitset was added properly to iter 1\n", true, bitset_get(i->bitsets[0], 10));
     test_bool("Checking bitset was added properly to iter 2\n", false, bitset_get(i->bitsets[0], 100));
