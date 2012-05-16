@@ -91,10 +91,6 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
     bitset_hash *words, *and_words = NULL;
     bitset *tmp, *b;
 
-    if (!op->length) {
-        return bitset_hash_new(1);
-    }
-
     for (unsigned i = 0; i < op->length; i++) {
 
         //Recursively flatten nested operations
@@ -235,6 +231,12 @@ static inline unsigned char bitset_fls(bitset_word word) {
 }
 
 bitset *bitset_operation_exec(bitset_operation *op) {
+    if (!op->length) {
+        return bitset_new();
+    } else if (op->length == 1 && !op->steps[0]->is_operation) {
+        return bitset_copy(op->steps[0]->data.b);
+    }
+
     bitset_hash *words = bitset_operation_iter(op);
     bitset_hash_bucket *bucket;
     bitset *result = bitset_new();
