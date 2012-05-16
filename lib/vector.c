@@ -440,6 +440,7 @@ static inline void bitset_vector_hash_resize(bitset_vector_hash *h, unsigned buc
         bitset_oom();
     }
     h->count = 0;
+    h->size = buckets;
     for (unsigned i = 0; i < old_len; i++) {
         bucket = old[i];
         while (bucket) {
@@ -449,7 +450,7 @@ static inline void bitset_vector_hash_resize(bitset_vector_hash *h, unsigned buc
             bucket = tmp;
         }
     }
-    free(h->buckets);
+    free(old);
 }
 
 static inline bitset_operation *bitset_vector_hash_get(bitset_vector_hash *h,
