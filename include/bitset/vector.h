@@ -167,6 +167,18 @@ bitset *bitset_vector_iterator_merge(bitset_vector_iterator *);
 void bitset_vector_iterator_free(bitset_vector_iterator *);
 
 /**
+ * Create an empty iterator
+ */
+
+bitset_vector_iterator *bitset_vector_iterator_new_empty();
+
+/**
+ * Create a copy of the iterator.
+ */
+
+bitset_vector_iterator *bitset_vector_iterator_copy(bitset_vector_iterator *);
+
+/**
  * Create a new vector operation.
  */
 

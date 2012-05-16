@@ -131,6 +131,7 @@ class Vector {
 
 class VectorIterator {
   public:
+    VectorIterator() { i = bitset_vector_iterator_new_empty(); }
     VectorIterator(bitset_vector_iterator *it) { i = it; }
     VectorIterator(const Vector& list, unsigned start=START, unsigned end=END) {
         i = bitset_vector_iterator_new(list.getVector(), start, end);

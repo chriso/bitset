@@ -247,7 +247,7 @@ bitset_vector_iterator *bitset_vector_iterator_new_empty() {
     i->bitsets = NULL;
     i->offsets = NULL;
     i->length = i->size = 0;
-    i->is_mutable = true;
+    i->is_mutable = false;
     return i;
 }
 
@@ -517,6 +517,7 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
 
     //Prepare the result iterator
     i = bitset_vector_iterator_new_empty();
+    i->is_mutable = true;
 
     bitset_vector_hash *and_hash, *h = bitset_vector_hash_new(32);
 
