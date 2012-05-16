@@ -239,6 +239,37 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *c, unsigned st
     return i;
 }
 
+bitset_vector_iterator *bitset_vector_iterator_new_empty() {
+    bitset_vector_iterator *i = (bitset_vector_iterator *) malloc(sizeof(bitset_vector_iterator));
+    if (!i) {
+        bitset_oom();
+    }
+    i->bitsets = NULL;
+    i->offsets = NULL;
+    i->length = i->size = 0;
+    i->is_mutable = true;
+    return i;
+}
+
+bitset_vector_iterator *bitset_vector_iterator_copy(bitset_vector_iterator *c) {
+    bitset_vector_iterator *i = (bitset_vector_iterator *) malloc(sizeof(bitset_vector_iterator));
+    if (!i) {
+        bitset_oom();
+    }
+    i->bitsets = (bitset **) malloc(sizeof(bitset*) * c->length);
+    i->offsets = (unsigned *) malloc(sizeof(unsigned) * c->length);
+    if (!i->bitsets || !i->offsets) {
+        bitset_oom();
+    }
+    i->is_mutable = false;
+    i->length = i->size = c->length;
+    for (unsigned j = 0; j < c->length; j++) {
+        i->bitsets[j] = bitset_copy(c->bitsets[j]);
+        i->offsets[j] = c->offsets[j];
+    }
+    return i;
+}
+
 void bitset_vector_iterator_concat(bitset_vector_iterator *i, bitset_vector_iterator *c, unsigned offset) {
     if (c->length) {
         unsigned previous_length = i->length;
@@ -473,22 +504,19 @@ static int bitset_vector_offset_sort(const void *a, const void *b) {
 }
 
 bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o) {
+    if (!o->length) {
+        return bitset_vector_iterator_new_empty();
+    } else if (o->length == 1 && !o->steps[0]->is_operation) {
+        return bitset_vector_iterator_copy(o->steps[0]->data.i);
+    }
+
     bitset_vector_iterator *i, *step, *tmp;
     bitset *b;
     bitset_operation *op;
     unsigned offset;
 
     //Prepare the result iterator
-    i = (bitset_vector_iterator *) malloc(sizeof(bitset_vector_iterator));
-    if (!i) {
-        bitset_oom();
-    }
-    i->bitsets = NULL;
-    i->offsets = NULL;
-    i->length = i->size = 0;
-    i->is_mutable = true;
-
-    if (!o->length) return i;
+    i = bitset_vector_iterator_new_empty();
 
     bitset_vector_hash *and_hash, *h = bitset_vector_hash_new(32);
 
