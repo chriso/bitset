@@ -261,7 +261,7 @@ bitset_vector_iterator *bitset_vector_iterator_copy(bitset_vector_iterator *c) {
     if (!i->bitsets || !i->offsets) {
         bitset_oom();
     }
-    i->is_mutable = false;
+    i->is_mutable = true;
     i->length = i->size = c->length;
     for (unsigned j = 0; j < c->length; j++) {
         i->bitsets[j] = bitset_copy(c->bitsets[j]);
