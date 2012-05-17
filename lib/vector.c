@@ -289,14 +289,21 @@ void bitset_vector_iterator_concat(bitset_vector_iterator *i, bitset_vector_iter
 void bitset_vector_iterator_count(bitset_vector_iterator *i, unsigned *raw, unsigned *unique) {
     unsigned raw_count = 0, offset;
     bitset *b;
-    bitset_operation *o = bitset_operation_new(NULL);
+    bitset_operation *o;
+    if (unique) {
+        o = bitset_operation_new(NULL);
+    }
     BITSET_VECTOR_FOREACH(i, b, offset) {
         raw_count += bitset_count(b);
-        bitset_operation_add(o, b, BITSET_OR);
+        if (unique) {
+            bitset_operation_add(o, b, BITSET_OR);
+        }
     }
     (void)offset;
     *raw = raw_count;
-    *unique = bitset_operation_count(o);
+    if (unique) {
+        *unique = bitset_operation_count(o);
+    }
     bitset_operation_free(o);
 }
 
