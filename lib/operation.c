@@ -110,12 +110,18 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
 #ifdef HASH_DEBUG
     fprintf(stderr, "HASH: Bitsets count = %u, max = %u\n", count, max);
 #endif
-    size = max / BITSET_LITERAL_LENGTH + 2;
-    while (count < max / 50) {
-        size /= 2;
-        max /= 50;
+    if (count <= 8) {
+        size = 16;
+    } else if (count <= 8388608) {
+        size = count * 2;
+    } else {
+        size = max / BITSET_LITERAL_LENGTH + 2;
+        while (count < max / 50) {
+            size /= 2;
+            max /= 50;
+        }
+        size = size < 16 ? 16 : size > 16777216 ? 16777216 : size;
     }
-    size = size < 16 ? 16 : size > 16777216 ? 16777216 : size;
     words = bitset_hash_new(size);
 
     for (unsigned i = 0; i < op->length; i++) {
