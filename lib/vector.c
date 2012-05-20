@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include <stdbool.h>
 
 #include "bitset/bitset.h"
@@ -350,7 +351,8 @@ bitset_vector_operation *bitset_vector_operation_new(bitset_vector_iterator *i) 
     if (!ops) {
         bitset_oom();
     }
-    ops->length = 0;
+    ops->length = ops->max = 0;
+    ops->min = UINT_MAX;
     if (i) {
         bitset_vector_operation_add(ops, i, BITSET_OR);
     }
@@ -399,11 +401,16 @@ static inline bitset_vector_operation_step *
 
 void bitset_vector_operation_add(bitset_vector_operation *o,
         bitset_vector_iterator *i, enum bitset_operation_type type) {
+    if (!i->length) {
+        return;
+    }
     bitset_vector_operation_step *step = bitset_vector_operation_add_step(o);
     step->is_nested = false;
     step->is_operation = false;
     step->data.i = i;
     step->type = type;
+    o->min = BITSET_MIN(o->min, i->offsets[0]);
+    o->max = BITSET_MAX(o->max, i->offsets[i->length-1]);
 }
 
 void bitset_vector_operation_add_nested(bitset_vector_operation *o,
@@ -413,101 +420,8 @@ void bitset_vector_operation_add_nested(bitset_vector_operation *o,
     step->is_operation = true;
     step->data.o = op;
     step->type = type;
-}
-
-static inline bitset_vector_hash *bitset_vector_hash_new(size_t buckets) {
-    bitset_vector_hash *h = (bitset_vector_hash *) malloc(sizeof(bitset_vector_hash));
-    if (!h) {
-        bitset_oom();
-    }
-    h->buckets = (bitset_vector_hash_node **) calloc(1,
-        sizeof(bitset_vector_hash) * buckets);
-    if (!h->buckets) {
-        bitset_oom();
-    }
-    h->size = buckets;
-    h->count = 0;
-    return h;
-}
-
-static inline void bitset_vector_hash_free(bitset_vector_hash *h) {
-    if (h->count) {
-        bitset_vector_hash_node *bucket, *tmp;
-        for (unsigned i = 0; i < h->size; i++) {
-            bucket = h->buckets[i];
-            while (bucket) {
-                tmp = bucket->next;
-                free(bucket);
-                bucket = tmp;
-            }
-        }
-    }
-    free(h->buckets);
-    free(h);
-}
-
-static inline void bitset_vector_hash_resize(bitset_vector_hash *, unsigned);
-
-static inline void bitset_vector_hash_put(bitset_vector_hash *h, unsigned offset,
-        bitset_operation *o) {
-    unsigned key = offset % h->size;
-    bitset_vector_hash_node *bucket = h->buckets[key];
-    bitset_vector_hash_node *next = (bitset_vector_hash_node *)
-        malloc(sizeof(bitset_vector_hash_node));
-    if (!next) {
-        bitset_oom();
-    }
-    next->offset = offset;
-    next->o = o;
-    next->next = NULL;
-    if (bucket) {
-        next->next = bucket;
-    }
-    h->buckets[key] = next;
-    if (h->count++ > (h->size / 2)) {
-        bitset_vector_hash_resize(h, h->size * 2);
-    }
-}
-
-static inline void bitset_vector_hash_resize(bitset_vector_hash *h, unsigned buckets) {
-    bitset_vector_hash_node *bucket, *tmp, **old = h->buckets;
-    size_t old_len = h->size;
-    h->buckets = (bitset_vector_hash_node **) calloc(1,
-        sizeof(bitset_vector_hash) * buckets);
-    if (!h->buckets) {
-        bitset_oom();
-    }
-    h->count = 0;
-    h->size = buckets;
-    for (unsigned i = 0; i < old_len; i++) {
-        bucket = old[i];
-        while (bucket) {
-            bitset_vector_hash_put(h, bucket->offset, bucket->o);
-            tmp = bucket->next;
-            free(bucket);
-            bucket = tmp;
-        }
-    }
-    free(old);
-}
-
-static inline bitset_operation *bitset_vector_hash_get(bitset_vector_hash *h,
-        unsigned offset) {
-    unsigned key = offset % h->size;
-    bitset_vector_hash_node *bucket = h->buckets[key];
-    while (bucket) {
-        if (bucket->offset == offset) {
-            return bucket->o;
-        }
-        bucket = bucket->next;
-    }
-    return NULL;
-}
-
-static int bitset_vector_offset_sort(const void *a, const void *b) {
-    unsigned a_offset = *(unsigned *)a;
-    unsigned b_offset = *(unsigned *)b;
-    return a_offset < b_offset ? -1 : a_offset > b_offset;
+    o->min = BITSET_MIN(o->min, op->min);
+    o->max = BITSET_MAX(o->max, op->max);
 }
 
 bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o) {
@@ -518,15 +432,21 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
     }
 
     bitset_vector_iterator *i, *step, *tmp;
-    bitset *b;
-    bitset_operation *op;
-    unsigned offset;
+    bitset *b, *b2;
+    bitset_operation *op = NULL;
+    unsigned offset, count = 0;
 
     //Prepare the result iterator
     i = bitset_vector_iterator_new_empty();
     i->is_mutable = true;
 
-    bitset_vector_hash *and_hash, *h = bitset_vector_hash_new(32);
+    //Prepare hash buckets
+    unsigned key, buckets = o->max - o->min + 1;
+    void **and_bucket = NULL;
+    void **bucket = (void **) calloc(1, sizeof(void*) * buckets);
+    if (!bucket) {
+        bitset_oom();
+    }
 
     for (unsigned j = 0; j < o->length; j++) {
 
@@ -542,71 +462,75 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
 
         //Create a bitset operation per vector offset
         if (o->steps[j]->type == BITSET_AND) {
-            and_hash = bitset_vector_hash_new(32);
+            and_bucket = (void **) calloc(1, sizeof(void*) * buckets);
+            if (!and_bucket) {
+                bitset_oom();
+            }
+            count = 0;
             BITSET_VECTOR_FOREACH(step, b, offset) {
-                op = bitset_vector_hash_get(h, offset);
+                key = offset - o->min;
+                if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
+                    op = (bitset_operation *) BITSET_UNTAG_POINTER(bucket[key]);
+                } else if (bucket[key]) {
+                    b2 = (bitset *) bucket[key];
+                    op = bitset_operation_new(b2);
+                }
                 if (op) {
+                    count++;
                     bitset_operation_add(op, b, BITSET_AND);
-                    bitset_vector_hash_put(and_hash, offset, op);
+                    and_bucket[key] = (void *) BITSET_TAG_POINTER(op);
+                    op = NULL;
                 }
             }
-            bitset_vector_hash_free(h);
-            h = and_hash;
+            free(bucket);
+            bucket = and_bucket;
         } else {
             BITSET_VECTOR_FOREACH(step, b, offset) {
-                op = bitset_vector_hash_get(h, offset);
-                if (!op) {
-                    op = bitset_operation_new(NULL);
+                key = offset - o->min;
+                if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
+                    op = (bitset_operation *) BITSET_UNTAG_POINTER(bucket[key]);
                     bitset_operation_add(op, b, o->steps[j]->type);
-                    bitset_vector_hash_put(h, offset, op);
+                } else if (bucket[key]) {
+                    op = bitset_operation_new((bitset *) bucket[key]);
+                    bucket[key] = (void *) BITSET_TAG_POINTER(op);
+                    bitset_operation_add(op, b, o->steps[j]->type);
                 } else {
-                    bitset_operation_add(op, b, o->steps[j]->type);
+                    bucket[key] = (void *) b;
+                    count++;
                 }
             }
         }
     }
 
     //Prepare the result iterator
-    i->bitsets = (bitset **) malloc(sizeof(bitset*) * h->count);
-    i->offsets = (unsigned *) malloc(sizeof(unsigned) * h->count);
+    i->bitsets = (bitset **) malloc(sizeof(bitset*) * count);
+    i->offsets = (unsigned *) malloc(sizeof(unsigned) * count);
     if (!i->bitsets || !i->offsets) {
         bitset_oom();
     }
-    i->length = i->size = h->count;
+    i->length = i->size = count;
 
-    //Vectors are append-only so sort the offsets
-    bitset_vector_hash_node *bucket;
-    unsigned *offsets = (unsigned *) malloc(sizeof(unsigned) * h->count);
-    for (unsigned j = 0, k = 0; j < h->size; j++) {
-        bucket = h->buckets[j];
-        while (bucket) {
-            offsets[k++] = bucket->offset;
-            bucket = bucket->next;
-        }
-    }
-    qsort(offsets, h->count, sizeof(unsigned), bitset_vector_offset_sort);
-
-    //Execute the operations and store the results
-    unsigned count = 0;
-    for (unsigned j = 0; j < h->count; j++) {
-        offset = offsets[j];
-        op = bitset_vector_hash_get(h, offset);
-        if (op->length) {
+    offset = 0;
+    for (unsigned j = 0; j < buckets; j++) {
+        if (BITSET_IS_TAGGED_POINTER(bucket[j])) {
+            op = (bitset_operation *) BITSET_UNTAG_POINTER(bucket[j]);
             b = bitset_operation_exec(op);
             if (b->length) {
-                i->bitsets[count] = b;
-                i->offsets[count] = offset;
-                count++;
+                i->bitsets[offset] = b;
+                i->offsets[offset++] = o->min + j;
             } else {
                 bitset_free(b);
             }
+            bitset_operation_free(op);
+        } else if (bucket[j]) {
+            i->bitsets[offset] = bitset_copy((bitset *) bucket[j]);
+            i->offsets[offset++] = o->min + j;
+            count++;
         }
-        bitset_operation_free(op);
     }
-    i->length = count;
+    i->length = offset;
 
-    free(offsets);
-    bitset_vector_hash_free(h);
+    free(bucket);
 
     return i;
 }
