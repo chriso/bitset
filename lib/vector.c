@@ -26,6 +26,22 @@ void bitset_vector_free(bitset_vector *l) {
     free(l);
 }
 
+bitset_vector *bitset_vector_copy(bitset_vector *v) {
+    bitset_vector *c = bitset_vector_new();
+    if (v->length) {
+        c->buffer = (char *) malloc(sizeof(char) * v->length);
+        if (!c->buffer) {
+            bitset_oom();
+        }
+        memcpy(c->buffer, v->buffer, v->length);
+        c->length = c->size = v->length;
+        c->count = v->count;
+        c->tail = v->tail;
+        c->tail_offset = v->tail_offset;
+    }
+    return c;
+}
+
 static inline void bitset_vector_resize(bitset_vector *l, size_t length) {
     if (length > l->size) {
         size_t next_size;

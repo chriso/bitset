@@ -90,6 +90,12 @@ bitset_vector *bitset_vector_new_buffer(const char *, size_t);
 void bitset_vector_free(bitset_vector *);
 
 /**
+ * Copy a vector.
+ */
+
+bitset_vector *bitset_vector_copy(bitset_vector *);
+
+/**
  * Get the byte length of the vector buffer.
  */
 

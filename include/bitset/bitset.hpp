@@ -113,6 +113,9 @@ class Vector {
         bitset_vector_push(v, b.getBitset(), offset);
         return *this;
     }
+    Vector *copy() const {
+        return new Vector(bitset_vector_copy(v));
+    }
     unsigned length() const {
         return bitset_vector_length(v);
     }
