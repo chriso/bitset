@@ -52,6 +52,12 @@ extern "C" {
 #define BITSET_TMPVAR(i, line)         BITSET_TMPVAR_(i, line)
 #define BITSET_TMPVAR_(a,b)            a__##b
 
+#define BITSET_IS_TAGGED_POINTER(p)    ((uintptr_t)p & 1)
+#define BITSET_TAG_POINTER(p)          ((uintptr_t)p | 1)
+#define BITSET_UNTAG_POINTER(p)        ((uintptr_t)p & ~((uintptr_t)1))
+#define BITSET_UINT_IN_POINTER(u)      (((uintptr_t)u << 1) | 1)
+#define BITSET_UINT_FROM_POINTER(u)    ((uintptr_t)u >> 1)
+
 #define BITSET_MAX(a, b)               ((a) > (b) ? (a) : (b));
 #define BITSET_MIN(a, b)               ((a) < (b) ? (a) : (b));
 #define BITSET_IS_POW2(word)           ((word & (word - 1)) == 0)

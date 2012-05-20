@@ -261,8 +261,8 @@ bitset *bitset_operation_exec(bitset_operation *op) {
     }
     for (unsigned i = 0, j = 0; i < words->size; i++) {
         bucket = words->buckets[i];
-        if ((uintptr_t)bucket & 1) {
-            offsets[j++] = (uintptr_t)bucket >> 1;
+        if (BITSET_IS_TAGGED_POINTER(bucket)) {
+            offsets[j++] = BITSET_UINT_FROM_POINTER(bucket);
             continue;
         }
         while (bucket) {
@@ -316,7 +316,7 @@ bitset_offset bitset_operation_count(bitset_operation *op) {
     bitset_word word;
     for (unsigned i = 0; i < words->size; i++) {
         bucket = words->buckets[i];
-        if ((uintptr_t)bucket & 1) {
+        if (BITSET_IS_TAGGED_POINTER(bucket)) {
             word = words->words[i];
             BITSET_POP_COUNT(count, word);
             continue;
@@ -330,7 +330,7 @@ bitset_offset bitset_operation_count(bitset_operation *op) {
     unsigned tagged = 0, nodes = 0;
     for (unsigned i = 0; i < words->size; i++) {
         bucket = words->buckets[i];
-        if ((uintptr_t)bucket & 1) { tagged++; continue; }
+        if (BITSET_IS_TAGGED_POINTER(bucket)) { tagged++; continue; }
         while (bucket) { nodes++; bucket = bucket->next; }
     }
     fprintf(stderr, "HASH: %u buckets, %u tagged, %u linked-list nodes\n",
@@ -362,7 +362,7 @@ void bitset_hash_free(bitset_hash *hash) {
     bitset_hash_bucket *bucket, *tmp;
     for (unsigned i = 0; i < hash->size; i++) {
         bucket = hash->buckets[i];
-        if ((uintptr_t)bucket & 1) {
+        if (BITSET_IS_TAGGED_POINTER(bucket)) {
             continue;
         }
         while (bucket) {
@@ -380,8 +380,8 @@ inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset,
         bitset_offset key, bitset_word word) {
     bitset_hash_bucket *insert, *bucket = hash->buckets[key];
     bitset_offset off;
-    if ((uintptr_t)bucket & 1) {
-        off = (uintptr_t)bucket >> 1;
+    if (BITSET_IS_TAGGED_POINTER(bucket)) {
+        off = BITSET_UINT_FROM_POINTER(bucket);
         if (off == offset) {
             return false;
         }
@@ -390,7 +390,7 @@ inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset,
             bitset_oom();
         }
         //Pointer tagging is out if malloc returns an address with the LSB set
-        assert(!((uintptr_t)insert & 1));
+        assert(!BITSET_IS_TAGGED_POINTER(insert));
         insert->offset = off;
         insert->word = (uintptr_t)hash->words[key];
         bucket = hash->buckets[key] = insert;
@@ -405,7 +405,7 @@ inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset,
         hash->count++;
         return true;
     } else if (!bucket) {
-        hash->buckets[key] = (bitset_hash_bucket *)(uintptr_t)((offset << 1) | 1);
+        hash->buckets[key] = (bitset_hash_bucket *) BITSET_UINT_IN_POINTER(offset);
         hash->words[key] = word;
         hash->count++;
         return true;
@@ -423,7 +423,7 @@ inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset,
     if (!insert) {
         bitset_oom();
     }
-    assert(!((uintptr_t)insert & 1));
+    assert(!BITSET_IS_TAGGED_POINTER(insert));
     insert->offset = offset;
     insert->word = word;
     insert->next = NULL;
@@ -437,8 +437,8 @@ inline bitset_word *bitset_hash_get(const bitset_hash *hash,
     bitset_hash_bucket *bucket = hash->buckets[key];
     bitset_offset off;
     while (bucket) {
-        if ((uintptr_t)bucket & 1) {
-            off = ((uintptr_t)bucket) >> 1;
+        if (BITSET_IS_TAGGED_POINTER(bucket)) {
+            off = BITSET_UINT_FROM_POINTER(bucket);
             if (off != offset) {
                 return NULL;
             }
