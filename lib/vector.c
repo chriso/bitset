@@ -149,12 +149,17 @@ bitset_vector *bitset_vector_new_buffer(const char *buffer, size_t length) {
         l->tail = buf;
         l->tail_offset += bitset_encoded_length(buf);
         offset_bytes = bitset_encoded_length_size(buf);
+        i += offset_bytes;
+        if (i >= l->length) break;
         buf += offset_bytes;
         length = bitset_encoded_length(buf);
         length_bytes = bitset_encoded_length_size(buf);
+        i += length_bytes;
+        if (i >= l->length) break;
         buf += length_bytes;
         length *= sizeof(bitset_word);
-        i += offset_bytes + length_bytes + length;
+        i += length;
+        if (i > l->length) break;
         buf += length;
     }
     return l;
@@ -235,9 +240,13 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *c, unsigned st
     for (unsigned j = 0, b = 0; j < c->length; ) {
         offset += bitset_encoded_length(buffer);
         offset_bytes = bitset_encoded_length_size(buffer);
+        j += offset_bytes;
+        if (j >= c->length) break;
         buffer += offset_bytes;
         length = bitset_encoded_length(buffer);
         length_bytes = bitset_encoded_length_size(buffer);
+        j += length_bytes;
+        if (j >= c->length) break;
         buffer += length_bytes;
         if (offset >= start && (!end || offset < end)) {
             bitset_vector_iterator_resize(i, b + 1);
@@ -251,7 +260,8 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *c, unsigned st
             b++;
         }
         length *= sizeof(bitset_word);
-        j += offset_bytes + length_bytes + length;
+        j += length;
+        if (j > c->length) break;
         buffer += length;
     }
     return i;
