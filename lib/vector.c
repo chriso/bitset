@@ -313,7 +313,7 @@ void bitset_vector_iterator_count(bitset_vector_iterator *i, unsigned *raw, unsi
     (void)offset;
     *raw = raw_count;
     if (unique) {
-        bitset_linear *l = bitset_linear_new(raw_count);
+        bitset_linear *l = bitset_linear_new(raw_count * 10);
         BITSET_VECTOR_FOREACH(i, b, offset) {
             bitset_linear_add(l, b);
         }
