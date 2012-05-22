@@ -83,7 +83,7 @@ void bitset_operation_add_nested(bitset_operation *ops, bitset_operation *o,
 }
 
 static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
-    bitset_offset word_offset, offset_key, max = 0, length;
+    bitset_offset word_offset, offset_key, max = 0, b_max, length;
     bitset_operation_step *step;
     bitset_word word, *hashed;
     unsigned position, count = 0;
@@ -104,7 +104,8 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
         //Work out the number of hash buckets required. Note that setting the right
         //number of buckets to avoid collisions is the biggest available win here
         count += op->steps[i]->data.b->length;
-        max = BITSET_MAX(max, bitset_max(op->steps[i]->data.b));
+        b_max = bitset_max(op->steps[i]->data.b);
+        max = BITSET_MAX(max, b_max);
 
     }
 #ifdef HASH_DEBUG
@@ -165,7 +166,6 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
 
             bitset_hash_free(words);
             words = and_words;
-            and_words = NULL;
 
         } else {
 
@@ -390,7 +390,6 @@ inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset,
             bitset_oom();
         }
         //Pointer tagging is out if malloc returns an address with the LSB set
-        assert(!BITSET_IS_TAGGED_POINTER(insert));
         insert->offset = off;
         insert->word = (uintptr_t)hash->words[key];
         bucket = hash->buckets[key] = insert;
@@ -423,7 +422,6 @@ inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset,
     if (!insert) {
         bitset_oom();
     }
-    assert(!BITSET_IS_TAGGED_POINTER(insert));
     insert->offset = offset;
     insert->word = word;
     insert->next = NULL;
