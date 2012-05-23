@@ -1,7 +1,7 @@
 #ifndef BITSET_OPERATION_H
 #define BITSET_OPERATION_H
 
-#include "bitset.h"
+#include "bitset/bitset.h"
 
 #ifdef __cplusplus
 extern "C" {
