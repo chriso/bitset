@@ -9,6 +9,41 @@
 #include "bitset/vector.h"
 #include "bitset/probabilistic.h"
 
+void stress_small(unsigned bits, unsigned max, unsigned count) {
+    float start, end;
+
+    bitset *b, *b2, *b3, *b4;
+    bitset_operation *o;
+    bitset_offset *offsets = malloc(sizeof(bitset_offset) * bits);
+
+    start = (float) clock();
+    for (unsigned j = 0; j < count; j++) {
+        for (unsigned j = 0; j < bits; j++) {
+            offsets[j] = rand() % max;
+        }
+        b = bitset_new_bits(offsets, bits);
+        for (unsigned j = 0; j < bits; j++) {
+            offsets[j] = rand() % max;
+        }
+        b2 = bitset_new_bits(offsets, bits);
+        for (unsigned j = 0; j < bits; j++) {
+            offsets[j] = rand() % max;
+        }
+        b3 = bitset_new_bits(offsets, bits);
+        o = bitset_operation_new(b);
+        bitset_operation_add(o, b2, BITSET_AND);
+        bitset_operation_add(o, b3, BITSET_OR);
+        b4 = bitset_operation_exec(o);
+        bitset_operation_free(o);
+        bitset_free(b4);
+        bitset_free(b);
+        bitset_free(b2);
+        bitset_free(b3);
+    }
+    end = ((float) clock() - start) / CLOCKS_PER_SEC;
+    printf("Executed small ops in %.2fs\n", end);
+}
+
 void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     float start, end, size = 0;
     unsigned i;
@@ -133,7 +168,10 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
 int main(int argc, char **argv) {
     srand(1);
 
-    printf("Creating 100k bitsets with 10M total bits between 1->1M\n");
+    printf("Testing 100k small operations\n");
+    stress_small(10, 1000000, 100000);
+
+    printf("\nCreating 100k bitsets with 10M total bits between 1->1M\n");
     stress_exec(100000, 100, 1000000);
 
     printf("\nCreating 100k bitsets with 10M total bits between 1->10M\n");
