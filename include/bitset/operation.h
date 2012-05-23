@@ -89,30 +89,6 @@ bitset *bitset_operation_exec(bitset_operation *);
 
 bitset_offset bitset_operation_count(bitset_operation *);
 
-/**
- * Create a new hash with the specified number of buckets.
- */
-
-bitset_hash *bitset_hash_new(size_t);
-
-/**
- * Free the specified hash.
- */
-
-void bitset_hash_free(bitset_hash *);
-
-/**
- * Insert a non-existent offset into the hash.
- */
-
-bool bitset_hash_insert(bitset_hash *, bitset_offset, bitset_offset, bitset_word);
-
-/**
- * Get the word at the specified offset.
- */
-
-bitset_word *bitset_hash_get(const bitset_hash *, bitset_offset, bitset_offset);
-
 #ifdef __cplusplus
 } //extern "C"
 #endif
