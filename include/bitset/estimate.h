@@ -77,6 +77,12 @@ unsigned bitset_countn_count(bitset_countn *);
 unsigned *bitset_countn_count_all(bitset_countn *);
 
 /**
+ * Count the number of bits that occur 0..N times using a mask.
+ */
+
+unsigned *bitset_countn_count_mask(bitset_countn *, bitset *);
+
+/**
  * Free the counter.
  */
 

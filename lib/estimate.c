@@ -129,11 +129,60 @@ unsigned bitset_countn_count(bitset_countn *e) {
 
 unsigned *bitset_countn_count_all(bitset_countn *e) {
     unsigned *counts = (unsigned *) calloc(1, sizeof(unsigned) * e->n);
+    if (!counts) {
+        bitset_oom();
+    }
     bitset_word word;
-    //Find bits that occur in the Nth bitset, but not the N+1th bitset
     for (unsigned offset = 0; offset < e->size; offset++) {
         for (unsigned n = 1; n <= e->n; n++) {
             word = e->words[n-1][offset] & ~e->words[n][offset];
+            if (word) {
+                BITSET_POP_COUNT(counts[n-1], word);
+            }
+        }
+    }
+    return counts;
+}
+
+unsigned *bitset_countn_count_mask(bitset_countn *e, bitset *mask) {
+    bitset_word *mask_words = (bitset_word *) calloc(1, e->size * sizeof(bitset_word));
+    if (!mask_words) {
+        bitset_oom();
+    }
+    bitset_offset offset = 0;
+    bitset_word word, mask_word;
+    unsigned position;
+
+    for (unsigned i = 0; i < mask->length; i++) {
+        mask_word = mask->words[i];
+        if (BITSET_IS_FILL_WORD(mask_word)) {
+            offset += BITSET_GET_LENGTH(mask_word);
+            if (offset >= e->size) {
+                offset %= e->size;
+            }
+            position = BITSET_GET_POSITION(mask_word);
+            if (!position) {
+                continue;
+            }
+            mask_word = BITSET_CREATE_LITERAL(position - 1);
+        }
+        for (unsigned n = 1; n <= e->n; n++) {
+            mask_words[offset] |= mask_word;
+        }
+        offset++;
+        if (offset >= e->size) {
+            offset -= e->size;
+        }
+    }
+
+    unsigned *counts = (unsigned *) calloc(1, sizeof(unsigned) * e->n);
+    if (!counts) {
+        bitset_oom();
+    }
+    for (unsigned offset = 0; offset < e->size; offset++) {
+        for (unsigned n = 1; n <= e->n; n++) {
+            word = e->words[n-1][offset] & ~e->words[n][offset];
+            word &= mask_words[offset];
             if (word) {
                 BITSET_POP_COUNT(counts[n-1], word);
             }

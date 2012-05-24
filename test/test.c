@@ -1081,6 +1081,14 @@ void test_suite_estimate() {
     test_int("Test countn count_all where N=1\n", 4, all[0]);
     test_int("Test countn count_all where N=2\n", 3, all[1]);
     test_int("Test countn count_all where N=3\n", 1, all[2]);
+
+
+    BITSET_NEW(mask, { 2, 4, 5, 40, 41 });
+    all = bitset_countn_count_mask(c, mask);
+    test_int("Test countn count_mask where N=1\n", 2, all[0]);
+    test_int("Test countn count_mask where N=2\n", 1, all[1]);
+    test_int("Test countn count_mask where N=3\n", 0, all[2]);
+
     bitset_countn_free(c);
     bitset_free(b5);
     bitset_free(b6);
