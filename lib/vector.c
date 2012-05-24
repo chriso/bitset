@@ -7,7 +7,7 @@
 #include "bitset/bitset.h"
 #include "bitset/vector.h"
 #include "bitset/operation.h"
-#include "bitset/probabilistic.h"
+#include "bitset/estimate.h"
 
 bitset_vector *bitset_vector_new() {
     bitset_vector *l = (bitset_vector *) malloc(sizeof(bitset_vector));

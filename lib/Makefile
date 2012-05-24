@@ -1,6 +1,6 @@
 .PHONY: clean
 
-OBJECTS=bitset.o operation.o probabilistic.o vector.o
+OBJECTS=bitset.o operation.o estimate.o vector.o
 
 all: libbitset.so libbitset.a
 
@@ -19,8 +19,8 @@ bitset.o:
 operation.o:
 	$(B_CC) $(CFLAGS) -c -o operation.o operation.c
 
-probabilistic.o:
-	$(B_CC) $(CFLAGS) -c -o probabilistic.o probabilistic.c
+estimate.o:
+	$(B_CC) $(CFLAGS) -c -o estimate.o estimate.c
 
 vector.o:
 	$(B_CC) $(CFLAGS) -c -o vector.o vector.c

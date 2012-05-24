@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include "bitset/operation.h"
-#include "bitset/probabilistic.h"
+#include "bitset/estimate.h"
 #include "bitset/vector.h"
 #include "test.h"
 
@@ -77,8 +77,8 @@ int main(int argc, char **argv) {
     test_suite_vector();
     printf("Testing vector operations\n");
     test_suite_vector_operation();
-    printf("Testing probabilistic algorithms\n");
-    test_suite_probabilistic();
+    printf("Testing estimate algorithms\n");
+    test_suite_estimate();
     printf("Testing stress\n");
     test_suite_stress();
     printf("OK\n");
@@ -1040,7 +1040,7 @@ void test_suite_vector_operation() {
     bitset_vector_free(v4);
 }
 
-void test_suite_probabilistic() {
+void test_suite_estimate() {
     BITSET_NEW(b1, { 100 });
     BITSET_NEW(b2, { 101 });
     BITSET_NEW(b3, { 102 });

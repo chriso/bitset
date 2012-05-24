@@ -6,7 +6,7 @@
 #include "bitset/bitset.h"
 #include "bitset/vector.h"
 #include "bitset/operation.h"
-#include "bitset/probabilistic.h"
+#include "bitset/estimate.h"
 
 /**
  * C++ wrapper classes for bitset structures.

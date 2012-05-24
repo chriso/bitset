@@ -7,7 +7,7 @@
 
 #include "bitset/operation.h"
 #include "bitset/vector.h"
-#include "bitset/probabilistic.h"
+#include "bitset/estimate.h"
 
 void stress_small(unsigned bits, unsigned max, unsigned count) {
     float start, end;

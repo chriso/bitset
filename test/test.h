@@ -11,7 +11,7 @@ void test_suite_min();
 void test_suite_max();
 void test_suite_vector();
 void test_suite_vector_operation();
-void test_suite_probabilistic();
+void test_suite_estimate();
 
 void test_bool(char *, bool, bool);
 void test_ulong(char *, unsigned long, unsigned long);
