@@ -1056,5 +1056,34 @@ void test_suite_probabilistic() {
     bitset_free(b2);
     bitset_free(b3);
     bitset_free(b4);
+
+    BITSET_NEW(b5, { 1, 2, 3, 40, 41, 42, 43, 51 });
+    BITSET_NEW(b6, { 1, 3, 41, 43 });
+    BITSET_NEW(b7, { 1 });
+    bitset_countn *c = bitset_countn_new(1, 100);
+    bitset_countn_add(c, b5);
+    bitset_countn_add(c, b6);
+    bitset_countn_add(c, b7);
+    test_int("Test countn count where N=1\n", 4, bitset_countn_count(c));
+    bitset_countn_free(c);
+    c = bitset_countn_new(2, 100);
+    bitset_countn_add(c, b5);
+    bitset_countn_add(c, b6);
+    bitset_countn_add(c, b7);
+    test_int("Test countn count where N=2\n", 3, bitset_countn_count(c));
+    bitset_countn_free(c);
+    c = bitset_countn_new(3, 100);
+    bitset_countn_add(c, b5);
+    bitset_countn_add(c, b6);
+    bitset_countn_add(c, b7);
+    test_int("Test countn count where N=3\n", 1, bitset_countn_count(c));
+    unsigned *all = bitset_countn_count_all(c);
+    test_int("Test countn count_all where N=1\n", 4, all[0]);
+    test_int("Test countn count_all where N=2\n", 3, all[1]);
+    test_int("Test countn count_all where N=3\n", 1, all[2]);
+    bitset_countn_free(c);
+    bitset_free(b5);
+    bitset_free(b6);
+    bitset_free(b7);
 }
 
