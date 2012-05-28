@@ -173,6 +173,12 @@ bitset_vector_iterator *bitset_vector_iterator_new_empty();
 bitset_vector_iterator *bitset_vector_iterator_copy(bitset_vector_iterator *);
 
 /**
+ * Make the bitsets in the vector iterator mutable.
+ */
+
+void bitset_vector_iterator_mutable(bitset_vector_iterator *);
+
+/**
  * Create a new vector operation.
  */
 

@@ -267,6 +267,16 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *c, unsigned st
     return i;
 }
 
+void bitset_vector_iterator_mutable(bitset_vector_iterator *i) {
+    if (i->is_mutable) {
+        return;
+    }
+    for (unsigned j = 0; j < i->length; j++) {
+        i->bitsets[j] = bitset_copy(i->bitsets[j]);
+    }
+    i->is_mutable = true;
+}
+
 bitset_vector_iterator *bitset_vector_iterator_new_empty() {
     bitset_vector_iterator *i = (bitset_vector_iterator *) malloc(sizeof(bitset_vector_iterator));
     if (!i) {
