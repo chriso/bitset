@@ -50,7 +50,7 @@ extern "C" {
 #define BITSET_MAX_LENGTH              BITSET_LENGTH_MASK
 
 #define BITSET_TMPVAR(i, line)         BITSET_TMPVAR_(i, line)
-#define BITSET_TMPVAR_(a,b)            a__##b
+#define BITSET_TMPVAR_(a,b)            a##b
 
 #define BITSET_IS_TAGGED_POINTER(p)    ((uintptr_t)p & 1)
 #define BITSET_TAG_POINTER(p)          ((uintptr_t)p | 1)
