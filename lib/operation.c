@@ -235,13 +235,16 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
     }
     words = bitset_hash_new(size);
 
+    enum bitset_operation_type type;
+
     for (unsigned i = 0; i < op->length; i++) {
 
         step = op->steps[i];
+        type = i == 0 ? BITSET_OR : step->type;
         b = step->data.b;
         word_offset = offset_key = 0;
 
-        if (step->type == BITSET_AND) {
+        if (type == BITSET_AND) {
 
             and_words = bitset_hash_new(words->size);
 
@@ -305,13 +308,13 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
                 hashed = bitset_hash_get(words, word_offset, offset_key);
 
                 if (hashed) {
-                    switch (step->type) {
+                    switch (type) {
                         case BITSET_OR:     *hashed |= word;  break;
                         case BITSET_ANDNOT: *hashed &= ~word; break;
                         case BITSET_XOR:    *hashed ^= word;  break;
                         default: break;
                     }
-                } else if (step->type != BITSET_ANDNOT) {
+                } else if (type != BITSET_ANDNOT) {
                     bitset_hash_insert(words, word_offset, offset_key, word);
                 }
             }

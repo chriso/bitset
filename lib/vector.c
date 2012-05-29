@@ -482,7 +482,11 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
         bitset_oom();
     }
 
+    enum bitset_operation_type type;
+
     for (unsigned j = 0; j < o->length; j++) {
+
+        type = j == 0 ? BITSET_OR : o->steps[j]->type;
 
         //Recursively flatten nested operations
         if (o->steps[j]->is_operation) {
@@ -495,7 +499,7 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
         step = o->steps[j]->data.i;
 
         //Create a bitset operation per vector offset
-        if (o->steps[j]->type == BITSET_AND) {
+        if (type == BITSET_AND) {
             and_bucket = (void **) calloc(1, sizeof(void*) * buckets);
             if (!and_bucket) {
                 bitset_oom();
@@ -523,11 +527,11 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
                 key = offset - o->min;
                 if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
                     op = (bitset_operation *) BITSET_UNTAG_POINTER(bucket[key]);
-                    bitset_operation_add(op, b, o->steps[j]->type);
+                    bitset_operation_add(op, b, type);
                 } else if (bucket[key]) {
                     op = bitset_operation_new((bitset *) bucket[key]);
                     bucket[key] = (void *) BITSET_TAG_POINTER(op);
-                    bitset_operation_add(op, b, o->steps[j]->type);
+                    bitset_operation_add(op, b, type);
                 } else {
                     bucket[key] = (void *) b;
                     count++;
