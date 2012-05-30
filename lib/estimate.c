@@ -188,6 +188,7 @@ unsigned *bitset_countn_count_mask(bitset_countn *e, bitset *mask) {
             }
         }
     }
+    free(mask_words);
     return counts;
 }
 
