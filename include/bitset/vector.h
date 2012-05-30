@@ -120,6 +120,12 @@ void bitset_vector_push(bitset_vector *, bitset *, unsigned);
 bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *, unsigned, unsigned);
 
 /**
+ * Create a new bitset vector iterator in which bitsets are mutable.
+ */
+
+bitset_vector_iterator *bitset_vector_iterator_new_mutable(bitset_vector *, unsigned, unsigned);
+
+/**
  * Iterate over all bitsets.
  */
 
@@ -171,12 +177,6 @@ bitset_vector_iterator *bitset_vector_iterator_new_empty();
  */
 
 bitset_vector_iterator *bitset_vector_iterator_copy(bitset_vector_iterator *);
-
-/**
- * Make the bitsets in the vector iterator mutable.
- */
-
-void bitset_vector_iterator_mutable(bitset_vector_iterator *);
 
 /**
  * Create a new vector operation.

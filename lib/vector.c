@@ -267,6 +267,56 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *c, unsigned st
     return i;
 }
 
+bitset_vector_iterator *bitset_vector_iterator_new_mutable(bitset_vector *c,
+        unsigned start, unsigned end) {
+    bitset_vector_iterator *i = (bitset_vector_iterator *) malloc(sizeof(bitset_vector_iterator));
+    if (!i) {
+        bitset_oom();
+    }
+    i->is_mutable = true;
+    if (start == BITSET_VECTOR_START && end == BITSET_VECTOR_END) {
+        i->bitsets = (bitset **) malloc(sizeof(bitset*) * c->count);
+        i->offsets = (unsigned *) malloc(sizeof(unsigned) * c->count);
+        if (!i->bitsets || !i->offsets) {
+            bitset_oom();
+        }
+        i->length = i->size = c->count;
+    } else {
+        i->length = i->size = 0;
+        i->bitsets = NULL;
+        i->offsets = NULL;
+    }
+    unsigned length = 0, offset = 0;
+    size_t length_bytes, offset_bytes;
+    char *buffer = c->buffer;
+    bitset tmp;
+    for (unsigned j = 0, b = 0; j < c->length; ) {
+        offset += bitset_encoded_length(buffer);
+        offset_bytes = bitset_encoded_length_size(buffer);
+        j += offset_bytes;
+        if (j >= c->length) break;
+        buffer += offset_bytes;
+        length = bitset_encoded_length(buffer);
+        length_bytes = bitset_encoded_length_size(buffer);
+        j += length_bytes;
+        if (j >= c->length) break;
+        buffer += length_bytes;
+        if (offset >= start && (!end || offset < end)) {
+            tmp.words = (bitset_word *) buffer;
+            tmp.length = tmp.size = length;
+            bitset_vector_iterator_resize(i, b + 1);
+            i->bitsets[b] = bitset_copy(&tmp);
+            i->offsets[b] = offset;
+            b++;
+        }
+        length *= sizeof(bitset_word);
+        j += length;
+        if (j > c->length) break;
+        buffer += length;
+    }
+    return i;
+}
+
 void bitset_vector_iterator_mutable(bitset_vector_iterator *i) {
     if (i->is_mutable) {
         return;
