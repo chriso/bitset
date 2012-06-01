@@ -42,7 +42,7 @@ bitset_vector *bitset_vector_copy(bitset_vector *v) {
     return c;
 }
 
-static inline void bitset_vector_resize(bitset_vector *l, size_t length) {
+void bitset_vector_resize(bitset_vector *l, size_t length) {
     if (length > l->size) {
         size_t next_size;
         BITSET_NEXT_POW2(next_size, length);

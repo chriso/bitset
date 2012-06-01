@@ -114,6 +114,12 @@ unsigned bitset_vector_count(bitset_vector *);
 void bitset_vector_push(bitset_vector *, bitset *, unsigned);
 
 /**
+ * Resize the vector buffer.
+ */
+
+void bitset_vector_resize(bitset_vector *, size_t);
+
+/**
  * Create a new bitset vector iterator over the range [start,end).
  */
 
