@@ -532,11 +532,28 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
         bitset_oom();
     }
 
+    //OR the first vector
+    step = o->steps[0]->data.i;
+    BITSET_VECTOR_FOREACH(step, b, offset) {
+        key = offset - o->min;
+        if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
+            op = (bitset_operation *) BITSET_UNTAG_POINTER(bucket[key]);
+            bitset_operation_add(op, b, o->steps[0]->type);
+        } else if (bucket[key]) {
+            op = bitset_operation_new((bitset *) bucket[key]);
+            bucket[key] = (void *) BITSET_TAG_POINTER(op);
+            bitset_operation_add(op, b, o->steps[0]->type);
+        } else {
+            bucket[key] = (void *) b;
+            count++;
+        }
+    }
+
     enum bitset_operation_type type;
 
-    for (unsigned j = 0; j < o->length; j++) {
+    for (unsigned j = 1; j < o->length; j++) {
 
-        type = j == 0 ? BITSET_OR : o->steps[j]->type;
+        type = o->steps[j]->type;
 
         //Recursively flatten nested operations
         if (o->steps[j]->is_operation) {

@@ -131,7 +131,6 @@ static inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset,
         if (!insert) {
             bitset_oom();
         }
-        //Pointer tagging is out if malloc returns an address with the LSB set
         insert->offset = off;
         insert->word = (uintptr_t)hash->words[key];
         bucket = hash->buckets[key] = insert;
@@ -235,16 +234,39 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
     }
     words = bitset_hash_new(size);
 
-    enum bitset_operation_type type;
+    //OR the first bitset
+    b = op->steps[0]->data.b;
+    word_offset = offset_key = 0;
+    for (unsigned j = 0; j < b->length; j++) {
+        word = b->words[j];
+        if (BITSET_IS_FILL_WORD(word)) {
+            length = BITSET_GET_LENGTH(word);
+            word_offset += length;
+            offset_key += length;
+            if (offset_key >= size) {
+                offset_key %= size;
+            }
+            position = BITSET_GET_POSITION(word);
+            if (!position) {
+                continue;
+            }
+            word = BITSET_CREATE_LITERAL(position - 1);
+        }
+        word_offset++;
+        offset_key++;
+        if (offset_key >= size) {
+            offset_key -= size;
+        }
+        bitset_hash_insert(words, word_offset, offset_key, word);
+    }
 
-    for (unsigned i = 0; i < op->length; i++) {
+    for (unsigned i = 1; i < op->length; i++) {
 
         step = op->steps[i];
-        type = i == 0 ? BITSET_OR : step->type;
         b = step->data.b;
         word_offset = offset_key = 0;
 
-        if (type == BITSET_AND) {
+        if (step->type == BITSET_AND) {
 
             and_words = bitset_hash_new(words->size);
 
@@ -308,13 +330,13 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
                 hashed = bitset_hash_get(words, word_offset, offset_key);
 
                 if (hashed) {
-                    switch (type) {
+                    switch (step->type) {
                         case BITSET_OR:     *hashed |= word;  break;
                         case BITSET_ANDNOT: *hashed &= ~word; break;
                         case BITSET_XOR:    *hashed ^= word;  break;
                         default: break;
                     }
-                } else if (type != BITSET_ANDNOT) {
+                } else if (step->type != BITSET_ANDNOT) {
                     bitset_hash_insert(words, word_offset, offset_key, word);
                 }
             }

@@ -3,7 +3,7 @@
 all: test_o stress_o
 
 test_o:
-	$(B_CC) $(CFLAGS) -L../lib -lbitset -o test test.c
+	$(B_CC) $(CFLAGS) -L../lib -lbitset -g -o test test.c
 
 stress_o:
 	$(B_CC) $(CFLAGS) -L../lib -lbitset -o stress stress.c
