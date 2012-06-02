@@ -91,6 +91,7 @@ typedef struct bitset_ {
     bitset_word *words;
     size_t length;
     size_t size;
+    unsigned references;
 } bitset;
 
 typedef struct bitset_iterator_ {
@@ -161,7 +162,7 @@ bitset *bitset_new_bits(bitset_offset *, size_t);
  * Create a copy of the specified bitset.
  */
 
-bitset *bitset_copy(const bitset *);
+bitset *bitset_copy(bitset *);
 
 /**
  * Check whether a bit is set.

@@ -46,7 +46,6 @@ typedef struct bitset_vector_iterator_ {
     unsigned *offsets;
     size_t length;
     size_t size;
-    bool is_mutable;
 } bitset_vector_iterator;
 
 typedef struct bitset_vector_operation_ bitset_vector_operation;
@@ -124,12 +123,6 @@ void bitset_vector_resize(bitset_vector *, size_t);
  */
 
 bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *, unsigned, unsigned);
-
-/**
- * Create a new bitset vector iterator in which bitsets are mutable.
- */
-
-bitset_vector_iterator *bitset_vector_iterator_new_mutable(bitset_vector *, unsigned, unsigned);
 
 /**
  * Iterate over all bitsets.

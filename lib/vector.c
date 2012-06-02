@@ -216,12 +216,12 @@ static inline void bitset_vector_iterator_resize(bitset_vector_iterator *i, size
     i->length = length;
 }
 
-bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *c, unsigned start, unsigned end) {
+bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *c,
+        unsigned start, unsigned end) {
     bitset_vector_iterator *i = (bitset_vector_iterator *) malloc(sizeof(bitset_vector_iterator));
     if (!i) {
         bitset_oom();
     }
-    i->is_mutable = false;
     if (start == BITSET_VECTOR_START && end == BITSET_VECTOR_END) {
         i->bitsets = (bitset **) malloc(sizeof(bitset*) * c->count);
         i->offsets = (unsigned *) malloc(sizeof(unsigned) * c->count);
@@ -254,8 +254,13 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *c, unsigned st
             if (!i->bitsets[b]) {
                 bitset_oom();
             }
-            i->bitsets[b]->words = (bitset_word *) buffer;
+            i->bitsets[b]->words = (bitset_word *) malloc(sizeof(bitset_word) * length);
+            if (!i->bitsets[b]->words) {
+                bitset_oom();
+            }
+            memcpy(i->bitsets[b]->words, buffer, length * sizeof(bitset_word));
             i->bitsets[b]->length = i->bitsets[b]->size = length;
+            i->bitsets[b]->references = 1;
             i->offsets[b] = offset;
             b++;
         }
@@ -265,66 +270,6 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *c, unsigned st
         buffer += length;
     }
     return i;
-}
-
-bitset_vector_iterator *bitset_vector_iterator_new_mutable(bitset_vector *c,
-        unsigned start, unsigned end) {
-    bitset_vector_iterator *i = (bitset_vector_iterator *) malloc(sizeof(bitset_vector_iterator));
-    if (!i) {
-        bitset_oom();
-    }
-    i->is_mutable = true;
-    if (start == BITSET_VECTOR_START && end == BITSET_VECTOR_END) {
-        i->bitsets = (bitset **) malloc(sizeof(bitset*) * c->count);
-        i->offsets = (unsigned *) malloc(sizeof(unsigned) * c->count);
-        if (!i->bitsets || !i->offsets) {
-            bitset_oom();
-        }
-        i->length = i->size = c->count;
-    } else {
-        i->length = i->size = 0;
-        i->bitsets = NULL;
-        i->offsets = NULL;
-    }
-    unsigned length = 0, offset = 0;
-    size_t length_bytes, offset_bytes;
-    char *buffer = c->buffer;
-    bitset tmp;
-    for (unsigned j = 0, b = 0; j < c->length; ) {
-        offset += bitset_encoded_length(buffer);
-        offset_bytes = bitset_encoded_length_size(buffer);
-        j += offset_bytes;
-        if (j >= c->length) break;
-        buffer += offset_bytes;
-        length = bitset_encoded_length(buffer);
-        length_bytes = bitset_encoded_length_size(buffer);
-        j += length_bytes;
-        if (j >= c->length) break;
-        buffer += length_bytes;
-        if (offset >= start && (!end || offset < end)) {
-            tmp.words = (bitset_word *) buffer;
-            tmp.length = tmp.size = length;
-            bitset_vector_iterator_resize(i, b + 1);
-            i->bitsets[b] = bitset_copy(&tmp);
-            i->offsets[b] = offset;
-            b++;
-        }
-        length *= sizeof(bitset_word);
-        j += length;
-        if (j > c->length) break;
-        buffer += length;
-    }
-    return i;
-}
-
-void bitset_vector_iterator_mutable(bitset_vector_iterator *i) {
-    if (i->is_mutable) {
-        return;
-    }
-    for (unsigned j = 0; j < i->length; j++) {
-        i->bitsets[j] = bitset_copy(i->bitsets[j]);
-    }
-    i->is_mutable = true;
 }
 
 bitset_vector_iterator *bitset_vector_iterator_new_empty() {
@@ -335,7 +280,6 @@ bitset_vector_iterator *bitset_vector_iterator_new_empty() {
     i->bitsets = NULL;
     i->offsets = NULL;
     i->length = i->size = 0;
-    i->is_mutable = false;
     return i;
 }
 
@@ -349,7 +293,6 @@ bitset_vector_iterator *bitset_vector_iterator_copy(bitset_vector_iterator *c) {
     if (!i->bitsets || !i->offsets) {
         bitset_oom();
     }
-    i->is_mutable = true;
     i->length = i->size = c->length;
     for (unsigned j = 0; j < c->length; j++) {
         i->bitsets[j] = bitset_copy(c->bitsets[j]);
@@ -364,13 +307,9 @@ void bitset_vector_iterator_concat(bitset_vector_iterator *i, bitset_vector_iter
         bitset_vector_iterator_resize(i, previous_length + c->length);
         for (unsigned j = 0; j < c->length; j++) {
             i->bitsets[j + previous_length] = c->bitsets[j];
+            c->bitsets[j]->references++;
             i->offsets[j + previous_length] = c->offsets[j] + offset;
         }
-        free(c->bitsets);
-        free(c->offsets);
-        c->bitsets = NULL;
-        c->offsets = NULL;
-        c->length = c->size = 0;
     }
 }
 
@@ -418,11 +357,7 @@ bitset *bitset_vector_iterator_merge(bitset_vector_iterator *i) {
 
 void bitset_vector_iterator_free(bitset_vector_iterator *i) {
     for (unsigned j = 0; j < i->length; j++) {
-        if (i->is_mutable) {
-            bitset_free(i->bitsets[j]);
-        } else {
-            free(i->bitsets[j]);
-        }
+        bitset_free(i->bitsets[j]);
     }
     if (i->bitsets) free(i->bitsets);
     if (i->offsets) free(i->offsets);
@@ -522,7 +457,6 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
 
     //Prepare the result iterator
     i = bitset_vector_iterator_new_empty();
-    i->is_mutable = true;
 
     //Prepare hash buckets
     unsigned key, buckets = o->max - o->min + 1;

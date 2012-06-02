@@ -14,10 +14,14 @@ bitset *bitset_new() {
         bitset_oom();
     }
     b->length = b->size = 0;
+    b->references = 1;
     return b;
 }
 
 void bitset_free(bitset *b) {
+    if (--b->references) {
+        return;
+    }
     if (b->length) {
         free(b->words);
     }
@@ -49,18 +53,9 @@ size_t bitset_length(bitset *b) {
     return b->length * sizeof(bitset_word);
 }
 
-bitset *bitset_copy(const bitset *b) {
-    bitset *replica = (bitset *) malloc(sizeof(bitset));
-    if (!replica) {
-        bitset_oom();
-    }
-    replica->words = (bitset_word *) malloc(sizeof(bitset_word) * b->length);
-    if (!replica->words) {
-        bitset_oom();
-    }
-    memcpy(replica->words, b->words, b->length * sizeof(bitset_word));
-    replica->length = b->length;
-    return replica;
+bitset *bitset_copy(bitset *b) {
+    b->references++;
+    return b;
 }
 
 bool bitset_get(const bitset *b, bitset_offset bit) {
@@ -308,6 +303,7 @@ bitset *bitset_new_buffer(const char *buffer, size_t length) {
     }
     memcpy(b->words, buffer, length * sizeof(char));
     b->length = b->size = length / sizeof(bitset_word);
+    b->references = 1;
     return b;
 }
 
