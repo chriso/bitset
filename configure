@@ -6,9 +6,9 @@ REQUIRE_HEADER="stdbool.h stddef.h stdint.h stdio.h string.h time.h"
 EXIT_SUCCESS=0
 EXIT_FAILURE=1
 
-VERSION='2.4'
 VERSION_MAJOR='2'
 VERSION_MINOR='4'
+VERSION="${VERSION_MAJOR}.${VERSION_MINOR}"
 BUILD="$PWD/build/bitset.build"
 PREFIX=${PREFIX:-"/usr/local"}
 OPTIMISATION=${OPTIMISATION:-"-O3"}
