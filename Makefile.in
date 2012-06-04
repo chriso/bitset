@@ -32,7 +32,7 @@ install: all install-headers
 	@cp lib/libbitset.a $(LIBRARY)/libbitset.a || exit
 	@chmod 644 $(LIBRARY)/libbitset.a || exit
 	@echo " INSTALL: $(LIBRARY)/libbitset.a"
-	@cp -d lib/libbitset.so* $(LIBRARY)/ || exit
+	@cp -P lib/libbitset.so* $(LIBRARY)/ || exit
 	@echo " INSTALL: $(LIBRARY)/libbitset.so"
 	@strip $(LIBRARY)/libbitset.so.$(VERSION) || exit
 	@echo " STRIP: $(LIBRARY)/libbitset.so.$(VERSION)"
