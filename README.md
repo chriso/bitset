@@ -15,8 +15,6 @@ requiring a decompression step. Unlike most [succinct data structures](http://en
   abstraction](https://github.com/chriso/bitset/blob/master/include/bitset/vector.h#L7-25)
 - Bitwise operations between one or more vectors, e.g. `V1 | (V2 & V3) => V4`
 - Probabilistic algorithms for estimating cardinality, top-k, etc.
-- [C++ class
-  wrappers](https://github.com/chriso/bitset/blob/master/include/bitset/bitset.hpp)
 
 ### Installing
 
