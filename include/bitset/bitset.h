@@ -57,6 +57,7 @@ extern "C" {
 #define BITSET_UNTAG_POINTER(p)        ((uintptr_t)p & ~((uintptr_t)1))
 #define BITSET_UINT_IN_POINTER(u)      (((uintptr_t)u << 1) | 1)
 #define BITSET_UINT_FROM_POINTER(u)    ((uintptr_t)u >> 1)
+#define BITSET_UINT_CAN_TAG(u)         (u < (sizeof(void*)==4 ? 1U<<31 : 1LLU<<63))
 
 #define BITSET_MAX(a, b)               ((a) > (b) ? (a) : (b));
 #define BITSET_MIN(a, b)               ((a) < (b) ? (a) : (b));

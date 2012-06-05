@@ -145,9 +145,20 @@ static inline bool bitset_hash_insert(bitset_hash *hash, bitset_offset offset,
         hash->count++;
         return true;
     } else if (!bucket) {
-        hash->buckets[key] = (bitset_hash_bucket *) BITSET_UINT_IN_POINTER(offset);
-        hash->words[key] = word;
-        hash->count++;
+        if (BITSET_UINT_CAN_TAG(offset)) {
+            hash->buckets[key] = (bitset_hash_bucket *) BITSET_UINT_IN_POINTER(offset);
+            hash->words[key] = word;
+            hash->count++;
+        } else {
+            insert = (bitset_hash_bucket *) malloc(sizeof(bitset_hash_bucket));
+            if (!insert) {
+                bitset_oom();
+            }
+            insert->offset = offset;
+            insert->word = word;
+            insert->next = NULL;
+            hash->buckets[key] = insert;
+        }
         return true;
     }
     for (;;) {

@@ -531,6 +531,30 @@ void test_suite_operation() {
     bitset_free(b4);
 
     b1 = bitset_new();
+    b2 = bitset_new();
+    b3 = bitset_new();
+    bitset_set_to(b1, 2147483650, true);
+    bitset_set_to(b1, 2147483760, true);
+    bitset_set_to(b1, 3147483860, true);
+    bitset_set_to(b2, 2147483760, true);
+    bitset_set_to(b3, 300, true);
+    bitset_set_to(b3, 3147483860, true);
+    ops = bitset_operation_new(b1);
+    bitset_operation_add(ops, b2, BITSET_OR);
+    bitset_operation_add(ops, b3, BITSET_OR);
+    b4 = bitset_operation_exec(ops);
+    test_int("Checking operation regression count 2\n", 4, bitset_count(b4));
+    test_bool("Checking operation regression 5\n", true, bitset_get(b4, 2147483650));
+    test_bool("Checking operation regression 6\n", true, bitset_get(b4, 2147483760));
+    test_bool("Checking operation regression 7\n", true, bitset_get(b4, 300));
+    test_bool("Checking opreation regression 8\n", true, bitset_get(b4, 3147483860));
+    bitset_operation_free(ops);
+    bitset_free(b1);
+    bitset_free(b2);
+    bitset_free(b3);
+    bitset_free(b4);
+
+    b1 = bitset_new();
     bitset_set_to(b1, 10, true);
     b2 = bitset_new();
     bitset_set_to(b2, 20, true);
