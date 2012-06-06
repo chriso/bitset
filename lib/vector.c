@@ -455,6 +455,16 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
     bitset_operation *op = NULL;
     unsigned offset, count = 0;
 
+    //Recursively flatten nested operations
+    for (unsigned j = 0; j < o->length; j++) {
+        if (o->steps[j]->is_operation) {
+            tmp = bitset_vector_operation_exec(o->steps[j]->data.o);
+            bitset_vector_operation_free(o->steps[j]->data.o);
+            o->steps[j]->data.i = tmp;
+            o->steps[j]->is_operation = false;
+        }
+    }
+
     //Prepare the result iterator
     i = bitset_vector_iterator_new_empty();
 
@@ -488,15 +498,6 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
     for (unsigned j = 1; j < o->length; j++) {
 
         type = o->steps[j]->type;
-
-        //Recursively flatten nested operations
-        if (o->steps[j]->is_operation) {
-            tmp = bitset_vector_operation_exec(o->steps[j]->data.o);
-            bitset_vector_operation_free(o->steps[j]->data.o);
-            o->steps[j]->data.i = tmp;
-            o->steps[j]->is_operation = false;
-        }
-
         step = o->steps[j]->data.i;
 
         //Create a bitset operation per vector offset
