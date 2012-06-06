@@ -245,33 +245,121 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
     }
     words = bitset_hash_new(size);
 
-    //OR the first bitset
+    unsigned start_at = 1;
     b = op->steps[0]->data.b;
     word_offset = offset_key = 0;
-    for (unsigned j = 0; j < b->length; j++) {
-        word = b->words[j];
-        if (BITSET_IS_FILL_WORD(word)) {
-            length = BITSET_GET_LENGTH(word);
-            word_offset += length;
-            offset_key += length;
-            if (offset_key >= size) {
-                offset_key %= size;
-            }
-            position = BITSET_GET_POSITION(word);
-            if (!position) {
-                continue;
-            }
-            word = BITSET_CREATE_LITERAL(position - 1);
-        }
-        word_offset++;
-        offset_key++;
-        if (offset_key >= size) {
-            offset_key -= size;
-        }
-        bitset_hash_insert(words, word_offset, offset_key, word);
-    }
 
-    for (unsigned i = 1; i < op->length; i++) {
+    //An operation such as (A OR B ..) is processed firstly by calculating (0 OR A)
+    //to populate a hash containing word_offset => word. The remaining steps in
+    //the operation are then applied to the words contained in the hash. If the
+    //operation is (A AND B ..) then performing (O OR A) might waste cycles. Handle
+    //this common case slightly differently by populating the initial hash with
+    //the result of (0 OR (A AND B))
+
+    if (op->length >= 2 && op->steps[1]->type == BITSET_AND) {
+
+        start_at = 2;
+        bitset_offset and_offset = 0;
+        bitset_word and_word = 0;
+        bitset *and = op->steps[1]->data.b;
+        unsigned k = 0, j = 0;
+        for (;;) {
+            while (word_offset >= and_offset) {
+                if (and_offset == word_offset) {
+                    word &= and_word;
+                    if (word) {
+                        bitset_hash_insert(words, word_offset, offset_key, word);
+                    }
+                }
+                if (j >= and->length) {
+                    if (k >= b->length || and_offset < word_offset) {
+                        goto break2;
+                    }
+                    break;
+                }
+                if (BITSET_IS_FILL_WORD(and->words[j])) {
+                    and_offset += BITSET_GET_LENGTH(and->words[j]);
+                    position = BITSET_GET_POSITION(and->words[j]);
+                    if (!position) {
+                        j++;
+                        continue;
+                    }
+                    and_word = BITSET_CREATE_LITERAL(position - 1);
+                } else {
+                    and_word = and->words[j];
+                }
+                and_offset++;
+                j++;
+            }
+            while (and_offset >= word_offset) {
+                if (and_offset == word_offset) {
+                    word &= and_word;
+                    if (word) {
+                        bitset_hash_insert(words, word_offset, offset_key, word);
+                    }
+                }
+                if (k >= b->length) {
+                    if (j >= and->length || word_offset < and_offset) {
+                        goto break2;
+                    }
+                    break;
+                }
+                if (BITSET_IS_FILL_WORD(b->words[k])) {
+                    length = BITSET_GET_LENGTH(b->words[k]);
+                    word_offset += length;
+                    offset_key += length;
+                    if (offset_key >= size) {
+                        offset_key %= size;
+                    }
+                    position = BITSET_GET_POSITION(b->words[k]);
+                    if (!position) {
+                        k++;
+                        continue;
+                    }
+                    word = BITSET_CREATE_LITERAL(position - 1);
+                } else {
+                    word = b->words[k];
+                }
+                word_offset++;
+                offset_key++;
+                if (offset_key >= size) {
+                    offset_key -= size;
+                }
+                k++;
+            }
+        }
+
+    } else {
+
+        //Populate the offset=>word hash (0 OR A)
+        for (unsigned j = 0; j < b->length; j++) {
+            word = b->words[j];
+            if (BITSET_IS_FILL_WORD(word)) {
+                length = BITSET_GET_LENGTH(word);
+                word_offset += length;
+                offset_key += length;
+                if (offset_key >= size) {
+                    offset_key %= size;
+                }
+                position = BITSET_GET_POSITION(word);
+                if (!position) {
+                    continue;
+                }
+                word = BITSET_CREATE_LITERAL(position - 1);
+            }
+            word_offset++;
+            offset_key++;
+            if (offset_key >= size) {
+                offset_key -= size;
+            }
+            bitset_hash_insert(words, word_offset, offset_key, word);
+        }
+
+    }
+break2:
+
+    //Apply the remaining steps in the operation
+    for (unsigned i = start_at; i < op->length; i++) {
 
         step = op->steps[i];
         b = step->data.b;
