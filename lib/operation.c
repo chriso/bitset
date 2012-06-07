@@ -87,9 +87,6 @@ static inline bitset_hash *bitset_hash_new(size_t buckets) {
     if (!hash) {
         bitset_oom();
     }
-#ifdef HASH_DEBUG
-    fprintf(stderr, "HASH: %u buckets\n", buckets);
-#endif
     hash->size = buckets;
     hash->count = 0;
     hash->buckets = (bitset_hash_bucket **) calloc(1, sizeof(bitset_hash_bucket *) * buckets);
@@ -228,9 +225,6 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
         max = BITSET_MAX(max, b_max);
 
     }
-#ifdef HASH_DEBUG
-    fprintf(stderr, "HASH: Bitsets count = %u, max = %u\n", count, max);
-#endif
     if (count <= 8) {
         size = 16;
     } else if (count <= 8388608) {
@@ -560,16 +554,6 @@ bitset_offset bitset_operation_count(bitset_operation *op) {
             bucket = bucket->next;
         }
     }
-#ifdef HASH_DEBUG
-    unsigned tagged = 0, nodes = 0;
-    for (unsigned i = 0; i < words->size; i++) {
-        bucket = words->buckets[i];
-        if (BITSET_IS_TAGGED_POINTER(bucket)) { tagged++; continue; }
-        while (bucket) { nodes++; bucket = bucket->next; }
-    }
-    fprintf(stderr, "HASH: %u buckets, %u tagged, %u linked-list nodes\n",
-        words->size, tagged, nodes);
-#endif
     bitset_hash_free(words);
     return count;
 }
