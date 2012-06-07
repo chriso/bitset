@@ -205,7 +205,7 @@ static inline bitset_word *bitset_hash_get(const bitset_hash *hash,
 static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
     bitset_offset word_offset, offset_key, max = 0, b_max, length;
     bitset_operation_step *step;
-    bitset_word word, *hashed;
+    bitset_word word = 0, *hashed;
     unsigned position, count = 0;
     size_t size;
     bitset_hash *words, *and_words = NULL;
