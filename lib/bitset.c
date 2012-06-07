@@ -9,7 +9,7 @@
 #include "bitset/operation.h"
 
 bitset *bitset_new() {
-    bitset *b = (bitset *) malloc(sizeof(bitset));
+    bitset *b = malloc(sizeof(bitset));
     if (!b) {
         bitset_oom();
     }
@@ -33,7 +33,7 @@ void bitset_resize(bitset *b, size_t length) {
         size_t next_size;
         BITSET_NEXT_POW2(next_size, length);
         if (!b->length) {
-            b->words = (bitset_word *) malloc(sizeof(bitset_word) * next_size);
+            b->words = malloc(sizeof(bitset_word) * next_size);
         } else {
             b->words = (bitset_word *) realloc(b->words, sizeof(bitset_word) * next_size);
         }
@@ -293,11 +293,11 @@ bool bitset_set_to(bitset *b, bitset_offset bit, bool value) {
 }
 
 bitset *bitset_new_buffer(const char *buffer, size_t length) {
-    bitset *b = (bitset *) malloc(sizeof(bitset));
+    bitset *b = malloc(sizeof(bitset));
     if (!b) {
         bitset_oom();
     }
-    b->words = (bitset_word *) malloc(length * sizeof(char));
+    b->words = malloc(length * sizeof(char));
     if (!b->words) {
         bitset_oom();
     }
@@ -385,13 +385,13 @@ bitset *bitset_new_bits(bitset_offset *bits, size_t count) {
 }
 
 bitset_iterator *bitset_iterator_new(const bitset *b) {
-    bitset_iterator *i = (bitset_iterator *) malloc(sizeof(bitset_iterator));
+    bitset_iterator *i = malloc(sizeof(bitset_iterator));
     if (!i) {
         bitset_oom();
     }
     i->length = bitset_count(b);
     if (i->length) {
-        i->offsets = (bitset_offset *) malloc(sizeof(bitset_offset) * i->length);
+        i->offsets = malloc(sizeof(bitset_offset) * i->length);
         if (!i->offsets) {
             bitset_oom();
         }

@@ -7,7 +7,7 @@
 #include "bitset/estimate.h"
 
 bitset_linear *bitset_linear_new(size_t size) {
-    bitset_linear *e = (bitset_linear *) malloc(sizeof(bitset_linear));
+    bitset_linear *e = malloc(sizeof(bitset_linear));
     if (!e) {
         bitset_oom();
     }
@@ -64,14 +64,14 @@ void bitset_linear_free(bitset_linear *e) {
 }
 
 bitset_countn *bitset_countn_new(unsigned n, size_t size) {
-    bitset_countn *e = (bitset_countn *) malloc(sizeof(bitset_countn));
+    bitset_countn *e = malloc(sizeof(bitset_countn));
     if (!e) {
         bitset_oom();
     }
     e->n = n;
     size = (size_t)(size / BITSET_LITERAL_LENGTH) + 1;
     e->size = size;
-    e->words = (bitset_word **) malloc(sizeof(bitset_word *) * (e->n + 1));
+    e->words = malloc(sizeof(bitset_word *) * (e->n + 1));
     if (!e->words) {
         bitset_oom();
     }
