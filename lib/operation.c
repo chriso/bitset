@@ -257,20 +257,9 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
         bitset_word and_word = 0;
         bitset *and = op->steps[1]->data.b;
         unsigned k = 0, j = 0;
-        for (;;) {
-            while (word_offset >= and_offset) {
-                if (and_offset == word_offset) {
-                    word &= and_word;
-                    if (word) {
-                        bitset_hash_insert(words, word_offset, offset_key, word);
-                    }
-                }
-                if (j >= and->length) {
-                    if (k >= b->length || and_offset < word_offset) {
-                        goto break2;
-                    }
-                    break;
-                }
+        int last_k = -1, last_j = -1;
+        while (1) {
+            if (last_j < (int)j) {
                 if (BITSET_IS_FILL_WORD(and->words[j])) {
                     and_offset += BITSET_GET_LENGTH(and->words[j]);
                     position = BITSET_GET_POSITION(and->words[j]);
@@ -283,21 +272,9 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
                     and_word = and->words[j];
                 }
                 and_offset++;
-                j++;
+                last_j = j;
             }
-            while (and_offset >= word_offset) {
-                if (and_offset == word_offset) {
-                    word &= and_word;
-                    if (word) {
-                        bitset_hash_insert(words, word_offset, offset_key, word);
-                    }
-                }
-                if (k >= b->length) {
-                    if (j >= and->length || word_offset < and_offset) {
-                        goto break2;
-                    }
-                    break;
-                }
+            if (last_k < (int)k) {
                 if (BITSET_IS_FILL_WORD(b->words[k])) {
                     length = BITSET_GET_LENGTH(b->words[k]);
                     word_offset += length;
@@ -319,7 +296,28 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
                 if (offset_key >= size) {
                     offset_key -= size;
                 }
+                last_k = k;
+            }
+            if (and_offset < word_offset) {
+                j++;
+                if (j >= and->length) {
+                    break;
+                }
+            } else if (word_offset < and_offset) {
                 k++;
+                if (k >= b->length) {
+                    break;
+                }
+            } else {
+                word &= and_word;
+                if (word) {
+                    bitset_hash_insert(words, word_offset, offset_key, word);
+                }
+                j++;
+                k++;
+                if (j >= and->length && k >= b->length) {
+                    break;
+                }
             }
         }
 
@@ -350,7 +348,6 @@ static inline bitset_hash *bitset_operation_iter(bitset_operation *op) {
         }
 
     }
-break2:
 
     //Apply the remaining steps in the operation
     for (unsigned i = start_at; i < op->length; i++) {
