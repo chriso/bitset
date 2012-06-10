@@ -1,45 +1,40 @@
-**bitset** - `GPLv3`
+`bitset`
 
-### About
+## What's included
 
-The bitset is
-[compressed](https://github.com/chriso/bitset/blob/master/include/bitset/bitset.h#L6-24)
-and supports the same operations as its uncompressed counterpart without
-requiring a decompression step. Unlike most [succinct data structures](http://en.wikipedia.org/wiki/Succinct_data_structure) which are append-only and then immutable, the bitset includes support for setting random bit offsets. 64-bit offsets are also supported for very sparse bitsets.
-
-### What's included
-
+- A succint, compressed bitset structure
+- 64-bit offset support for very sparse bitsets
+- Mutable after construction (unlike most succint structures which are append-only)
 - Bitset operations such as get/set, population count, min/max (ffs/fls)
-- Complex bitwise operations between one or more bitsets, e.g. `A & (B & ~C) | (D ^ E)`
-- Pack multiple bitsets together using the included [vector
+- Complex bitwise operations between bitsets, e.g. `A & (B & ~C) | (D ^ E)`
+- Pack bitsets together efficiently using the included [vector
   abstraction](https://github.com/chriso/bitset/blob/master/include/bitset/vector.h#L7-25)
 - Bitwise operations between one or more vectors, e.g. `V1 | (V2 & V3) => V4`
-- Probabilistic algorithms for estimating cardinality, top-k, etc.
+- Probabilistic algorithms
 
-### Installing
-
-The build system is adapted from https://github.com/sbahra/ck.
+## Installing
 
 ```bash
 $ ./configure
 $ make
-$ make test stress # optional
 $ sudo make install
 ```
 
-### License
+## Tests
 
-Copyright (C) 2012 Chris O'Hara <cohara87@gmail.com>
+Tests can be run with
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+```bash
+$ make test
+```
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+Stress tests / benchmarks can be run with
 
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
+```bash
+$ make stress
+```
+
+## License
+
+**LGPL** - Copyright (c) 2012 Chris O'Hara <cohara87@gmail.com>
+
