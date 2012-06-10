@@ -3,8 +3,8 @@ includedir=@HEADERS@
 libdir=@LIBRARY@
 
 Name: Bitset
-Description: 
-URL: http://coming.soon/
+Description: Compressed bitsets with supporting algorithms and structures
+URL: http://github.com/chriso/bitset
 Version: @VERSION@
 Libs: -L${libdir} -lbitset
 Cflags: -I${includedir}
