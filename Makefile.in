@@ -34,8 +34,6 @@ install: all install-headers
 	@echo " INSTALL: $(LIBRARY)/libbitset.a"
 	@cp -P lib/libbitset.so* $(LIBRARY)/ || exit
 	@echo " INSTALL: $(LIBRARY)/libbitset.so"
-	#@strip $(LIBRARY)/libbitset.so.$(VERSION) || exit
-	#@echo " STRIP: $(LIBRARY)/libbitset.so.$(VERSION)"
 	@mkdir -p $(PKGCONFIG_DATA) || exit
 	@chmod 755 $(PKGCONFIG_DATA)
 	@cp build/bitset.pc $(PKGCONFIG_DATA)/bitset.pc || exit
