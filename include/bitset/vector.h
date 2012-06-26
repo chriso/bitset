@@ -185,10 +185,12 @@ bitset_vector_iterator *bitset_vector_iterator_copy(bitset_vector_iterator *);
 bitset_vector_operation *bitset_vector_operation_new(bitset_vector_iterator *);
 
 /**
- * Free the specified vector operation.
+ * Free the specified vector operation. By default iterator operands will not be
+ * freed. Use the second function before calling free() to free iterators.
  */
 
 void bitset_vector_operation_free(bitset_vector_operation *);
+void bitset_vector_operation_free_operands(bitset_vector_operation *);
 
 /**
  * Add a vector to the operation.

@@ -395,6 +395,20 @@ void bitset_vector_operation_free(bitset_vector_operation *ops) {
     free(ops);
 }
 
+void bitset_vector_operation_free_operands(bitset_vector_operation *ops) {
+    if (ops->length) {
+        for (unsigned i = 0; i < ops->length; i++) {
+            if (ops->steps[i]->is_nested) {
+                if (ops->steps[i]->is_operation) {
+                    bitset_vector_operation_free_operands(ops->steps[i]->data.o);
+                }
+            } else {
+                bitset_vector_iterator_free(ops->steps[i]->data.i);
+            }
+        }
+    }
+}
+
 static inline bitset_vector_operation_step *
         bitset_vector_operation_add_step(bitset_vector_operation *ops) {
     bitset_vector_operation_step *step = (bitset_vector_operation_step *)
@@ -455,21 +469,28 @@ void bitset_vector_operation_add_data(bitset_vector_operation *o,
 
 void bitset_vector_operation_resolve_data(bitset_vector_operation *o,
         bitset_vector_iterator *(*resolve_fn)(void *, void *), void *context) {
-    for (unsigned j = 0; j < o->length; j++) {
-        if (o->steps[j]->is_operation) {
-            bitset_vector_operation_resolve_data(o->steps[j]->data.o, resolve_fn, context);
-        } else if (o->steps[j]->userdata) {
-            o->steps[j]->data.i = resolve_fn(o->steps[j]->userdata, context);
+    if (o->length) {
+        for (unsigned j = 0; j < o->length; j++) {
+            if (o->steps[j]->is_operation) {
+                bitset_vector_operation_resolve_data(o->steps[j]->data.o, resolve_fn, context);
+            } else if (o->steps[j]->userdata) {
+                bitset_vector_iterator *i = resolve_fn(o->steps[j]->userdata, context);
+                o->steps[j]->data.i = i;
+                o->min = BITSET_MIN(o->min, i->offsets[0]);
+                o->max = BITSET_MAX(o->max, i->offsets[i->length-1]);
+            }
         }
     }
 }
 
 void bitset_vector_operation_free_data(bitset_vector_operation *o, void (*free_fn)(void *)) {
-    for (unsigned j = 0; j < o->length; j++) {
-        if (o->steps[j]->is_operation) {
-            bitset_vector_operation_free_data(o->steps[j]->data.o, free_fn);
-        } else if (o->steps[j]->userdata) {
-            free_fn(o->steps[j]->userdata);
+    if (o->length) {
+        for (unsigned j = 0; j < o->length; j++) {
+            if (o->steps[j]->is_operation) {
+                bitset_vector_operation_free_data(o->steps[j]->data.o, free_fn);
+            } else if (o->steps[j]->userdata) {
+                free_fn(o->steps[j]->userdata);
+            }
         }
     }
 }
