@@ -443,6 +443,37 @@ void bitset_vector_operation_add_nested(bitset_vector_operation *o,
     o->max = BITSET_MAX(o->max, op->max);
 }
 
+void bitset_vector_operation_add_data(bitset_vector_operation *o,
+        void *data, enum bitset_operation_type type) {
+    bitset_vector_operation_step *step = bitset_vector_operation_add_step(o);
+    step->is_nested = false;
+    step->is_operation = false;
+    step->data.i = NULL;
+    step->type = type;
+    step->userdata = data;
+}
+
+void bitset_vector_operation_resolve_data(bitset_vector_operation *o,
+        bitset_vector_iterator *(*resolve_fn)(void *, void *), void *context) {
+    for (unsigned j = 0; j < o->length; j++) {
+        if (o->steps[j]->is_operation) {
+            bitset_vector_operation_resolve_data(o->steps[j]->data.o, resolve_fn, context);
+        } else if (o->steps[j]->userdata) {
+            o->steps[j]->data.i = resolve_fn(o->steps[j]->userdata, context);
+        }
+    }
+}
+
+void bitset_vector_operation_free_data(bitset_vector_operation *o, void (*free_fn)(void *)) {
+    for (unsigned j = 0; j < o->length; j++) {
+        if (o->steps[j]->is_operation) {
+            bitset_vector_operation_free_data(o->steps[j]->data.o, free_fn);
+        } else if (o->steps[j]->userdata) {
+            free_fn(o->steps[j]->userdata);
+        }
+    }
+}
+
 bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o) {
     if (!o->length) {
         return bitset_vector_iterator_new_empty();

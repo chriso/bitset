@@ -55,6 +55,7 @@ typedef struct bitset_vector_operation_step_ {
         bitset_vector_iterator *i;
         bitset_vector_operation *o;
     } data;
+    void *userdata;
     bool is_nested;
     bool is_operation;
     enum bitset_operation_type type;
@@ -208,6 +209,19 @@ void bitset_vector_operation_add_nested(bitset_vector_operation *,
  */
 
 bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *);
+
+/**
+ * Provide a way to associate user data with each step and use the data to lazily
+ * lookup vector iterators.
+ */
+
+void bitset_vector_operation_add_data(bitset_vector_operation *,
+    void *data, enum bitset_operation_type);
+
+void bitset_vector_operation_resolve_data(bitset_vector_operation *,
+        bitset_vector_iterator *(*)(void *data, void *context), void *context);
+
+void bitset_vector_operation_free_data(bitset_vector_operation *, void (*)(void *data));
 
 #ifdef __cplusplus
 } //extern "C"
