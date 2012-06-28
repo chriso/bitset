@@ -476,8 +476,10 @@ void bitset_vector_operation_resolve_data(bitset_vector_operation *o,
             } else if (o->steps[j]->userdata) {
                 bitset_vector_iterator *i = resolve_fn(o->steps[j]->userdata, context);
                 o->steps[j]->data.i = i;
-                o->min = BITSET_MIN(o->min, i->offsets[0]);
-                o->max = BITSET_MAX(o->max, i->offsets[i->length-1]);
+                if (i && i->length) {
+                    o->min = BITSET_MIN(o->min, i->offsets[0]);
+                    o->max = BITSET_MAX(o->max, i->offsets[i->length-1]);
+                }
             }
         }
     }
@@ -530,18 +532,20 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
 
     //OR the first vector
     step = o->steps[0]->data.i;
-    BITSET_VECTOR_FOREACH(step, b, offset) {
-        key = offset - o->min;
-        if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
-            op = (bitset_operation *) BITSET_UNTAG_POINTER(bucket[key]);
-            bitset_operation_add(op, b, o->steps[0]->type);
-        } else if (bucket[key]) {
-            op = bitset_operation_new((bitset *) bucket[key]);
-            bucket[key] = (void *) BITSET_TAG_POINTER(op);
-            bitset_operation_add(op, b, o->steps[0]->type);
-        } else {
-            bucket[key] = (void *) b;
-            count++;
+    if (step) {
+        BITSET_VECTOR_FOREACH(step, b, offset) {
+            key = offset - o->min;
+            if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
+                op = (bitset_operation *) BITSET_UNTAG_POINTER(bucket[key]);
+                bitset_operation_add(op, b, o->steps[0]->type);
+            } else if (bucket[key]) {
+                op = bitset_operation_new((bitset *) bucket[key]);
+                bucket[key] = (void *) BITSET_TAG_POINTER(op);
+                bitset_operation_add(op, b, o->steps[0]->type);
+            } else {
+                bucket[key] = (void *) b;
+                count++;
+            }
         }
     }
 
@@ -559,24 +563,26 @@ bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *o)
                 bitset_oom();
             }
             count = 0;
-            BITSET_VECTOR_FOREACH(step, b, offset) {
-                key = offset - o->min;
-                if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
-                    op = (bitset_operation *) BITSET_UNTAG_POINTER(bucket[key]);
-                } else if (bucket[key]) {
-                    b2 = (bitset *) bucket[key];
-                    op = bitset_operation_new(b2);
-                }
-                if (op) {
-                    count++;
-                    bitset_operation_add(op, b, BITSET_AND);
-                    and_bucket[key] = (void *) BITSET_TAG_POINTER(op);
-                    op = NULL;
+            if (step) {
+                BITSET_VECTOR_FOREACH(step, b, offset) {
+                    key = offset - o->min;
+                    if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
+                        op = (bitset_operation *) BITSET_UNTAG_POINTER(bucket[key]);
+                    } else if (bucket[key]) {
+                        b2 = (bitset *) bucket[key];
+                        op = bitset_operation_new(b2);
+                    }
+                    if (op) {
+                        count++;
+                        bitset_operation_add(op, b, BITSET_AND);
+                        and_bucket[key] = (void *) BITSET_TAG_POINTER(op);
+                        op = NULL;
+                    }
                 }
             }
             free(bucket);
             bucket = and_bucket;
-        } else {
+        } else if (step) {
             BITSET_VECTOR_FOREACH(step, b, offset) {
                 key = offset - o->min;
                 if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
