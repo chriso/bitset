@@ -11,82 +11,82 @@ extern "C" {
  * Bitset linear counting type.
  */
 
-typedef struct bitset_linear_ {
+typedef struct bitset_linear_s {
     bitset_word *words;
     unsigned count;
     size_t size;
-} bitset_linear;
+} bitset_linear_t;
 
 /**
  * Bitset count N type.
  */
 
-typedef struct bitset_countn_ {
+typedef struct bitset_countn_s {
     bitset_word **words;
     unsigned n;
     size_t size;
-} bitset_countn;
+} bitset_countn_t;
 
 /**
  * Estimate unique bits using an uncompressed bitset of the specified size
  * (bloom filter where n=1).
  */
 
-bitset_linear *bitset_linear_new(size_t);
+bitset_linear_t *bitset_linear_new(size_t);
 
 /**
  * Estimate unique bits in the bitset.
  */
 
-void bitset_linear_add(bitset_linear *, bitset *);
+void bitset_linear_add(bitset_linear_t *, bitset_t *);
 
 /**
  * Get the estimated unique bit count.
  */
 
-unsigned bitset_linear_count(bitset_linear *);
+unsigned bitset_linear_count(bitset_linear_t *);
 
 /**
  * Free the linear counter.
  */
 
-void bitset_linear_free(bitset_linear *);
+void bitset_linear_free(bitset_linear_t *);
 
 /**
  * Estimate the number of bits that occur N times.
  */
 
-bitset_countn *bitset_countn_new(unsigned, size_t);
+bitset_countn_t *bitset_countn_new(unsigned, size_t);
 
 /**
  * Add a bitset to the counter.
  */
 
-void bitset_countn_add(bitset_countn *, bitset *);
+void bitset_countn_add(bitset_countn_t *, bitset_t *);
 
 /**
  * Count the number of bits that occur N times.
  */
 
-unsigned bitset_countn_count(bitset_countn *);
+unsigned bitset_countn_count(bitset_countn_t *);
 
 /**
  * Count the number of bits that occur 0..N times.
  */
 
-unsigned *bitset_countn_count_all(bitset_countn *);
+unsigned *bitset_countn_count_all(bitset_countn_t *);
 
 /**
  * Count the number of bits that occur 0..N times using a mask.
  */
 
-unsigned *bitset_countn_count_mask(bitset_countn *, bitset *);
+unsigned *bitset_countn_count_mask(bitset_countn_t *, bitset_t *);
 
 /**
  * Free the counter.
  */
 
-void bitset_countn_free(bitset_countn *);
+void bitset_countn_free(bitset_countn_t *);
 
 #ifdef __cplusplus
 } //extern "C"

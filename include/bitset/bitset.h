@@ -2,15 +2,18 @@
 #define BITSET_BITSET_H_
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <limits.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * The bitset structure uses a form of word-aligned run-length encoding.
+ * The bitset structure uses word-aligned run-length encoding.
  *
  * The compression technique is optimised for sparse bitsets where runs of
  * empty words are typically followed by a word with only one set bit. We
@@ -90,130 +93,122 @@ extern "C" {
  * Bitset types.
  */
 
-typedef struct bitset_ {
-    bitset_word *words;
+typedef struct bitset_s {
+    bitset_word *buffer;
     size_t length;
     size_t size;
     unsigned references;
-} bitset;
+} bitset_t;
 
-typedef struct bitset_iterator_ {
+typedef struct bitset_iterator_s {
     bitset_offset *offsets;
     size_t length;
-} bitset_iterator;
-
-/**
- * Custom out of memory behaviour.
- */
-
-#ifndef bitset_oom
-#  define bitset_oom() fprintf(stderr, "Out of memory\n"), exit(1)
-#endif
+} bitset_iterator_t;
 
 /**
  * Create a new bitset.
  */
 
-bitset *bitset_new();
+bitset_t *bitset_new();
 
 /**
  * Clear the specified bitset.
  */
 
-void bitset_clear(bitset *);
+void bitset_clear(bitset_t *);
 
 /**
  * Free the specified bitset.
  */
 
-void bitset_free(bitset *);
+void bitset_free(bitset_t *);
 
 /**
  * Resize the bitset buffer.
  */
 
-void bitset_resize(bitset *, size_t);
+void bitset_resize(bitset_t *, size_t);
 
 /**
  * Get the byte length of the bitset buffer.
  */
 
-size_t bitset_length(bitset *);
+size_t bitset_length(bitset_t *);
 
 /**
  * Create a new bitset from an existing buffer.
  */
 
-bitset *bitset_new_buffer(const char *, size_t);
+bitset_t *bitset_new_buffer(const char *, size_t);
 
 /**
  * Create a new bitset from an array of bits.
  */
 
-bitset *bitset_new_bits(bitset_offset *, size_t);
+bitset_t *bitset_new_bits(bitset_offset *, size_t);
 
 /**
- * A helper for creating bitsets: BITSET_NEW(b1, { 1, 10, 100 });
+ * A helper for creating bitsets: BITSET_NEW(b1, 1, 10, 100);
  */
 
 #define BITSET_NEW(name, ...) \
-    bitset_offset BITSET_TMPVAR(o, __LINE__)[] = __VA_ARGS__; \
-    bitset *name = bitset_new_bits((bitset_offset*)BITSET_TMPVAR(o, __LINE__), \
+    bitset_offset BITSET_TMPVAR(o, __LINE__)[] = { __VA_ARGS__ }; \
+    bitset_t *name = bitset_new_bits((bitset_offset*)BITSET_TMPVAR(o, __LINE__), \
       sizeof(BITSET_TMPVAR(o, __LINE__))/sizeof(BITSET_TMPVAR(o, __LINE__)[0]));
 
 /**
  * Create a copy of the specified bitset.
  */
 
-bitset *bitset_copy(bitset *);
+bitset_t *bitset_copy(bitset_t *);
 
 /**
  * Check whether a bit is set.
  */
 
-bool bitset_get(const bitset *, bitset_offset);
+bool bitset_get(const bitset_t *, bitset_offset);
 
 /**
  * Get the population count of the bitset (number of set bits).
  */
 
-bitset_offset bitset_count(const bitset *);
+bitset_offset bitset_count(const bitset_t *);
 
 /**
  * Set or unset the specified bit.
  */
 
-bool bitset_set_to(bitset *, bitset_offset, bool);
+bool bitset_set_to(bitset_t *, bitset_offset, bool);
 
 /**
  * Set the specified bit.
  */
 
-bool bitset_set(bitset *, bitset_offset);
+bool bitset_set(bitset_t *, bitset_offset);
 
 /**
  * Unset the specified bit.
  */
 
-bool bitset_unset(bitset *, bitset_offset);
+bool bitset_unset(bitset_t *, bitset_offset);
 
 /**
  * Find the lowest set bit in the bitset.
  */
 
-bitset_offset bitset_min(const bitset *);
+bitset_offset bitset_min(const bitset_t *);
 
 /**
  * Find the highest set bit in the bitset.
  */
 
-bitset_offset bitset_max(const bitset *);
+bitset_offset bitset_max(const bitset_t *);
 
 /**
  * Create a new bitset iterator.
  */
 
-bitset_iterator *bitset_iterator_new(const bitset *);
+bitset_iterator_t *bitset_iterator_new(const bitset_t *);
 
 /**
  * Iterate over all bits.
@@ -229,7 +224,15 @@ bitset_iterator *bitset_iterator_new(const bitset *);
  * Free the bitset iterator.
  */
 
-void bitset_iterator_free(bitset_iterator *);
+void bitset_iterator_free(bitset_iterator_t *);
+
+/**
+ * Custom out of memory behaviour.
+ */
+
+#ifndef bitset_oom
+#  define bitset_oom() fprintf(stderr, "Out of memory\n"), exit(1)
+#endif
 
 #ifdef __cplusplus
 } //extern "C"

@@ -3,6 +3,7 @@
 
 #include "bitset/bitset.h"
 #include "bitset/operation.h"
+#include "bitset/estimate.h"
 
 /**
  * Bitset buffers can be packed together into a vector which is compressed
@@ -32,37 +33,37 @@ extern "C" {
  * Bitset vector types.
  */
 
-typedef struct bitset_vector_ {
+typedef struct bitset_vector_s {
     char *buffer;
     size_t length;
     size_t size;
     unsigned count;
     char *tail;
     unsigned tail_offset;
-} bitset_vector;
+} bitset_vector_t;
 
-typedef struct bitset_vector_iterator_ {
-    bitset **bitsets;
+typedef struct bitset_vector_iterator_s {
+    bitset_t **bitsets;
     unsigned *offsets;
     size_t length;
     size_t size;
-} bitset_vector_iterator;
+} bitset_vector_iterator_t;
 
-typedef struct bitset_vector_operation_ bitset_vector_operation;
+typedef struct bitset_vector_operation_s bitset_vector_operation_t;
 
-typedef struct bitset_vector_operation_step_ {
+typedef struct bitset_vector_operation_step_s {
     union {
-        bitset_vector_iterator *i;
-        bitset_vector_operation *o;
+        bitset_vector_iterator_t *i;
+        bitset_vector_operation_t *o;
     } data;
     void *userdata;
     bool is_nested;
     bool is_operation;
     enum bitset_operation_type type;
-} bitset_vector_operation_step;
+} bitset_vector_operation_step_t;
 
-struct bitset_vector_operation_ {
-    bitset_vector_operation_step **steps;
+struct bitset_vector_operation_s {
+    bitset_vector_operation_step_t **steps;
     unsigned min;
     unsigned max;
     size_t length;
@@ -75,55 +76,55 @@ struct bitset_vector_operation_ {
  * Create a new bitset vector.
  */
 
-bitset_vector *bitset_vector_new();
+bitset_vector_t *bitset_vector_new();
 
 /**
  * Create a new bitset vector based on an existing buffer.
  */
 
-bitset_vector *bitset_vector_new_buffer(const char *, size_t);
+bitset_vector_t *bitset_vector_new_buffer(const char *, size_t);
 
 /**
  * Free the specified vector.
  */
 
-void bitset_vector_free(bitset_vector *);
+void bitset_vector_free(bitset_vector_t *);
 
 /**
  * Copy a vector.
  */
 
-bitset_vector *bitset_vector_copy(bitset_vector *);
+bitset_vector_t *bitset_vector_copy(bitset_vector_t *);
 
 /**
  * Get the byte length of the vector buffer.
  */
 
-size_t bitset_vector_length(bitset_vector *);
+size_t bitset_vector_length(bitset_vector_t *);
 
 /**
  * Get the number of bitsets in the vector.
  */
 
-unsigned bitset_vector_count(bitset_vector *);
+unsigned bitset_vector_count(bitset_vector_t *);
 
 /**
  * Push a bitset on to the end of the vector.
  */
 
-void bitset_vector_push(bitset_vector *, bitset *, unsigned);
+void bitset_vector_push(bitset_vector_t *, bitset_t *, unsigned);
 
 /**
  * Resize the vector buffer.
  */
 
-void bitset_vector_resize(bitset_vector *, size_t);
+void bitset_vector_resize(bitset_vector_t *, size_t);
 
 /**
  * Create a new bitset vector iterator over the range [start,end).
  */
 
-bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *, unsigned, unsigned);
+bitset_vector_iterator_t *bitset_vector_iterator_new(bitset_vector_t *, unsigned, unsigned);
 
 /**
  * Iterate over all bitsets.
@@ -140,90 +141,90 @@ bitset_vector_iterator *bitset_vector_iterator_new(bitset_vector *, unsigned, un
  * Concatenate an iterator to another at the specified offset.
  */
 
-void bitset_vector_iterator_concat(bitset_vector_iterator *, bitset_vector_iterator *, unsigned);
+void bitset_vector_iterator_concat(bitset_vector_iterator_t *, bitset_vector_iterator_t *, unsigned);
 
 /**
  * Count bits in each bitset.
  */
 
-void bitset_vector_iterator_count(bitset_vector_iterator *, unsigned *, unsigned *);
+void bitset_vector_iterator_count(bitset_vector_iterator_t *, unsigned *, unsigned *);
 
 /**
  * Compact the iterator into a vector.
  */
 
-bitset_vector *bitset_vector_iterator_compact(bitset_vector_iterator *);
+bitset_vector_t *bitset_vector_iterator_compact(bitset_vector_iterator_t *);
 
 /**
  * Merge (bitwise OR) each vector bitset.
  */
 
-bitset *bitset_vector_iterator_merge(bitset_vector_iterator *);
+bitset_t *bitset_vector_iterator_merge(bitset_vector_iterator_t *);
 
 /**
  * Free the vector iterator.
  */
 
-void bitset_vector_iterator_free(bitset_vector_iterator *);
+void bitset_vector_iterator_free(bitset_vector_iterator_t *);
 
 /**
  * Create an empty iterator
  */
 
-bitset_vector_iterator *bitset_vector_iterator_new_empty();
+bitset_vector_iterator_t *bitset_vector_iterator_new_empty();
 
 /**
  * Create a copy of the iterator.
  */
 
-bitset_vector_iterator *bitset_vector_iterator_copy(bitset_vector_iterator *);
+bitset_vector_iterator_t *bitset_vector_iterator_copy(bitset_vector_iterator_t *);
 
 /**
  * Create a new vector operation.
  */
 
-bitset_vector_operation *bitset_vector_operation_new(bitset_vector_iterator *);
+bitset_vector_operation_t *bitset_vector_operation_new(bitset_vector_iterator_t *);
 
 /**
  * Free the specified vector operation. By default iterator operands will not be
  * freed. Use the second function before calling free() to free iterators.
  */
 
-void bitset_vector_operation_free(bitset_vector_operation *);
-void bitset_vector_operation_free_operands(bitset_vector_operation *);
+void bitset_vector_operation_free(bitset_vector_operation_t *);
+void bitset_vector_operation_free_operands(bitset_vector_operation_t *);
 
 /**
  * Add a vector to the operation.
  */
 
-void bitset_vector_operation_add(bitset_vector_operation *,
-    bitset_vector_iterator *, enum bitset_operation_type);
+void bitset_vector_operation_add(bitset_vector_operation_t *,
+    bitset_vector_iterator_t *, enum bitset_operation_type);
 
 /**
  * Add a nested operation.
  */
 
-void bitset_vector_operation_add_nested(bitset_vector_operation *,
-    bitset_vector_operation *, enum bitset_operation_type);
+void bitset_vector_operation_add_nested(bitset_vector_operation_t *,
+    bitset_vector_operation_t *, enum bitset_operation_type);
 
 /**
  * Execute the operation and return the result.
  */
 
-bitset_vector_iterator *bitset_vector_operation_exec(bitset_vector_operation *);
+bitset_vector_iterator_t *bitset_vector_operation_exec(bitset_vector_operation_t *);
 
 /**
  * Provide a way to associate user data with each step and use the data to lazily
  * lookup vector iterators.
  */
 
-void bitset_vector_operation_add_data(bitset_vector_operation *,
+void bitset_vector_operation_add_data(bitset_vector_operation_t *,
     void *data, enum bitset_operation_type);
 
-void bitset_vector_operation_resolve_data(bitset_vector_operation *,
-        bitset_vector_iterator *(*)(void *data, void *context), void *context);
+void bitset_vector_operation_resolve_data(bitset_vector_operation_t *,
+        bitset_vector_iterator_t *(*)(void *data, void *context), void *context);
 
-void bitset_vector_operation_free_data(bitset_vector_operation *, void (*)(void *data));
+void bitset_vector_operation_free_data(bitset_vector_operation_t *, void (*)(void *data));
 
 #ifdef __cplusplus
 } //extern "C"

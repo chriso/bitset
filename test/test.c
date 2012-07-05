@@ -10,10 +10,10 @@
 #include "bitset/vector.h"
 #include "test.h"
 
-void bitset_dump(bitset *b) {
+void bitset_dump(bitset_t *b) {
     printf("\x1B[33mDumping bitset of size %u\x1B[0m\n", (unsigned)b->length);
     for (unsigned i = 0; i < b->length; i++) {
-        printf("\x1B[36m%3d.\x1B[0m %-8x\n", i, b->words[i]);
+        printf("\x1B[36m%3d.\x1B[0m %-8x\n", i, b->buffer[i]);
     }
 }
 
@@ -32,11 +32,11 @@ TEST_DEFINE(bool, bool, "%d")
 TEST_DEFINE(str, char *, "%s")
 TEST_DEFINE(hex, int, "%#x")
 
-bool test_bitset(char *title, bitset *b, unsigned length, uint32_t *expected) {
+bool test_bitset(char *title, bitset_t *b, unsigned length, uint32_t *expected) {
     bool mismatch = length != b->length;
     if (!mismatch) {
         for (unsigned i = 0; i < length; i++) {
-            if (b->words[i] != expected[i]) {
+            if (b->buffer[i] != expected[i]) {
                 mismatch = true;
                 break;
             }
@@ -48,7 +48,7 @@ bool test_bitset(char *title, bitset *b, unsigned length, uint32_t *expected) {
         for (unsigned i = 0; i < length_max; i++) {
             printf("  \x1B[36m%3d.\x1B[0m ", i);
             if (i < b->length) {
-                printf("%-8x ", b->words[i]);
+                printf("%-8x ", b->buffer[i]);
             } else {
                 printf("         ");
             }
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 }
 
 void test_suite_get() {
-    bitset *b = bitset_new();
+    bitset_t *b = bitset_new();
     for (unsigned i = 0; i < 32; i++)
         test_bool("Testing initial bits are unset\n", false, bitset_get(b, i));
     bitset_free(b);
@@ -124,25 +124,25 @@ void test_suite_get() {
     test_bool("Testing get with position following a fill 3\n", false, bitset_get(b, 32));
     bitset_free(b);
 
-    BITSET_NEW(b2, { 1, 10, 100 });
+    BITSET_NEW(b2, 1, 10, 100);
     test_int("Testing BITSET_NEW macro 1\n", 3, bitset_count(b2));
     test_bool("Testing BITSET_NEW macro 2\n", true, bitset_get(b2, 1));
     test_bool("Testing BITSET_NEW macro 3\n", true, bitset_get(b2, 10));
     test_bool("Testing BITSET_NEW macro 4\n", true, bitset_get(b2, 100));
     bitset_free(b2);
 
-    BITSET_NEW(b3, { 300 });
+    BITSET_NEW(b3, 300);
     test_int("Testing BITSET_NEW macro 5\n", 1, bitset_count(b3));
     test_bool("Testing BITSET_NEW macro 6\n", true, bitset_get(b3, 300));
     bitset_free(b3);
 
-    BITSET_NEW(b4b, { 4000000000 });
+    BITSET_NEW(b4b, 4000000000);
     test_int("Testing BITSET_NEW macro 7\n", 1, bitset_count(b4b));
     test_bool("Testing BITSET_NEW macro 8\n", true, bitset_get(b4b, 4000000000));
     bitset_free(b4b);
 
-    BITSET_NEW(b4, { 100, 300, 302, 305, 1000 });
-    bitset_iterator *i = bitset_iterator_new(b4);
+    BITSET_NEW(b4, 100, 300, 302, 305, 1000);
+    bitset_iterator_t *i = bitset_iterator_new(b4);
     unsigned o, iters = 0;
     BITSET_FOREACH(i, o) {
         test_bool("Checking bitset iterator", true, o==100 || o==300 || o==302 || o==305 || o==1000);
@@ -155,7 +155,7 @@ void test_suite_get() {
 }
 
 void test_suite_count() {
-    bitset *b = bitset_new();
+    bitset_t *b = bitset_new();
     test_ulong("Testing pop count of empty set\n", 0, bitset_count(b));
     bitset_free(b);
 
@@ -181,7 +181,7 @@ void test_suite_count() {
 }
 
 void test_suite_min() {
-    bitset *b = bitset_new();
+    bitset_t *b = bitset_new();
     bitset_set_to(b, 1000, true);
     test_ulong("Test find first set 1", 1000, bitset_min(b));
     bitset_set_to(b, 300, true);
@@ -202,7 +202,7 @@ void test_suite_min() {
 }
 
 void test_suite_max() {
-    bitset *b = bitset_new();
+    bitset_t *b = bitset_new();
     bitset_set_to(b, 3, true);
     test_ulong("Test find last set 8", 3, bitset_max(b));
     bitset_set_to(b, 12, true);
@@ -223,7 +223,7 @@ void test_suite_max() {
 }
 
 void test_suite_set() {
-    bitset *b = bitset_new();
+    bitset_t *b = bitset_new();
     test_bool("Testing set on empty set 1\n", false, bitset_set_to(b, 0, true));
     test_bool("Testing set on empty set 2\n", true, bitset_get(b, 0));
     test_bool("Testing set on empty set 3\n", false, bitset_get(b, 1));
@@ -481,7 +481,7 @@ void test_suite_set() {
 }
 
 void test_suite_stress() {
-    bitset *b = bitset_new();
+    bitset_t *b = bitset_new();
     unsigned int max = 100000000, num = 1000;
     unsigned *bits = malloc(sizeof(unsigned) * num);
     srand(time(NULL));
@@ -501,8 +501,8 @@ void test_suite_stress() {
 }
 
 void test_suite_operation() {
-    bitset_operation *ops;
-    bitset *b1, *b2, *b3, *b4;
+    bitset_operation_t *ops;
+    bitset_t *b1, *b2, *b3, *b4;
 
     b1 = bitset_new();
     b2 = bitset_new();
@@ -626,14 +626,14 @@ void test_suite_operation() {
     bitset_set_to(b3, 12, true);
     ops = bitset_operation_new(b1);
     test_int("Checking initial operation length is one\n", 1, ops->length);
-    test_bool("Checking primary bitset is added\n", true, bitset_get(ops->steps[0]->data.b, 10));
+    test_bool("Checking primary bitset_t is added\n", true, bitset_get(ops->steps[0]->data.bitset, 10));
     bitset_operation_add(ops, b2, BITSET_OR);
     test_int("Checking op length increases\n", 2, ops->length);
     bitset_operation_add(ops, b3, BITSET_OR);
     test_int("Checking op length increases\n", 3, ops->length);
-    test_bool("Checking bitset was added correctly\n", true, bitset_get(ops->steps[1]->data.b, 20));
+    test_bool("Checking bitset was added correctly\n", true, bitset_get(ops->steps[1]->data.bitset, 20));
     test_int("Checking op was added correctly\n", BITSET_OR, ops->steps[1]->type);
-    test_bool("Checking bitset was added correctly\n", true, bitset_get(ops->steps[2]->data.b, 12));
+    test_bool("Checking bitset was added correctly\n", true, bitset_get(ops->steps[2]->data.bitset, 12));
     test_int("Checking op was added correctly\n", BITSET_OR, ops->steps[2]->type);
     test_ulong("Checking operation count 1\n", 3, bitset_operation_count(ops));
     bitset_operation_free(ops);
@@ -772,7 +772,7 @@ void test_suite_operation() {
     bitset_set_to(b3, 300, true);
     bitset_set_to(b3, 400, true);
     ops = bitset_operation_new(b1);
-    bitset_operation *op2 = bitset_operation_new(b2);
+    bitset_operation_t *op2 = bitset_operation_new(b2);
     bitset_operation_add(op2, b3, BITSET_OR);
     bitset_operation_add_nested(ops, op2, BITSET_AND);
     b4 = bitset_operation_exec(ops);
@@ -831,9 +831,9 @@ void test_suite_operation() {
 }
 
 void test_suite_vector() {
-    bitset_vector *l, *l2;
-    bitset_vector_iterator *i, *i2;
-    bitset *b;
+    bitset_vector_t *l, *l2;
+    bitset_vector_iterator_t *i, *i2;
+    bitset_t *b;
     bitset_word *tmp;
     unsigned loop_count;
     unsigned offset;
@@ -872,11 +872,11 @@ void test_suite_vector() {
     test_int("Checking vector was resized properly 3\n", 1, l->count);
     test_int("Checking the offset is set properly 1\n", 3, (unsigned char)l->buffer[0]);
     test_int("Checking the length is set properly 1\n", 1, (unsigned char)l->buffer[1]);
-    tmp = b->words;
-    b->words = (bitset_word *) (l->buffer + 2);
+    tmp = b->buffer;
+    b->buffer = (bitset_word *) (l->buffer + 2);
     test_bool("Checking bitset was added properly 1\n", true, bitset_get(b, 10));
     test_bool("Checking bitset was added properly 2\n", false, bitset_get(b, 100));
-    b->words = tmp;
+    b->buffer = tmp;
     bitset_free(b);
 
     b = bitset_new();
@@ -890,12 +890,12 @@ void test_suite_vector() {
     test_int("Checking the length is set properly 2\n", 2, (unsigned char)l->buffer[7]);
     test_int("Check tail offset is set correctly\n", 10, l->tail_offset);
     test_int("Check tail ptr is set correctly\n", (uintptr_t)l->buffer+6, (uintptr_t)l->tail);
-    tmp = b->words;
-    b->words = (bitset_word *) (l->buffer + 8);
+    tmp = b->buffer;
+    b->buffer = (bitset_word *) (l->buffer + 8);
     test_bool("Checking bitset was added properly 3\n", true, bitset_get(b, 100));
     test_bool("Checking bitset was added properly 4\n", true, bitset_get(b, 1000));
     test_bool("Checking bitset was added properly 5\n", false, bitset_get(b, 10));
-    b->words = tmp;
+    b->buffer = tmp;
     bitset_free(b);
 
     b = bitset_new();
@@ -1004,10 +1004,10 @@ void test_suite_vector() {
 }
 
 void test_suite_vector_operation() {
-    bitset_vector_operation *o1, *o2;
-    bitset_vector *v1, *v2, *v3, *v4;
-    bitset_vector_iterator *i1, *i2, *i3, *i4, *i5;
-    bitset *b1, *b2, *b3, *b4;
+    bitset_vector_operation_t *o1, *o2;
+    bitset_vector_t *v1, *v2, *v3, *v4;
+    bitset_vector_iterator_t *i1, *i2, *i3, *i4, *i5;
+    bitset_t *b1, *b2, *b3, *b4;
     unsigned offset;
 
     b1 = bitset_new();
@@ -1129,11 +1129,11 @@ void test_suite_vector_operation() {
 }
 
 void test_suite_estimate() {
-    BITSET_NEW(b1, { 100 });
-    BITSET_NEW(b2, { 101 });
-    BITSET_NEW(b3, { 102 });
-    BITSET_NEW(b4, { 100, 101, 102 });
-    bitset_linear *l = bitset_linear_new(102);
+    BITSET_NEW(b1, 100);
+    BITSET_NEW(b2, 101);
+    BITSET_NEW(b3, 102);
+    BITSET_NEW(b4, 100, 101, 102);
+    bitset_linear_t *l = bitset_linear_new(102);
     bitset_linear_add(l, b1);
     bitset_linear_add(l, b2);
     bitset_linear_add(l, b3);
@@ -1145,10 +1145,10 @@ void test_suite_estimate() {
     bitset_free(b3);
     bitset_free(b4);
 
-    BITSET_NEW(b5, { 1, 2, 3, 40, 41, 42, 43, 51 });
-    BITSET_NEW(b6, { 1, 3, 41, 43 });
-    BITSET_NEW(b7, { 1 });
-    bitset_countn *c = bitset_countn_new(1, 100);
+    BITSET_NEW(b5, 1, 2, 3, 40, 41, 42, 43, 51);
+    BITSET_NEW(b6, 1, 3, 41, 43);
+    BITSET_NEW(b7, 1);
+    bitset_countn_t *c = bitset_countn_new(1, 100);
     bitset_countn_add(c, b5);
     bitset_countn_add(c, b6);
     bitset_countn_add(c, b7);
@@ -1171,7 +1171,7 @@ void test_suite_estimate() {
     test_int("Test countn count_all where N=3\n", 1, all[2]);
     free(all);
 
-    BITSET_NEW(mask, { 2, 4, 5, 40, 41 });
+    BITSET_NEW(mask, 2, 4, 5, 40, 41);
     all = bitset_countn_count_mask(c, mask);
     test_int("Test countn count_mask where N=1\n", 2, all[0]);
     test_int("Test countn count_mask where N=2\n", 1, all[1]);

@@ -16,7 +16,7 @@ void test_suite_estimate();
 void test_bool(char *, bool, bool);
 void test_ulong(char *, unsigned long, unsigned long);
 void test_int(char *, int, int);
-bool test_bitset(char *, bitset *, unsigned, uint32_t *);
-void bitset_dump(bitset *);
+bool test_bitset(char *, bitset_t *, unsigned, uint32_t *);
+void bitset_dump(bitset_t *);
 
 #endif

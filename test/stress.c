@@ -12,8 +12,8 @@
 void stress_small(unsigned bits, unsigned max, unsigned count) {
     float start, end;
 
-    bitset *b, *b2, *b3, *b4;
-    bitset_operation *o;
+    bitset_t *b, *b2, *b3, *b4;
+    bitset_operation_t *o;
     bitset_offset *offsets = malloc(sizeof(bitset_offset) * bits);
 
     start = (float) clock();
@@ -48,9 +48,9 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     float start, end, size = 0;
     unsigned i;
 
-    bitset **b = malloc(sizeof(bitset *) * bitsets);
+    bitset_t **b = malloc(sizeof(bitset_t *) * bitsets);
     bitset_offset *offsets = malloc(sizeof(bitset_offset) * bits);
-    bitset_vector *vector = bitset_vector_new();
+    bitset_vector_t *vector = bitset_vector_new();
 
     //Create the bitsets
     start = (float) clock();
@@ -68,7 +68,7 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
 
     //Popcnt bitsets
     unsigned count = 0, ucount = 0;
-    bitset_operation *o = bitset_operation_new(NULL);
+    bitset_operation_t *o = bitset_operation_new(NULL);
     for (i = 0; i < bitsets; i++) {
         count += bitset_count(b[i]);
         bitset_operation_add(o, b[i], BITSET_OR);
@@ -76,7 +76,7 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     ucount = bitset_operation_count(o);
 
     //Popcnt bitsets using an iterator
-    bitset_vector_iterator *iter = bitset_vector_iterator_new(vector,
+    bitset_vector_iterator_t *iter = bitset_vector_iterator_new(vector,
         BITSET_VECTOR_START, BITSET_VECTOR_END);
     start = (float) clock();
     unsigned raw, unique;
@@ -97,7 +97,7 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
 void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
     float start, end, size = 0;
 
-    bitset **b = malloc(sizeof(bitset *) * bitsets);
+    bitset_t **b = malloc(sizeof(bitset_t *) * bitsets);
     bitset_offset *offsets = malloc(sizeof(bitset_offset) * bits);
 
     //Create the bitsets
@@ -135,7 +135,7 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
 
     //Bitwise OR + pop count
     start = (float) clock();
-    bitset_operation *op = bitset_operation_new(b[0]);
+    bitset_operation_t *op = bitset_operation_new(b[0]);
     for (unsigned i = 1; i < bitsets; i++) {
         bitset_operation_add(op, b[i], BITSET_OR);
     }
@@ -149,7 +149,7 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
 
     //Use linear counting
     start = (float) clock();
-    bitset_linear *e = bitset_linear_new(max);
+    bitset_linear_t *e = bitset_linear_new(max);
     for (unsigned i = 0; i < bitsets; i++) {
         bitset_linear_add(e, b[i]);
     }
