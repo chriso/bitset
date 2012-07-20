@@ -1,4 +1,6 @@
-`bitset`
+![Bitset](https://github.com/chriso/bitset/raw/master/bitset.png)
+
+(symbol in logo from the most excellent [helveticons](http://helveticons.ch))
 
 ## What's included
 
