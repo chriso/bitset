@@ -5,9 +5,7 @@ test/*.o
 .deps
 .libs
 .AppleDouble
-lib/libbitdb.*
-build/env
-build/bitdb.pc
+lib/libbitset.*
 
 Makefile.in
 Makefile
@@ -22,9 +20,11 @@ Makefile
 /config.*
 /libtool
 /ltmain.sh
-/stamp-h1
+/stamp-h*
+/m4/l*.m4
 
 test/stress
 test/test
 
 bitset-*.tar.gz
+bitset.pc
