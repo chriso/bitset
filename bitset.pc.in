@@ -1,10 +1,11 @@
-prefix=@PREFIX@
-includedir=@HEADERS@
-libdir=@LIBRARY@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+includedir=@includedir@
+libdir=@libdir@
 
 Name: Bitset
 Description: Compressed bitsets with supporting algorithms and structures
 URL: http://github.com/chriso/bitset
-Version: @VERSION@
+Version: @version@
 Libs: -L${libdir} -lbitset
 Cflags: -I${includedir}
