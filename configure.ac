@@ -2,7 +2,7 @@ AC_PREREQ([2.60])
 
 # See http://www.gnu.org/software/libtool/manual/libtool.html#Updating-version-info
 m4_define([v_maj], [2])
-m4_define([v_min], [5])
+m4_define([v_min], [6])
 m4_define([v_mic], [0])
 m4_define([project_version], [v_maj.v_min.v_mic])
 
