@@ -9,6 +9,16 @@
 #include "bitset/vector.h"
 #include "bitset/estimate.h"
 
+/**
+ * Bundle a PRNG to get around dists with a tiny RAND_MAX.
+ */
+
+static unsigned bitset_rand_seed = 1;
+static inline unsigned bitset_rand() {
+    bitset_rand_seed = bitset_rand_seed * 1103515245 + 12345;
+    return bitset_rand_seed;
+}
+
 void stress_small(unsigned bits, unsigned max, unsigned count) {
     float start, end;
 
@@ -19,15 +29,15 @@ void stress_small(unsigned bits, unsigned max, unsigned count) {
     start = (float) clock();
     for (unsigned j = 0; j < count; j++) {
         for (unsigned j = 0; j < bits; j++) {
-            offsets[j] = rand() % max;
+            offsets[j] = bitset_rand() % max;
         }
         b = bitset_new_bits(offsets, bits);
         for (unsigned j = 0; j < bits; j++) {
-            offsets[j] = rand() % max;
+            offsets[j] = bitset_rand() % max;
         }
         b2 = bitset_new_bits(offsets, bits);
         for (unsigned j = 0; j < bits; j++) {
-            offsets[j] = rand() % max;
+            offsets[j] = bitset_rand() % max;
         }
         b3 = bitset_new_bits(offsets, bits);
         o = bitset_operation_new(b);
@@ -56,7 +66,7 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     start = (float) clock();
     for (i = 0; i < bitsets; i++) {
         for (unsigned j = 0; j < bits; j++) {
-            offsets[j] = rand() % max;
+            offsets[j] = bitset_rand() % max;
         }
         b[i] = bitset_new_bits(offsets, bits);
         bitset_vector_push(vector, b[i], i);
@@ -104,7 +114,7 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
     start = (float) clock();
     for (unsigned i = 0; i < bitsets; i++) {
         for (unsigned j = 0; j < bits; j++) {
-            offsets[j] = rand() % max;
+            offsets[j] = bitset_rand() % max;
         }
         b[i] = bitset_new_bits(offsets, bits);
         size += b[i]->length * sizeof(bitset_word);
@@ -166,8 +176,6 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
 }
 
 int main(int argc, char **argv) {
-    srand(1);
-
     printf("Testing 100k small operations\n");
     stress_small(10, 1000000, 100000);
 
