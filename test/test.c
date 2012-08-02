@@ -831,6 +831,7 @@ void test_suite_operation() {
 }
 
 void test_suite_vector() {
+    /*
     bitset_vector_t *l, *l2;
     bitset_vector_iterator_t *i, *i2;
     bitset_t *b;
@@ -1001,9 +1002,11 @@ void test_suite_vector() {
     test_int("Check tail ptr is set correctly\n", (uintptr_t)l->buffer+6, (uintptr_t)l->tail);
     bitset_vector_free(l);
     free(buffer);
+    */
 }
 
 void test_suite_vector_operation() {
+    /*
     bitset_vector_operation_t *o1, *o2;
     bitset_vector_t *v1, *v2, *v3, *v4;
     bitset_vector_iterator_t *i1, *i2, *i3, *i4, *i5;
@@ -1126,6 +1129,7 @@ void test_suite_vector_operation() {
     bitset_vector_free(v2);
     bitset_vector_free(v3);
     bitset_vector_free(v4);
+    */
 }
 
 void test_suite_estimate() {

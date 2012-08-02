@@ -76,6 +76,7 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     ucount = bitset_operation_count(o);
 
     //Popcnt bitsets using an iterator
+    /*
     bitset_vector_iterator_t *iter = bitset_vector_iterator_new(vector,
         BITSET_VECTOR_START, BITSET_VECTOR_END);
     start = (float) clock();
@@ -90,6 +91,7 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     bitset_vector_iterator_free(iter);
     bitset_vector_free(vector);
     bitset_operation_free(o);
+    */
     free(b);
     free(offsets);
 }
