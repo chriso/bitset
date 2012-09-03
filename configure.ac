@@ -54,7 +54,6 @@ AC_SUBST([LIBTOOL_LINK_FLAGS])
 
 case "$host" in
   *-*-linux*)
-  	AC_MSG_ERROR([in here])
     CFLAGS="${CFLAGS} -DLINUX"
     ;;
 esac
