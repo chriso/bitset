@@ -83,5 +83,4 @@ if test "$enable_jemalloc" != "no"; then
   fi
 fi
 AC_SUBST(has_jemalloc)
-AC_SUBST(jemalloc_prefix)
 ])
