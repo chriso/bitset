@@ -25,6 +25,7 @@ AM_INIT_AUTOMAKE([foreign 1.11])
 define([AC_LIBTOOL_LANG_CXX_CONFIG], [:])dnl
 define([AC_LIBTOOL_LANG_F77_CONFIG], [:])dnl
 LT_INIT([dlopen])
+LT_INIT([dlopen disable-static])
 
 AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h])
 
