@@ -20,6 +20,19 @@ dnl modified to skip other TS_ helpers
 dnl
 
 AC_DEFUN([TS_CHECK_JEMALLOC], [
+AC_ARG_WITH([jemalloc-prefix],
+  [AS_HELP_STRING([--with-jemalloc-prefix=PREFIX],[Specify the jemalloc prefix [default=""]])],
+  [
+  jemalloc_prefix="$withval"
+  ],[
+  if test "`uname -s`" = "Darwin"; then
+    jemalloc_prefix="je_"
+  else
+    jemalloc_prefix=""
+  fi
+  ]
+)
+
 enable_jemalloc=no
 AC_ARG_WITH([jemalloc], [AS_HELP_STRING([--with-jemalloc=DIR], [use a specific jemalloc library])],
 [
@@ -48,7 +61,7 @@ AC_ARG_WITH([jemalloc], [AS_HELP_STRING([--with-jemalloc=DIR], [use a specific j
   fi
 ])
 
-jemalloch=0
+has_jemalloc=0
 if test "$enable_jemalloc" != "no"; then
   jemalloc_have_headers=0
   jemalloc_have_libs=0
@@ -57,20 +70,18 @@ if test "$enable_jemalloc" != "no"; then
     LDFLAGS="${LDFLAGS} -L${jemalloc_ldflags}"
     LIBTOOL_LINK_FLAGS="${LIBTOOL_LINK_FLAGS} -R${jemalloc_ldflags}"
   fi
-  if test "`uname -s`" = "Darwin"; then
-    AC_CHECK_LIB(jemalloc, je_malloc_stats_print, [jemalloc_have_libs=1])
-  else
-    AC_CHECK_LIB(jemalloc, malloc_stats_print, [jemalloc_have_libs=1])
-  fi
+  func="${jemalloc_prefix}malloc_stats_print"
+  AC_CHECK_LIB(jemalloc, ${func}, [jemalloc_have_libs=1])
   if test "$jemalloc_have_libs" != "0"; then
     AC_CHECK_HEADERS([jemalloc/jemalloc.h], [jemalloc_have_headers=1])
   fi
   if test "$jemalloc_have_headers" != "0"; then
-    jemalloch=1
+    has_jemalloc=1
     LIBS="${LIBS} -ljemalloc"
   else
     AC_MSG_ERROR([Couldn't find a jemalloc installation])
   fi
 fi
-AC_SUBST(jemalloch)
+AC_SUBST(has_jemalloc)
+AC_SUBST(jemalloc_prefix)
 ])

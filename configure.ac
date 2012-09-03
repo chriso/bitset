@@ -29,11 +29,6 @@ LT_INIT([dlopen disable-static])
 
 AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h])
 
-case "$host" in
-  *-*-linux*)
-    CFLAGS="${CFLAGS} -DLINUX"
-esac
-
 TS_CHECK_JEMALLOC
 TS_CHECK_TCMALLOC
 
@@ -56,6 +51,13 @@ AC_SUBST([CFLAGS])
 AC_SUBST([LDFLAGS])
 AC_SUBST([LIBS])
 AC_SUBST([LIBTOOL_LINK_FLAGS])
+
+case "$host" in
+  *-*-linux*)
+  	AC_MSG_ERROR([in here])
+    CFLAGS="${CFLAGS} -DLINUX"
+    ;;
+esac
 
 AC_CONFIG_FILES([Makefile include/Makefile lib/Makefile test/Makefile bitset.pc])
 AC_OUTPUT
