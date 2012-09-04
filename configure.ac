@@ -1,16 +1,10 @@
 AC_PREREQ([2.60])
 
 # See http://www.gnu.org/software/libtool/manual/libtool.html#Updating-version-info
-m4_define([v_maj], [2])
-m4_define([v_min], [6])
-m4_define([v_mic], [0])
-m4_define([project_version], [v_maj.v_min.v_mic])
+m4_define([ver], [2.6.0])
+m4_define([l_ver], [2:6:0])
 
-m4_define([lt_cur], [m4_eval(v_maj + v_min)])
-m4_define([lt_rev], [v_mic])
-m4_define([lt_age], [v_min])
-
-AC_INIT([bitset], [project_version], [http://github.com/chriso/bitset])
+AC_INIT([bitset], [ver], [http://github.com/chriso/bitset])
 AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_AUX_DIR(.)
@@ -39,9 +33,10 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memmove])
 AX_CC_MAXOPT
 
-version_info="lt_cur:lt_rev:lt_age"
-version="lt_cur.lt_rev.lt_age"
-AC_SUBST([version_info])
+version="ver"
+library_version="l_ver"
+
+AC_SUBST([library_version])
 AC_SUBST([version])
 
 AC_CONFIG_FILES([Makefile include/Makefile lib/Makefile test/Makefile bitset.pc])

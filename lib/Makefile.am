@@ -4,5 +4,5 @@ AM_CFLAGS= -std=c99 -Wall
 lib_LTLIBRARIES = libbitset.la
 libbitset_la_SOURCES = bitset.c estimate.c operation.c vector.c
 libbitset_la_LDFLAGS = $(AM_LDFLAGS) \
-    -version-info @version_info@ \
+    -version-info @library_version@ \
     -no-undefined
