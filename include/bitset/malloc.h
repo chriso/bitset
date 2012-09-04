@@ -1,18 +1,15 @@
+#ifndef BITSET_MALLOC_H_
+#define BITSET_MALLOC_H_
+
 #if defined(has_tcmalloc)
-#include <google/tcmalloc.h>
-#else
-#if defined(has_jemalloc)
-#include <jemalloc/jemalloc.h>
-#endif
-#include 'malloc.h'
+#  include <google/tcmalloc.h>
+#elif defined(has_jemalloc)
+#  include <jemalloc/jemalloc.h>
+#elif defined(LINUX)
+#  include <malloc.h>
 #endif
 
-int bitset_mallopt(int param, int value)
-{
-#if defined(has_jemalloc) || defined(has_tcmalloc)
-#if defined(LINUX)
-  return mallopt(param, value);
+int bitset_mallopt(int, int);
+
 #endif
-  return 0;
-#endif
-}
+
