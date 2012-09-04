@@ -1,7 +1,7 @@
 AC_PREREQ([2.60])
 
 # See http://www.gnu.org/software/libtool/manual/libtool.html#Updating-version-info
-m4_define([ver], [2.6.0])
+m4_define([ver], [2.7.0])
 m4_define([l_ver], [2:6:0])
 
 AC_INIT([bitset], [ver], [http://github.com/chriso/bitset])
