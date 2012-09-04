@@ -32,6 +32,7 @@ AC_ARG_WITH([jemalloc-prefix],
   fi
   ]
 )
+AC_DEFINE_UNQUOTED([prefix_jemalloc], [${jemalloc_prefix}], [jemalloc prefix])
 
 enable_jemalloc=no
 AC_ARG_WITH([jemalloc], [AS_HELP_STRING([--with-jemalloc=DIR], [use a specific jemalloc library])],
