@@ -231,7 +231,7 @@ void bitset_iterator_free(bitset_iterator_t *);
  */
 
 #ifndef bitset_oom
-#  define bitset_oom() fprintf(stderr, "Out of memory\n"), exit(1)
+#  define bitset_oom() fprintf(stderr, "Out of memory\n"), exit(EXIT_FAILURE)
 #endif
 
 #ifdef __cplusplus
