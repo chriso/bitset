@@ -483,7 +483,7 @@ void test_suite_set() {
 void test_suite_stress() {
     bitset_t *b = bitset_new();
     unsigned int max = 100000000, num = 1000;
-    unsigned *bits = malloc(sizeof(unsigned) * num);
+    unsigned *bits = bitset_malloc(sizeof(unsigned) * num);
     srand(time(NULL));
     for (unsigned i = 0; i < num; i++) {
         bits[i] = rand() % max;
@@ -496,7 +496,7 @@ void test_suite_stress() {
     for (unsigned i = 0; i < 86400; i++) {
         bitset_count(b);
     }
-    free(bits);
+    bitset_malloc_free(bits);
     bitset_free(b);
 }
 
@@ -986,7 +986,7 @@ void test_suite_vector() {
     bitset_vector_iterator_free(i2);
 
     //Make a copy of the buffer
-    char *buffer = malloc(sizeof(char) * l->length);
+    char *buffer = bitset_malloc(sizeof(char) * l->length);
     memcpy(buffer, l->buffer, l->length);
     unsigned length = l->length;
 
@@ -1000,7 +1000,7 @@ void test_suite_vector() {
     test_int("Check tail offset is set correctly\n", 10, l->tail_offset);
     test_int("Check tail ptr is set correctly\n", (uintptr_t)l->buffer+6, (uintptr_t)l->tail);
     bitset_vector_free(l);
-    free(buffer);
+    bitset_malloc_free(buffer);
 }
 
 void test_suite_vector_operation() {
@@ -1169,7 +1169,7 @@ void test_suite_estimate() {
     test_int("Test countn count_all where N=1\n", 4, all[0]);
     test_int("Test countn count_all where N=2\n", 3, all[1]);
     test_int("Test countn count_all where N=3\n", 1, all[2]);
-    free(all);
+    bitset_malloc_free(all);
 
     BITSET_NEW(mask, 2, 4, 5, 40, 41);
     all = bitset_countn_count_mask(c, mask);
@@ -1177,7 +1177,7 @@ void test_suite_estimate() {
     test_int("Test countn count_mask where N=2\n", 1, all[1]);
     test_int("Test countn count_mask where N=3\n", 0, all[2]);
     bitset_free(mask);
-    free(all);
+    bitset_malloc_free(all);
 
     bitset_countn_free(c);
     bitset_free(b5);

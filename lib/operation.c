@@ -1,13 +1,13 @@
 #include "bitset/operation.h"
 
 bitset_operation_t *bitset_operation_new(bitset_t *bitset) {
-    bitset_operation_t *operation = malloc(sizeof(bitset_operation_t));
+    bitset_operation_t *operation = bitset_malloc(sizeof(bitset_operation_t));
     if (!operation) {
         bitset_oom();
     }
     operation->length = 0;
     operation->size = 1;
-    operation->steps = malloc(sizeof(bitset_operation_step_t) * 2);
+    operation->steps = bitset_malloc(sizeof(bitset_operation_step_t) * 2);
     if (!operation->steps) {
         bitset_oom();
     }
@@ -26,20 +26,20 @@ void bitset_operation_free(bitset_operation_t *operation) {
                 bitset_free(operation->steps[i]->data.bitset);
             }
         }
-        free(operation->steps[i]);
+        bitset_malloc_free(operation->steps[i]);
     }
-    free(operation->steps);
-    free(operation);
+    bitset_malloc_free(operation->steps);
+    bitset_malloc_free(operation);
 }
 
 static inline bitset_operation_step_t *bitset_operation_add_step(bitset_operation_t *operation) {
-    bitset_operation_step_t *step = malloc(sizeof(bitset_operation_step_t));
+    bitset_operation_step_t *step = bitset_malloc(sizeof(bitset_operation_step_t));
     if (!step) {
         bitset_oom();
     }
     if (operation->length == operation->size) {
         operation->size *= 2;
-        operation->steps = realloc(operation->steps,
+        operation->steps = bitset_realloc(operation->steps,
             sizeof(bitset_operation_step_t *) * operation->size);
         if (!operation->steps) {
             bitset_oom();
@@ -53,7 +53,7 @@ void bitset_operation_add(bitset_operation_t *operation,
     if (!bitset->length) {
         if (type == BITSET_AND && operation->length) {
             for (unsigned i = 0; i < operation->length; i++) {
-                free(operation->steps[i]);
+                bitset_malloc_free(operation->steps[i]);
             }
             operation->length = 0;
         }
@@ -76,7 +76,7 @@ void bitset_operation_add_nested(bitset_operation_t *operation, bitset_operation
 }
 
 static inline bitset_hash_t *bitset_hash_new(size_t buckets) {
-    bitset_hash_t *hash = malloc(sizeof(bitset_hash_t));
+    bitset_hash_t *hash = bitset_malloc(sizeof(bitset_hash_t));
     if (!hash) {
         bitset_oom();
     }
@@ -84,8 +84,8 @@ static inline bitset_hash_t *bitset_hash_new(size_t buckets) {
     BITSET_NEXT_POW2(size, buckets);
     hash->size = size;
     hash->count = 0;
-    hash->buckets = calloc(1, sizeof(bitset_hash_bucket_t *) * hash->size);
-    hash->buffer = malloc(sizeof(bitset_word) * hash->size);
+    hash->buckets = bitset_calloc(1, sizeof(bitset_hash_bucket_t *) * hash->size);
+    hash->buffer = bitset_malloc(sizeof(bitset_word) * hash->size);
     if (!hash->buckets || !hash->buffer) {
         bitset_oom();
     }
@@ -102,12 +102,12 @@ static inline void bitset_hash_free(bitset_hash_t *hash) {
         while (bucket) {
             tmp = bucket;
             bucket = bucket->next;
-            free(tmp);
+            bitset_malloc_free(tmp);
         }
     }
-    free(hash->buckets);
-    free(hash->buffer);
-    free(hash);
+    bitset_malloc_free(hash->buckets);
+    bitset_malloc_free(hash->buffer);
+    bitset_malloc_free(hash);
 }
 
 static inline bool bitset_hash_insert(bitset_hash_t *hash, bitset_offset offset, bitset_word word) {
@@ -119,14 +119,14 @@ static inline bool bitset_hash_insert(bitset_hash_t *hash, bitset_offset offset,
         if (off == offset) {
             return false;
         }
-        insert = malloc(sizeof(bitset_hash_bucket_t));
+        insert = bitset_malloc(sizeof(bitset_hash_bucket_t));
         if (!insert) {
             bitset_oom();
         }
         insert->offset = off;
         insert->word = (uintptr_t)hash->buffer[key];
         bucket = hash->buckets[key] = insert;
-        insert = malloc(sizeof(bitset_hash_bucket_t));
+        insert = bitset_malloc(sizeof(bitset_hash_bucket_t));
         if (!insert) {
             bitset_oom();
         }
@@ -142,7 +142,7 @@ static inline bool bitset_hash_insert(bitset_hash_t *hash, bitset_offset offset,
             hash->buffer[key] = word;
             hash->count++;
         } else {
-            insert = malloc(sizeof(bitset_hash_bucket_t));
+            insert = bitset_malloc(sizeof(bitset_hash_bucket_t));
             if (!insert) {
                 bitset_oom();
             }
@@ -162,7 +162,7 @@ static inline bool bitset_hash_insert(bitset_hash_t *hash, bitset_offset offset,
         }
         bucket = bucket->next;
     }
-    insert = malloc(sizeof(bitset_hash_bucket_t));
+    insert = bitset_malloc(sizeof(bitset_hash_bucket_t));
     if (!insert) {
         bitset_oom();
     }
@@ -415,7 +415,7 @@ bitset_t *bitset_operation_exec(bitset_operation_t *operation) {
         bitset_hash_free(words);
         return result;
     }
-    bitset_offset *offsets = malloc(sizeof(bitset_offset) * words->count);
+    bitset_offset *offsets = bitset_malloc(sizeof(bitset_offset) * words->count);
     if (!offsets) {
         bitset_oom();
     }
@@ -464,7 +464,7 @@ bitset_t *bitset_operation_exec(bitset_operation_t *operation) {
         }
         word_offset = offset;
     }
-    free(offsets);
+    bitset_malloc_free(offsets);
     bitset_hash_free(words);
     return result;
 }

@@ -24,7 +24,7 @@ void stress_small(unsigned bits, unsigned max, unsigned count) {
 
     bitset_t *b, *b2, *b3, *b4;
     bitset_operation_t *o;
-    bitset_offset *offsets = malloc(sizeof(bitset_offset) * bits);
+    bitset_offset *offsets = bitset_malloc(sizeof(bitset_offset) * bits);
 
     start = (float) clock();
     for (unsigned j = 0; j < count; j++) {
@@ -58,8 +58,8 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     float start, end, size = 0;
     unsigned i;
 
-    bitset_t **b = malloc(sizeof(bitset_t *) * bitsets);
-    bitset_offset *offsets = malloc(sizeof(bitset_offset) * bits);
+    bitset_t **b = bitset_malloc(sizeof(bitset_t *) * bitsets);
+    bitset_offset *offsets = bitset_malloc(sizeof(bitset_offset) * bits);
     bitset_vector_t *vector = bitset_vector_new();
 
     //Create the bitsets
@@ -100,15 +100,15 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     bitset_vector_iterator_free(iter);
     bitset_vector_free(vector);
     bitset_operation_free(o);
-    free(b);
-    free(offsets);
+    bitset_malloc_free(b);
+    bitset_malloc_free(offsets);
 }
 
 void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
     float start, end, size = 0;
 
-    bitset_t **b = malloc(sizeof(bitset_t *) * bitsets);
-    bitset_offset *offsets = malloc(sizeof(bitset_offset) * bits);
+    bitset_t **b = bitset_malloc(sizeof(bitset_t *) * bitsets);
+    bitset_offset *offsets = bitset_malloc(sizeof(bitset_offset) * bits);
 
     //Create the bitsets
     start = (float) clock();
@@ -171,8 +171,8 @@ void stress_exec(unsigned bitsets, unsigned bits, unsigned max) {
     for (unsigned i = 0; i < bitsets; i++) {
         bitset_free(b[i]);
     }
-    free(b);
-    free(offsets);
+    bitset_malloc_free(b);
+    bitset_malloc_free(offsets);
 }
 
 int main(int argc, char **argv) {

@@ -8,6 +8,8 @@
 #include <stdbool.h>
 #include <limits.h>
 
+#include "malloc.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
