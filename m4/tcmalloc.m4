@@ -48,6 +48,7 @@ AC_ARG_WITH([tcmalloc], [AS_HELP_STRING([--with-tcmalloc=DIR], [use the tcmalloc
     if test "$tcmalloc_have_lib" != "0"; then
       LIBS="${LIBS} -l${with_tcmalloc_lib}"
       has_tcmalloc=1      
+      AC_DEFINE(has_tcmalloc, [1], [Link/compile against tcmalloc])
     else
       AC_MSG_ERROR([Couldn't find a tcmalloc installation])
     fi

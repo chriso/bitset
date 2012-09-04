@@ -78,6 +78,7 @@ if test "$enable_jemalloc" != "no"; then
   if test "$jemalloc_have_headers" != "0"; then
     has_jemalloc=1
     LIBS="${LIBS} -ljemalloc"
+    AC_DEFINE(has_jemalloc, [1], [Link/compile against jemalloc])
   else
     AC_MSG_ERROR([Couldn't find a jemalloc installation])
   fi
