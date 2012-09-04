@@ -9,21 +9,43 @@
 
 #if defined(has_tcmalloc)
 #  include <google/tcmalloc.h>
+#  define BITSET_MALLOC_PREFIX tc_
 #elif defined(has_jemalloc)
 #  include <jemalloc/jemalloc.h>
-#elif defined(LINUX)
-#  include <malloc.h>
+#  define BITSET_MALLOC_PREFIX je_
+#else
+#  define BITSET_MALLOC_PREFIX
+#  if defined(LINUX)
+#    include <malloc.h> //for mallopt()
+#  endif
 #endif
 
-void *bitset_malloc(size_t);
+#define bitset_malloc(size) \
+    BITSET_MALLOC_CALL(malloc)(size)
 
-void bitset_malloc_free(void *);
+#define bitset_malloc_free(ptr) \
+    BITSET_MALLOC_CALL(free)(ptr)
 
-void *bitset_calloc(size_t, size_t);
+#define bitset_calloc(count, size) \
+    BITSET_MALLOC_CALL(calloc)(count, size)
 
-void *bitset_realloc(void *, size_t);
+#define bitset_realloc(ptr, size) \
+    BITSET_MALLOC_CALL(realloc)(ptr, size)
 
-int bitset_mallopt(int, int);
+#if !defined(has_jemalloc) && !defined(has_tcmalloc) && defined(LINUX)
+#  define bitset_mallopt(param, val) return mallopt(param, value);
+#else
+#  define bitset_mallopt(param, val) 1
+#endif
+
+#define BITSET_MALLOC_CALL(fn) \
+    BITSET_MALLOC_CONCAT(BITSET_MALLOC_PREFIX, fn)
+
+#define BITSET_MALLOC_CONCAT(a,b) \
+    BITSET_MALLOC_CONCAT_(a,b)
+
+#define BITSET_MALLOC_CONCAT_(a,b) \
+    a##b
 
 #endif
 
