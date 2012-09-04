@@ -12,7 +12,7 @@
 #  define BITSET_MALLOC_PREFIX tc_
 #elif defined(has_jemalloc)
 #  include <jemalloc/jemalloc.h>
-#  define BITSET_MALLOC_PREFIX je_
+#  define BITSET_MALLOC_PREFIX prefix_jemalloc
 #else
 #  define BITSET_MALLOC_PREFIX
 #  if defined(LINUX)
