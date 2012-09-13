@@ -7,19 +7,11 @@ bitset_t *bitset_new() {
         bitset_oom();
     }
     bitset->length = 0;
-    bitset->buffer = malloc(sizeof(bitset_word));
-    if (!bitset->buffer) {
-        bitset_oom();
-    }
-    bitset->size = 1;
-    bitset->references = 1;
+    bitset->buffer = NULL;
     return bitset;
 }
 
 void bitset_free(bitset_t *bitset) {
-    if (--bitset->references) {
-        return;
-    }
     if (bitset->length) {
         free(bitset->buffer);
     }
@@ -27,16 +19,18 @@ void bitset_free(bitset_t *bitset) {
 }
 
 void bitset_resize(bitset_t *bitset, size_t length) {
-    size_t next_size = bitset->size;
-    while (next_size <= length) {
-        next_size *= 2;
-    }
-    if (next_size > bitset->size) {
-        bitset->buffer = realloc(bitset->buffer, sizeof(bitset_word) * next_size);
-        if (!bitset->buffer) {
-            bitset_oom();
+    size_t current_size, next_size;
+    BITSET_NEXT_POW2(next_size, length);
+    if (!bitset->length) {
+        bitset->buffer = malloc(sizeof(bitset_word) * next_size);
+    } else {
+        BITSET_NEXT_POW2(current_size, bitset->length);
+        if (next_size > current_size) {
+            bitset->buffer = realloc(bitset->buffer, sizeof(bitset_word) * next_size);
         }
-        bitset->size = next_size;
+    }
+    if (!bitset->buffer) {
+        bitset_oom();
     }
     bitset->length = length;
 }
@@ -50,7 +44,6 @@ size_t bitset_length(bitset_t *bitset) {
 }
 
 bitset_t *bitset_copy(bitset_t *bitset) {
-    bitset->references++;
     return bitset;
 }
 
@@ -285,8 +278,7 @@ bitset_t *bitset_new_buffer(const char *buffer, size_t length) {
         bitset_oom();
     }
     memcpy(bitset->buffer, buffer, length * sizeof(char));
-    bitset->length = bitset->size = length / sizeof(bitset_word);
-    bitset->references = 1;
+    bitset->length = length / sizeof(bitset_word);
     return bitset;
 }
 

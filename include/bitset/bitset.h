@@ -96,8 +96,6 @@ extern "C" {
 typedef struct bitset_s {
     bitset_word *buffer;
     size_t length;
-    size_t size;
-    unsigned references;
 } bitset_t;
 
 typedef struct bitset_iterator_s {
