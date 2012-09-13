@@ -831,6 +831,18 @@ void test_suite_operation() {
 }
 
 void test_suite_vector() {
+
+    bitset_vector_t *v, v2;
+
+    v = bitset_vector_new();
+    test_int("Checking vector length is zero initially\n", 0, v->length);
+    test_int("Checking vector size is one initially\n", 1, v->size);
+    bitset_vector_resize(v, 5);
+    test_int("Checking vector size accommodates desired resize size\n", 8, v->size);
+    bitset_vector_resize(v, 65);
+    test_int("Checking vector size accommodates desired resize size\n", 128, v->size);
+    bitset_vector_free(v);
+
     /*
     bitset_vector_t *l, *l2;
     bitset_vector_iterator_t *i, *i2;

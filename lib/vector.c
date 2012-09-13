@@ -5,16 +5,18 @@ bitset_vector_t *bitset_vector_new() {
     if (!l) {
         bitset_oom();
     }
-    l->length = l->size = l->count = l->tail_offset = 0;
-    l->buffer = l->tail = NULL;
+    l->buffer = malloc(1);
+    if (!l->buffer) {
+        bitset_oom();
+    }
+    l->size = 1;
+    l->length = 0;
     return l;
 }
 
-void bitset_vector_free(bitset_vector_t *l) {
-    if (l->length) {
-        free(l->buffer);
-    }
-    free(l);
+void bitset_vector_free(bitset_vector_t *v) {
+    free(v->buffer);
+    free(v);
 }
 
 bitset_vector_t *bitset_vector_copy(bitset_vector_t *v) {
@@ -26,36 +28,39 @@ bitset_vector_t *bitset_vector_copy(bitset_vector_t *v) {
         }
         memcpy(c->buffer, v->buffer, v->length);
         c->length = c->size = v->length;
-        c->count = v->count;
-        c->tail = v->tail;
-        c->tail_offset = v->tail_offset;
     }
     return c;
 }
 
-void bitset_vector_resize(bitset_vector_t *l, size_t length) {
-    if (length > l->size) {
-        size_t next_size;
-        BITSET_NEXT_POW2(next_size, length);
-        if (!l->length) {
-            l->buffer = malloc(sizeof(char) * next_size);
-        } else {
-            l->buffer = realloc(l->buffer, sizeof(char) * next_size);
-        }
-        if (!l->buffer) {
+void bitset_vector_resize(bitset_vector_t *v, size_t length) {
+    size_t new_size = v->size;
+    while (new_size < length) {
+        new_size *= 2;
+    }
+    if (new_size > v->size) {
+        v->buffer = realloc(v->buffer, new_size * sizeof(char));
+        if (!v->buffer) {
             bitset_oom();
         }
-        l->size = next_size;
+        v->size = new_size;
     }
-    l->length = length;
 }
 
-size_t bitset_vector_length(bitset_vector_t *l) {
-    return l->length;
+char *bitset_vector_export(bitset_vector_t *v) {
+    return v->buffer;
 }
 
-unsigned bitset_vector_count(bitset_vector_t *l) {
-    return l->count;
+size_t bitset_vector_length(bitset_vector_t *v) {
+    return v->length;
+}
+
+bitset_vector_t *bitset_vector_import(const char *buffer, size_t length) {
+    bitset_vector_t *v = bitset_vector_new();
+    if (length) {
+        bitset_vector_resize(v, length);
+        memcpy(v->buffer, buffer, length);
+    }
+    return v;
 }
 
 static inline size_t bitset_encoded_length_required_bytes(size_t length) {
@@ -122,46 +127,8 @@ static inline size_t bitset_encoded_length(const char *buffer) {
     return length;
 }
 
-bitset_vector_t *bitset_vector_new_buffer(const char *buffer, size_t length) {
-    bitset_vector_t *l = malloc(sizeof(bitset_vector_t));
-    if (!l) {
-        bitset_oom();
-    }
-    l->buffer = malloc(length * sizeof(char));
-    if (!l->buffer) {
-        bitset_oom();
-    }
-    memcpy(l->buffer, buffer, length * sizeof(char));
-    l->length = l->size = length;
-    l->count = l->tail_offset = 0;
-    size_t length_bytes, offset_bytes;
-    char *buf = l->buffer;
-    for (unsigned i = 0; i < l->length; l->count++) {
-        l->tail = buf;
-        l->tail_offset += bitset_encoded_length(buf);
-        offset_bytes = bitset_encoded_length_size(buf);
-        i += offset_bytes;
-        if (i >= l->length) break;
-        buf += offset_bytes;
-        length = bitset_encoded_length(buf);
-        length_bytes = bitset_encoded_length_size(buf);
-        i += length_bytes;
-        if (i >= l->length) break;
-        buf += length_bytes;
-        length *= sizeof(bitset_word);
-        i += length;
-        if (i > l->length) break;
-        buf += length;
-    }
-    return l;
-}
-
-void bitset_vector_push(bitset_vector_t *l, bitset_t *b, unsigned offset) {
-    if (offset < l->tail_offset) {
-        fprintf(stderr, "libbitset: bitset_vector_push() only supports appends\n");
-        return;
-    }
-
+void bitset_vector_push(bitset_vector_t *v, bitset_t *b, unsigned offset) {
+    /*
     size_t length = l->length;
     unsigned relative_offset = offset - l->tail_offset;
     l->count++;
@@ -186,6 +153,7 @@ void bitset_vector_push(bitset_vector_t *l, bitset_t *b, unsigned offset) {
     if (b->length) {
         memcpy(buffer, b->buffer, b->length * sizeof(bitset_word));
     }
+    */
 }
 
 void bitset_vector_concat(bitset_vector_t *i, bitset_vector_t *c, unsigned offset) {

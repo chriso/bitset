@@ -37,9 +37,6 @@ typedef struct bitset_vector_s {
     char *buffer;
     size_t length;
     size_t size;
-    unsigned count;
-    char *tail;
-    unsigned tail_offset;
 } bitset_vector_t;
 
 typedef struct bitset_vector_operation_s bitset_vector_operation_t;
@@ -75,7 +72,7 @@ bitset_vector_t *bitset_vector_new();
  * Create a new bitset vector based on an existing buffer.
  */
 
-bitset_vector_t *bitset_vector_new_buffer(const char *, size_t);
+bitset_vector_t *bitset_vector_import(const char *, size_t);
 
 /**
  * Free the specified vector.
@@ -88,6 +85,12 @@ void bitset_vector_free(bitset_vector_t *);
  */
 
 bitset_vector_t *bitset_vector_copy(bitset_vector_t *);
+
+/**
+ * Get the vector buffer.
+ */
+
+char *bitset_vector_buffer(bitset_vector_t *);
 
 /**
  * Get the byte length of the vector buffer.
