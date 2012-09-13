@@ -19,7 +19,7 @@ bitset_linear_t *bitset_linear_new(size_t size) {
 
 void bitset_linear_add(bitset_linear_t *counter, bitset_t *bitset) {
     bitset_offset offset = 0;
-    bitset_word word, mask;
+    bitset_word word, mask, tmp;
     unsigned position;
     unsigned offset_mask = counter->size - 1;
     for (size_t i = 0; i < bitset->length; i++) {
@@ -36,8 +36,9 @@ void bitset_linear_add(bitset_linear_t *counter, bitset_t *bitset) {
                 counter->words[offset & offset_mask] |= mask;
             }
         } else {
+            tmp = counter->words[offset & offset_mask];
             counter->words[offset & offset_mask] |= word;
-            word &= ~counter->words[offset & offset_mask];
+            word &= ~tmp;
             BITSET_POP_COUNT(counter->count, word);
         }
         offset++;
