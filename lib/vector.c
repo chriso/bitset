@@ -173,6 +173,10 @@ void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offse
     bitset_t bitset;
     while (buffer < v->buffer + v->length) {
         buffer = bitset_vector_advance(buffer, &bitset, &tail_offset);
+        if (tail_offset >= offset) {
+            fprintf(stderr, "error: bitset vectors are append-only\n");
+            exit(1);
+        }
     }
 
     char *c_buffer = c->buffer, *c_start, *c_end = c->buffer + c->length;
@@ -182,7 +186,7 @@ void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offse
             c_start = c_buffer;
 
             //Copy the initial bitset from c
-            offset = tail_offset + current_offset - offset;
+            offset = offset + current_offset - tail_offset;
             size_t length_bytes = bitset_encoded_length_required_bytes(bitset.length);
             size_t offset_bytes = bitset_encoded_length_required_bytes(offset);
             bitset_vector_resize(v, v->length + length_bytes + offset_bytes + bitset.length * sizeof(bitset_word));
@@ -217,24 +221,34 @@ void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offse
     }
 }
 
-void bitset_vector_count_bits(bitset_vector_t *i, unsigned *raw, unsigned *unique) {
-    /*
-    unsigned raw_count = 0, offset;
+unsigned bitset_vector_bitsets(bitset_vector_t *v) {
+    unsigned count = 0, offset;
+    bitset_t *tmp;
+    BITSET_VECTOR_FOREACH(v, tmp, offset) {
+        count++;
+    }
+    return count;
+}
+
+void bitset_vector_cardinality(bitset_vector_t *v, unsigned *raw, unsigned *unique) {
+    unsigned offset;
     bitset_t *b;
-    BITSET_VECTOR_FOREACH(i, b, offset) {
-        raw_count += bitset_count(b);
+    *raw = 0;
+    BITSET_VECTOR_FOREACH(v, b, offset) {
+        *raw += bitset_count(b);
     }
-    (void)offset;
-    *raw = raw_count;
     if (unique) {
-        bitset_linear_t *l = bitset_linear_new(raw_count * 10);
-        BITSET_VECTOR_FOREACH(i, b, offset) {
-            bitset_linear_add(l, b);
+        if (*raw) {
+            bitset_linear_t *l = bitset_linear_new(*raw * 100);
+            BITSET_VECTOR_FOREACH(v, b, offset) {
+                bitset_linear_add(l, b);
+            }
+            *unique = bitset_linear_count(l);
+            bitset_linear_free(l);
+        } else {
+            *unique = 0;
         }
-        *unique = bitset_linear_count(l);
-        bitset_linear_free(l);
     }
-    */
 }
 
 bitset_t *bitset_vector_merge(bitset_vector_t *i) {

@@ -836,11 +836,12 @@ void test_suite_vector() {
     bitset_t *b;
     bitset_word *tmp;
     unsigned loop_count;
-    unsigned offset;
+    unsigned offset, raw, unique;
 
     l = bitset_vector_new();
     test_int("Checking vector length is zero initially\n", 0, bitset_vector_length(l));
     test_int("Checking vector size is one initially\n", 1, l->size);
+    test_int("Checking vector counts are initially zero\n", 0, bitset_vector_bitsets(l));
     loop_count = 0;
     BITSET_VECTOR_FOREACH(l, b, offset) {
         loop_count++;
@@ -851,6 +852,7 @@ void test_suite_vector() {
     l = bitset_vector_new();
     b = bitset_new();
     bitset_vector_push(l, b, 0);
+    test_int("Checking vector bitset count 1\n", 1, bitset_vector_bitsets(l));
     test_int("Checking vector was resized properly 1\n", 2, l->size);
     test_int("Checking vector was resized properly 2\n", 2, l->length);
     test_int("Checking the offset is zero\n", 0, (unsigned char)l->buffer[0]);
@@ -877,6 +879,7 @@ void test_suite_vector() {
     bitset_set_to(b, 100, true);
     bitset_set_to(b, 1000, true);
     bitset_vector_push(l, b, 10);
+    test_int("Checking vector bitset count 2\n", 2, bitset_vector_bitsets(l));
     test_int("Checking vector was resized properly 4\n", 16, l->size);
     test_int("Checking vector was resized properly 5\n", 16, l->length);
     test_int("Checking the offset is set properly 2\n", 7, (unsigned char)l->buffer[6]);
@@ -953,12 +956,16 @@ void test_suite_vector() {
 
     l3 = bitset_vector_new();
     bitset_vector_concat(l3, l, 0, BITSET_VECTOR_START, BITSET_VECTOR_END);
-    bitset_vector_concat(l3, l, 10, BITSET_VECTOR_START, BITSET_VECTOR_END);
+    bitset_vector_concat(l3, l, 11, BITSET_VECTOR_START, BITSET_VECTOR_END);
+    bitset_vector_cardinality(l3, &raw, &unique);
+    test_int("Checking vector bitset count 3\n", 4, bitset_vector_bitsets(l3));
+    test_int("Checking vector bitset count 4\n", 6, raw);
+    test_int("Checking vector bitset count 5\n", 3, unique);
     loop_count = 0;
     BITSET_VECTOR_FOREACH(l3, b, offset) {
         loop_count++;
         test_bool("Checking foreach works 3\n", true, offset == 3 ||
-            offset == 10 || offset == 13 || offset == 20);
+            offset == 10 || offset == 14 || offset == 21);
     }
     test_int("Checking it looped the right number of times 4\n", 4, loop_count);
     bitset_vector_free(l3);
@@ -967,15 +974,12 @@ void test_suite_vector() {
     char *buffer = malloc(sizeof(char) * l->length);
     memcpy(buffer, l->buffer, l->length);
     unsigned length = l->length;
-
     bitset_vector_free(l);
 
     //Check the copy is the same
     l = bitset_vector_import(buffer, length);
     test_int("Check size is copied\n", 16, l->size);
     test_int("Check length is copied\n", 16, l->length);
-    //test_int("Check tail offset is set correctly\n", 10, l->tail_offset);
-    //test_int("Check tail ptr is set correctly\n", (uintptr_t)l->buffer+6, (uintptr_t)l->tail);
     bitset_vector_free(l);
     free(buffer);
 }

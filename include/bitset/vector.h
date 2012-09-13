@@ -102,7 +102,7 @@ size_t bitset_vector_length(bitset_vector_t *);
  * Get the number of bitsets in the vector.
  */
 
-unsigned bitset_vector_count(bitset_vector_t *);
+unsigned bitset_vector_bitsets(bitset_vector_t *);
 
 /**
  * Push a bitset on to the end of the vector.
@@ -141,10 +141,10 @@ void bitset_vector_concat(bitset_vector_t *, bitset_vector_t *, unsigned offset,
     unsigned start, unsigned end);
 
 /**
- * Count bits in each bitset.
+ * Get a raw and unique count for set items in the vector.
  */
 
-void bitset_vector_count_bits(bitset_vector_t *, unsigned *, unsigned *);
+void bitset_vector_cardinality(bitset_vector_t *, unsigned *, unsigned *);
 
 /**
  * Merge (bitwise OR) each vector bitset.
