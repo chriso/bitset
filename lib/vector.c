@@ -1,17 +1,17 @@
 #include "bitset/vector.h"
 
 bitset_vector_t *bitset_vector_new() {
-    bitset_vector_t *l = malloc(sizeof(bitset_vector_t));
-    if (!l) {
+    bitset_vector_t *v = malloc(sizeof(bitset_vector_t));
+    if (!v) {
         bitset_oom();
     }
-    l->buffer = malloc(1);
-    if (!l->buffer) {
+    v->buffer = malloc(1);
+    if (!v->buffer) {
         bitset_oom();
     }
-    l->size = 1;
-    l->length = 0;
-    return l;
+    v->size = 1;
+    v->length = 0;
+    return v;
 }
 
 void bitset_vector_free(bitset_vector_t *v) {
@@ -44,6 +44,7 @@ void bitset_vector_resize(bitset_vector_t *v, size_t length) {
         }
         v->size = new_size;
     }
+    v->length = length;
 }
 
 char *bitset_vector_export(bitset_vector_t *v) {
@@ -127,24 +128,35 @@ static inline size_t bitset_encoded_length(const char *buffer) {
     return length;
 }
 
+char *bitset_vector_advance(char *buffer, bitset_t *bitset, unsigned *offset) {
+    *offset = bitset_encoded_length(buffer);
+    buffer += bitset_encoded_length_size(buffer);
+    bitset->length = bitset_encoded_length(buffer);
+    buffer += bitset_encoded_length_size(buffer);
+    bitset->buffer = (bitset_word *) buffer;
+    return buffer + bitset->length * sizeof(bitset_word);
+}
+
 void bitset_vector_push(bitset_vector_t *v, bitset_t *b, unsigned offset) {
-    /*
-    size_t length = l->length;
-    unsigned relative_offset = offset - l->tail_offset;
-    l->count++;
+    char *buffer = v->buffer, *end = v->buffer + v->length;
+    unsigned current_offset = 0;
+    bitset_t tmp;
+    while (buffer < end) {
+        buffer = bitset_vector_advance(buffer, &tmp, &current_offset);
+        if (current_offset >= offset) {
+            fprintf(stderr, "error: bitset ectors are append-only\n");
+            exit(1);
+        }
+    }
 
     //Resize the vector to accommodate the bitset
+    unsigned relative_offset = offset - current_offset;
     size_t length_bytes = bitset_encoded_length_required_bytes(b->length);
     size_t offset_bytes = bitset_encoded_length_required_bytes(relative_offset);
-    bitset_vector_resize(l, length + length_bytes + offset_bytes + b->length * sizeof(bitset_word));
-
-    //Keep a reference to the tail bitset
-    char *buffer = l->tail = l->buffer + length;
-    l->tail_offset = offset;
+    bitset_vector_resize(v, v->length + length_bytes + offset_bytes + b->length * sizeof(bitset_word));
 
     //Encode the offset and length
     bitset_encoded_length_bytes(buffer, relative_offset);
-
     buffer += offset_bytes;
     bitset_encoded_length_bytes(buffer, b->length);
     buffer += length_bytes;
@@ -153,7 +165,6 @@ void bitset_vector_push(bitset_vector_t *v, bitset_t *b, unsigned offset) {
     if (b->length) {
         memcpy(buffer, b->buffer, b->length * sizeof(bitset_word));
     }
-    */
 }
 
 void bitset_vector_concat(bitset_vector_t *i, bitset_vector_t *c, unsigned offset) {

@@ -120,12 +120,15 @@ void bitset_vector_resize(bitset_vector_t *, size_t);
  * Iterate over all bitsets.
  */
 
-#define BITSET_VECTOR_FOREACH(iterator, bitset, offset) \
-    for (unsigned BITSET_TMPVAR(i, __LINE__) = 0; \
-         (BITSET_TMPVAR(i, __LINE__) < iterator->length \
-            ? (offset = iterator->offsets[BITSET_TMPVAR(i, __LINE__)], \
-               bitset = iterator->bitsets[BITSET_TMPVAR(i, __LINE__)], 1) : 0); \
-         BITSET_TMPVAR(i, __LINE__)++)
+#define BITSET_VECTOR_FOREACH(vector, bitset, offset) \
+    bitset_t BITSET_TMPVAR(tmp, __LINE__); \
+    bitset = &BITSET_TMPVAR(tmp, __LINE__); \
+    char *BITSET_TMPVAR(buffer, __LINE__) = vector->buffer; \
+    while (BITSET_TMPVAR(buffer, __LINE__) < (vector->buffer + vector->length) \
+        ? (BITSET_TMPVAR(buffer, __LINE__) = bitset_vector_advance(BITSET_TMPVAR(buffer, __LINE__), \
+            bitset, &offset), 1) : 0)
+
+char *bitset_vector_advance(char *buffer, bitset_t *, unsigned *);
 
 /**
  * Concatenate an vector to another at the specified offset.
