@@ -5,7 +5,7 @@ bitset_vector_t *bitset_vector_new() {
     if (!v) {
         bitset_oom();
     }
-    v->buffer = malloc(1);
+    v->buffer = bitset_malloc(sizeof(char));
     if (!v->buffer) {
         bitset_oom();
     }
@@ -252,24 +252,19 @@ void bitset_vector_cardinality(bitset_vector_t *v, unsigned *raw, unsigned *uniq
 }
 
 bitset_t *bitset_vector_merge(bitset_vector_t *i) {
-    return NULL;
-    /*
     unsigned offset;
     bitset_t *b;
     bitset_operation_t *o = bitset_operation_new(NULL);
     BITSET_VECTOR_FOREACH(i, b, offset) {
         bitset_operation_add(o, b, BITSET_OR);
     }
-    (void)offset;
     b = bitset_operation_exec(o);
     bitset_operation_free(o);
     return b;
-    */
 }
 
 bitset_vector_operation_t *bitset_vector_operation_new(bitset_vector_t *i) {
-    bitset_vector_operation_t *ops = (bitset_vector_operation_t *)
-        bitset_malloc(sizeof(bitset_vector_operation_t));
+    bitset_vector_operation_t *ops = bitset_malloc(sizeof(bitset_vector_operation_t));
     if (!ops) {
         bitset_oom();
     }
@@ -314,15 +309,13 @@ void bitset_vector_operation_free_operands(bitset_vector_operation_t *ops) {
 
 static inline bitset_vector_operation_step_t *
         bitset_vector_operation_add_step(bitset_vector_operation_t *ops) {
-    bitset_vector_operation_step_t *step = (bitset_vector_operation_step_t *)
-        bitset_malloc(sizeof(bitset_vector_operation_step_t));
+    bitset_vector_operation_step_t *step = bitset_malloc(sizeof(bitset_vector_operation_step_t));
     if (!step) {
         bitset_oom();
     }
     if (ops->length % 2 == 0) {
         if (!ops->length) {
-            ops->steps = (bitset_vector_operation_step_t **)
-                bitset_malloc(sizeof(bitset_vector_operation_step_t *) * 2);
+            ops->steps = bitset_malloc(sizeof(bitset_vector_operation_step_t *) * 2);
         } else {
             ops->steps = bitset_realloc(ops->steps, sizeof(bitset_vector_operation_step_t *) * ops->length * 2);
         }
