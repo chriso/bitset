@@ -123,6 +123,7 @@ void bitset_vector_resize(bitset_vector_t *, size_t);
 #define BITSET_VECTOR_FOREACH(vector, bitset, offset) \
     bitset_t BITSET_TMPVAR(tmp, __LINE__); \
     bitset = &BITSET_TMPVAR(tmp, __LINE__); \
+    offset = 0; \
     char *BITSET_TMPVAR(buffer, __LINE__) = vector->buffer; \
     while (BITSET_TMPVAR(buffer, __LINE__) < (vector->buffer + vector->length) \
         ? (BITSET_TMPVAR(buffer, __LINE__) = bitset_vector_advance(BITSET_TMPVAR(buffer, __LINE__), \
@@ -131,10 +132,13 @@ void bitset_vector_resize(bitset_vector_t *, size_t);
 char *bitset_vector_advance(char *buffer, bitset_t *, unsigned *);
 
 /**
- * Concatenate an vector to another at the specified offset.
+ * Concatenate an vector to another at the specified offset. The vector can optionally be
+ * sliced by start and end before being concatted. Pass BITSET_VECTOR_START and
+ * BITSET_VECTOR_END to both parameters to concat the entire vector.
  */
 
-void bitset_vector_concat(bitset_vector_t *, bitset_vector_t *, unsigned);
+void bitset_vector_concat(bitset_vector_t *, bitset_vector_t *, unsigned offset,
+    unsigned start, unsigned end);
 
 /**
  * Count bits in each bitset.

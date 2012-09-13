@@ -129,7 +129,7 @@ static inline size_t bitset_encoded_length(const char *buffer) {
 }
 
 char *bitset_vector_advance(char *buffer, bitset_t *bitset, unsigned *offset) {
-    *offset = bitset_encoded_length(buffer);
+    *offset += bitset_encoded_length(buffer);
     buffer += bitset_encoded_length_size(buffer);
     bitset->length = bitset_encoded_length(buffer);
     buffer += bitset_encoded_length_size(buffer);
@@ -138,13 +138,13 @@ char *bitset_vector_advance(char *buffer, bitset_t *bitset, unsigned *offset) {
 }
 
 void bitset_vector_push(bitset_vector_t *v, bitset_t *b, unsigned offset) {
-    char *buffer = v->buffer, *end = v->buffer + v->length;
+    char *buffer = v->buffer;
     unsigned current_offset = 0;
     bitset_t tmp;
-    while (buffer < end) {
+    while (buffer < v->buffer + v->length) {
         buffer = bitset_vector_advance(buffer, &tmp, &current_offset);
         if (current_offset >= offset) {
-            fprintf(stderr, "error: bitset ectors are append-only\n");
+            fprintf(stderr, "error: bitset vectors are append-only\n");
             exit(1);
         }
     }
@@ -167,16 +167,54 @@ void bitset_vector_push(bitset_vector_t *v, bitset_t *b, unsigned offset) {
     }
 }
 
-void bitset_vector_concat(bitset_vector_t *i, bitset_vector_t *c, unsigned offset) {
-    /*
-    unsigned previous_length = i->length;
-    bitset_vector_iterator_resize(i, previous_length + c->length);
-    for (unsigned j = 0; j < c->length; j++) {
-        c->bitsets[j]->references++;
-        i->offsets[j + previous_length] = c->offsets[j] + offset;
+void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offset, unsigned start, unsigned end) {
+    char *buffer = v->buffer;
+    unsigned tail_offset = 0, current_offset = 0;
+    bitset_t bitset;
+    while (buffer < v->buffer + v->length) {
+        buffer = bitset_vector_advance(buffer, &bitset, &tail_offset);
     }
-    memcpy(i->bitsets + previous_length, c->bitsets, c->length * sizeof(bitset_t*));
-    */
+
+    char *c_buffer = c->buffer, *c_start, *c_end = c->buffer + c->length;
+    while (c_buffer < c_end) {
+        c_buffer = bitset_vector_advance(c_buffer, &bitset, &current_offset);
+        if (current_offset >= start && (!end || current_offset < end)) {
+            c_start = c_buffer;
+
+            //Copy the initial bitset from c
+            offset = tail_offset + current_offset - offset;
+            size_t length_bytes = bitset_encoded_length_required_bytes(bitset.length);
+            size_t offset_bytes = bitset_encoded_length_required_bytes(offset);
+            bitset_vector_resize(v, v->length + length_bytes + offset_bytes + bitset.length * sizeof(bitset_word));
+            bitset_encoded_length_bytes(buffer, offset);
+            buffer += offset_bytes;
+            bitset_encoded_length_bytes(buffer, bitset.length);
+            buffer += length_bytes;
+            if (bitset.length) {
+                memcpy(buffer, bitset.buffer, bitset.length * sizeof(bitset_word));
+                buffer += bitset.length * sizeof(bitset_word);
+            }
+
+            //Look for a slice end point
+            if (end != BITSET_VECTOR_END && c_end > c_start) {
+                do {
+                    c_end = c_buffer;
+                    if (c_end == c->buffer + c->length) {
+                        break;
+                    }
+                    c_buffer = bitset_vector_advance(c_buffer, &bitset, &current_offset);
+                } while (current_offset < end);
+            }
+
+            //Concat the rest of the vector
+            if (c_end > c_start) {
+                bitset_vector_resize(v, v->length + (c_end - c_start));
+                memcpy(buffer, c_start, c_end - c_start);
+            }
+
+            break;
+        }
+    }
 }
 
 void bitset_vector_count_bits(bitset_vector_t *i, unsigned *raw, unsigned *unique) {
