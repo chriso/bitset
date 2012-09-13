@@ -1,7 +1,7 @@
 #include "bitset/vector.h"
 
 bitset_vector_t *bitset_vector_new() {
-    bitset_vector_t *v = malloc(sizeof(bitset_vector_t));
+    bitset_vector_t *v = bitset_malloc(sizeof(bitset_vector_t));
     if (!v) {
         bitset_oom();
     }
@@ -15,14 +15,14 @@ bitset_vector_t *bitset_vector_new() {
 }
 
 void bitset_vector_free(bitset_vector_t *v) {
-    free(v->buffer);
-    free(v);
+    bitset_malloc_free(v->buffer);
+    bitset_malloc_free(v);
 }
 
 bitset_vector_t *bitset_vector_copy(bitset_vector_t *v) {
     bitset_vector_t *c = bitset_vector_new();
     if (v->length) {
-        c->buffer = malloc(sizeof(char) * v->length);
+        c->buffer = bitset_malloc(sizeof(char) * v->length);
         if (!c->buffer) {
             bitset_oom();
         }
@@ -38,7 +38,7 @@ void bitset_vector_resize(bitset_vector_t *v, size_t length) {
         new_size *= 2;
     }
     if (new_size > v->size) {
-        v->buffer = realloc(v->buffer, new_size * sizeof(char));
+        v->buffer = bitset_realloc(v->buffer, new_size * sizeof(char));
         if (!v->buffer) {
             bitset_oom();
         }
@@ -269,7 +269,7 @@ bitset_t *bitset_vector_merge(bitset_vector_t *i) {
 
 bitset_vector_operation_t *bitset_vector_operation_new(bitset_vector_t *i) {
     bitset_vector_operation_t *ops = (bitset_vector_operation_t *)
-        malloc(sizeof(bitset_vector_operation_t));
+        bitset_malloc(sizeof(bitset_vector_operation_t));
     if (!ops) {
         bitset_oom();
     }
@@ -291,11 +291,11 @@ void bitset_vector_operation_free(bitset_vector_operation_t *ops) {
                     bitset_vector_free(ops->steps[i]->data.i);
                 }
             }
-            free(ops->steps[i]);
+            bitset_malloc_free(ops->steps[i]);
         }
-        free(ops->steps);
+        bitset_malloc_free(ops->steps);
     }
-    free(ops);
+    bitset_malloc_free(ops);
 }
 
 void bitset_vector_operation_free_operands(bitset_vector_operation_t *ops) {
@@ -315,16 +315,16 @@ void bitset_vector_operation_free_operands(bitset_vector_operation_t *ops) {
 static inline bitset_vector_operation_step_t *
         bitset_vector_operation_add_step(bitset_vector_operation_t *ops) {
     bitset_vector_operation_step_t *step = (bitset_vector_operation_step_t *)
-        malloc(sizeof(bitset_vector_operation_step_t));
+        bitset_malloc(sizeof(bitset_vector_operation_step_t));
     if (!step) {
         bitset_oom();
     }
     if (ops->length % 2 == 0) {
         if (!ops->length) {
             ops->steps = (bitset_vector_operation_step_t **)
-                malloc(sizeof(bitset_vector_operation_step_t *) * 2);
+                bitset_malloc(sizeof(bitset_vector_operation_step_t *) * 2);
         } else {
-            ops->steps = realloc(ops->steps, sizeof(bitset_vector_operation_step_t *) * ops->length * 2);
+            ops->steps = bitset_realloc(ops->steps, sizeof(bitset_vector_operation_step_t *) * ops->length * 2);
         }
         if (!ops->steps) {
             bitset_oom();
@@ -425,7 +425,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
     //Prepare hash buckets
     unsigned key, buckets = o->max - o->min + 1;
     void **and_bucket = NULL;
-    void **bucket = calloc(1, sizeof(void*) * buckets);
+    void **bucket = bitset_calloc(1, sizeof(void*) * buckets);
     if (!bucket) {
         bitset_oom();
     }
@@ -458,7 +458,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
 
         //Create a bitset operation per vector offset
         if (type == BITSET_AND) {
-            and_bucket = calloc(1, sizeof(void*) * buckets);
+            and_bucket = bitset_calloc(1, sizeof(void*) * buckets);
             if (!and_bucket) {
                 bitset_oom();
             }
@@ -480,7 +480,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
                     }
                 }
             }
-            free(bucket);
+            bitset_malloc_free(bucket);
             bucket = and_bucket;
         } else if (step) {
             BITSET_VECTOR_FOREACH(step, b, offset) {
@@ -521,7 +521,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
     }
     i->length = offset;
 
-    free(bucket);
+    bitset_malloc_free(bucket);
 
     return i;
     */

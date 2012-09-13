@@ -2,7 +2,7 @@
 #include "bitset/operation.h"
 
 bitset_t *bitset_new() {
-    bitset_t *bitset = malloc(sizeof(bitset_t));
+    bitset_t *bitset = bitset_malloc(sizeof(bitset_t));
     if (!bitset) {
         bitset_oom();
     }
@@ -13,20 +13,20 @@ bitset_t *bitset_new() {
 
 void bitset_free(bitset_t *bitset) {
     if (bitset->length) {
-        free(bitset->buffer);
+        bitset_malloc_free(bitset->buffer);
     }
-    free(bitset);
+    bitset_malloc_free(bitset);
 }
 
 void bitset_resize(bitset_t *bitset, size_t length) {
     size_t current_size, next_size;
     BITSET_NEXT_POW2(next_size, length);
     if (!bitset->length) {
-        bitset->buffer = malloc(sizeof(bitset_word) * next_size);
+        bitset->buffer = bitset_malloc(sizeof(bitset_word) * next_size);
     } else {
         BITSET_NEXT_POW2(current_size, bitset->length);
         if (next_size > current_size) {
-            bitset->buffer = realloc(bitset->buffer, sizeof(bitset_word) * next_size);
+            bitset->buffer = bitset_realloc(bitset->buffer, sizeof(bitset_word) * next_size);
         }
     }
     if (!bitset->buffer) {
@@ -269,11 +269,11 @@ bool bitset_set_to(bitset_t *bitset, bitset_offset bit, bool value) {
 }
 
 bitset_t *bitset_new_buffer(const char *buffer, size_t length) {
-    bitset_t *bitset = malloc(sizeof(bitset_t));
+    bitset_t *bitset = bitset_malloc(sizeof(bitset_t));
     if (!bitset) {
         bitset_oom();
     }
-    bitset->buffer = malloc(length * sizeof(char));
+    bitset->buffer = bitset_malloc(length * sizeof(char));
     if (!bitset->buffer) {
         bitset_oom();
     }
@@ -353,7 +353,7 @@ bitset_t *bitset_new_bits(bitset_offset *bits, size_t count) {
 }
 
 bitset_iterator_t *bitset_iterator_new(const bitset_t *bitset) {
-    bitset_iterator_t *iterator = malloc(sizeof(bitset_iterator_t));
+    bitset_iterator_t *iterator = bitset_malloc(sizeof(bitset_iterator_t));
     if (!iterator) {
         bitset_oom();
     }
@@ -362,7 +362,7 @@ bitset_iterator_t *bitset_iterator_new(const bitset_t *bitset) {
         iterator->offsets = NULL;
         return iterator;
     }
-    iterator->offsets = malloc(sizeof(bitset_offset) * iterator->length);
+    iterator->offsets = bitset_malloc(sizeof(bitset_offset) * iterator->length);
     if (!iterator->offsets) {
         bitset_oom();
     }
@@ -391,8 +391,8 @@ bitset_iterator_t *bitset_iterator_new(const bitset_t *bitset) {
 
 void bitset_iterator_free(bitset_iterator_t *iterator) {
     if (iterator->length) {
-        free(iterator->offsets);
+        bitset_malloc_free(iterator->offsets);
     }
-    free(iterator);
+    bitset_malloc_free(iterator);
 }
 

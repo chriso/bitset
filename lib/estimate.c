@@ -1,7 +1,7 @@
 #include "bitset/estimate.h"
 
 bitset_linear_t *bitset_linear_new(size_t size) {
-    bitset_linear_t *counter = malloc(sizeof(bitset_linear_t));
+    bitset_linear_t *counter = bitset_malloc(sizeof(bitset_linear_t));
     if (!counter) {
         bitset_oom();
     }
@@ -10,7 +10,7 @@ bitset_linear_t *bitset_linear_new(size_t size) {
     size_t pow2;
     BITSET_NEXT_POW2(pow2, size);
     counter->size = pow2;
-    counter->words = calloc(1, counter->size * sizeof(bitset_word));
+    counter->words = bitset_calloc(1, counter->size * sizeof(bitset_word));
     if (!counter->words) {
         bitset_oom();
     }
@@ -50,12 +50,12 @@ unsigned bitset_linear_count(bitset_linear_t *counter) {
 }
 
 void bitset_linear_free(bitset_linear_t *counter) {
-    free(counter->words);
-    free(counter);
+    bitset_malloc_free(counter->words);
+    bitset_malloc_free(counter);
 }
 
 bitset_countn_t *bitset_countn_new(unsigned n, size_t size) {
-    bitset_countn_t *counter = malloc(sizeof(bitset_countn_t));
+    bitset_countn_t *counter = bitset_malloc(sizeof(bitset_countn_t));
     if (!counter) {
         bitset_oom();
     }
@@ -64,13 +64,13 @@ bitset_countn_t *bitset_countn_new(unsigned n, size_t size) {
     size_t pow2;
     BITSET_NEXT_POW2(pow2, size);
     counter->size = pow2;
-    counter->words = malloc(sizeof(bitset_word *) * (counter->n + 1));
+    counter->words = bitset_malloc(sizeof(bitset_word *) * (counter->n + 1));
     if (!counter->words) {
         bitset_oom();
     }
     //Create N+1 uncompressed bitsets
     for (size_t i = 0; i <= n; i++) {
-        counter->words[i] = calloc(1, counter->size * sizeof(bitset_word));
+        counter->words[i] = bitset_calloc(1, counter->size * sizeof(bitset_word));
         if (!counter->words[i]) {
             bitset_oom();
         }
@@ -116,7 +116,7 @@ unsigned bitset_countn_count(bitset_countn_t *counter) {
 }
 
 unsigned *bitset_countn_count_all(bitset_countn_t *counter) {
-    unsigned *counts = calloc(1, sizeof(unsigned) * counter->n);
+    unsigned *counts = bitset_calloc(1, sizeof(unsigned) * counter->n);
     if (!counts) {
         bitset_oom();
     }
@@ -133,7 +133,7 @@ unsigned *bitset_countn_count_all(bitset_countn_t *counter) {
 }
 
 unsigned *bitset_countn_count_mask(bitset_countn_t *counter, bitset_t *mask) {
-    bitset_word *mask_words = calloc(1, counter->size * sizeof(bitset_word));
+    bitset_word *mask_words = bitset_calloc(1, counter->size * sizeof(bitset_word));
     if (!mask_words) {
         bitset_oom();
     }
@@ -161,7 +161,7 @@ unsigned *bitset_countn_count_mask(bitset_countn_t *counter, bitset_t *mask) {
             offset -= counter->size;
         }
     }
-    unsigned *counts = calloc(1, sizeof(unsigned) * counter->n);
+    unsigned *counts = bitset_calloc(1, sizeof(unsigned) * counter->n);
     if (!counts) {
         bitset_oom();
     }
@@ -172,15 +172,15 @@ unsigned *bitset_countn_count_mask(bitset_countn_t *counter, bitset_t *mask) {
             BITSET_POP_COUNT(counts[n-1], word);
         }
     }
-    free(mask_words);
+    bitset_malloc_free(mask_words);
     return counts;
 }
 
 void bitset_countn_free(bitset_countn_t *counter) {
     for (size_t i = 0; i <= counter->n; i++) {
-        free(counter->words[i]);
+        bitset_malloc_free(counter->words[i]);
     }
-    free(counter->words);
-    free(counter);
+    bitset_malloc_free(counter->words);
+    bitset_malloc_free(counter);
 }
 
