@@ -44,17 +44,20 @@ size_t bitset_length(bitset_t *bitset) {
 }
 
 bitset_t *bitset_copy(bitset_t *bitset) {
-    bitset_t *copy = bitset_malloc(sizeof(bitset_t));
+    bitset_t *copy = bitset_calloc(1, sizeof(bitset_t));
     if (!copy) {
         bitset_oom();
     }
-    size_t size;
-    BITSET_NEXT_POW2(size, bitset->length);
-    copy->buffer = bitset_malloc(sizeof(bitset_word) * size);
-    if (!copy->buffer) {
-        bitset_oom();
+    if (bitset->length) {
+        size_t size;
+        BITSET_NEXT_POW2(size, bitset->length);
+        copy->buffer = bitset_malloc(sizeof(bitset_word) * size);
+        if (!copy->buffer) {
+            bitset_oom();
+        }
+        memcpy(copy->buffer, bitset->buffer, bitset->length * sizeof(bitset_word));
+        copy->length = bitset->length;
     }
-    copy->length = bitset->length;
     return copy;
 }
 

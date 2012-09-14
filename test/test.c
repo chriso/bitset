@@ -1069,7 +1069,9 @@ void test_suite_vector_operation() {
     v5 = bitset_vector_operation_exec(o1);
     bitset_vector_operation_free(o1);
 
+    unsigned loop_count = 0;
     BITSET_VECTOR_FOREACH(v5, b1, offset) {
+        loop_count++;
         if (offset == 1) {
             test_int("Check vector operation count 1\n", 1, bitset_count(b1));
             test_int("Check vector operation bitset 1\n", true, bitset_get(b1, 400));
@@ -1080,7 +1082,7 @@ void test_suite_vector_operation() {
         } else if (offset == 3) {
             test_int("Check vector operation count 3\n", 1, bitset_count(b1));
             test_int("Check vector operation bitset 4\n", true, bitset_get(b1, 400));
-        } else if (offset ==4 ) {
+        } else if (offset == 4) {
             test_int("Check vector operation count 4\n", 2, bitset_count(b1));
             test_int("Check vector operation bitset 5\n", true, bitset_get(b1, 100));
             test_int("Check vector operation bitset 6\n", true, bitset_get(b1, 400));
@@ -1088,6 +1090,7 @@ void test_suite_vector_operation() {
             test_bool("", false, true);
         }
     }
+    test_int("Check vector operation looped right amount of times\n", 4, loop_count);
 
     bitset_vector_free(v1);
     bitset_vector_free(v2);

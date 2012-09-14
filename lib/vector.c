@@ -327,6 +327,8 @@ void bitset_vector_operation_add_nested(bitset_vector_operation_t *o,
     step->is_operation = true;
     step->data.o = op;
     step->type = type;
+    o->min = BITSET_MIN(o->min, op->min);
+    o->max = BITSET_MAX(o->max, op->max);
 }
 
 void bitset_vector_operation_add_data(bitset_vector_operation_t *o,
@@ -375,7 +377,9 @@ static bitset_t *bitset_vector_encoded_bitset(char *buffer) {
     bitset_t *bitset = bitset_new();
     bitset->length = bitset_encoded_length(buffer);
     buffer += bitset_encoded_length_size(buffer);
-    bitset->buffer = bitset_malloc(sizeof(bitset_word) * bitset->length);
+    size_t size;
+    BITSET_NEXT_POW2(size, bitset->length);
+    bitset->buffer = bitset_malloc(sizeof(bitset_word) * size);
     if (!bitset->buffer) {
         bitset_oom();
     }
@@ -460,6 +464,12 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
                     buffer = next;
                 }
             }
+            for (size_t i = 0; i < buckets; i++) {
+                if (and_bucket[i] && BITSET_IS_TAGGED_POINTER(bucket[i])) {
+                    op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
+                    bitset_operation_free(op);
+                }
+            }
             bitset_malloc_free(bucket);
             bucket = and_bucket;
 
@@ -498,19 +508,23 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
                 buffer = bitset_vector_encode(v, buffer - v->buffer, b, o->min + j - offset);
                 offset = o->min + j;
             }
-            //bitset_free(b);
+            bitset_free(b);
             for (size_t x = 0; x < op->length; x++) {
-                //bitset_free(op->steps[x]->data.bitset);
+                bitset_free(op->steps[x]->data.bitset);
             }
             bitset_operation_free(op);
         } else if (bucket[j]) {
             offset_bytes = bitset_encoded_length_required_bytes(o->min + j - offset);
             bitset_length = bitset_encoded_length(bucket[j]);
             copy_length = bitset_encoded_length_required_bytes(bitset_length) + bitset_length * sizeof(bitset_word);
+            uintptr_t buf_offset = buffer - v->buffer;
+            bitset_vector_resize(v, v->length + offset_bytes + copy_length);
+            buffer = v->buffer + buf_offset;
             bitset_encoded_length_bytes(buffer, o->min + j - offset);
             buffer += offset_bytes;
             memcpy(buffer, bucket[j], copy_length);
             buffer += copy_length;
+            offset = o->min + j;
         }
     }
 
