@@ -65,29 +65,15 @@ bitset_vector_t *bitset_vector_import(const char *buffer, size_t length) {
 }
 
 static inline size_t bitset_encoded_length_required_bytes(size_t length) {
-    if (length < (1 << 6)) {
-        return 1;
-    } else if (length < (1 << 14)) {
-        return 2;
-    } else if (length < (1 << 22)) {
-        return 3;
-    } else {
-        return 4;
-    }
+    return (length >= (1 << 15)) * 2 + 2;
 }
 
 static inline void bitset_encoded_length_bytes(char *buffer, size_t length) {
-    if (length < (1 << 6)) {
-        buffer[0] = (unsigned char)length;
-    } else if (length < (1 << 14)) {
-        buffer[0] = 0x40 | (unsigned char)(length >> 8);
+    if (length < (1 << 15)) {
+        buffer[0] = (unsigned char)(length >> 8);
         buffer[1] = (unsigned char)length;
-    } else if (length < (1 << 22)) {
-        buffer[0] = 0x80 | (unsigned char)(length >> 16);
-        buffer[1] = (unsigned char)(length >> 8);
-        buffer[2] = (unsigned char)length;
     } else {
-        buffer[0] = 0xC0 | (unsigned char)(length >> 24);
+        buffer[0] = 0x80 | (unsigned char)(length >> 24);
         buffer[1] = (unsigned char)(length >> 16);
         buffer[2] = (unsigned char)(length >> 8);
         buffer[3] = (unsigned char)length;
@@ -95,35 +81,19 @@ static inline void bitset_encoded_length_bytes(char *buffer, size_t length) {
 }
 
 static inline size_t bitset_encoded_length_size(const char *buffer) {
-    switch (buffer[0] & 0xC0) {
-        case 0x00: return 1;
-        case 0x40: return 2;
-        case 0x80: return 3;
-        default:   return 4;
-    }
+    return (buffer[0] & 0x80) * 2 + 2;
 }
 
 static inline size_t bitset_encoded_length(const char *buffer) {
     size_t length;
-    switch (buffer[0] & 0xC0) {
-        case 0x00:
-            length = (unsigned char)buffer[0];
-            break;
-        case 0x40:
-            length = (((unsigned char)buffer[0] & 0x3F) << 8);
-            length += (unsigned char)buffer[1];
-            break;
-        case 0x80:
-            length = (((unsigned char)buffer[0] & 0x3F) << 16);
-            length += ((unsigned char)buffer[1] << 8);
-            length += (unsigned char)buffer[2];
-            break;
-        default:
-            length = (((unsigned char)buffer[0] & 0x3F) << 24);
-            length += ((unsigned char)buffer[1] << 16);
-            length += ((unsigned char)buffer[2] << 8);
-            length += (unsigned char)buffer[3];
-            break;
+    if (buffer[0] & 0x80) {
+        length = (((unsigned char)buffer[0] & 0x7F) << 24);
+        length += ((unsigned char)buffer[1] << 16);
+        length += ((unsigned char)buffer[2] << 8);
+        length += (unsigned char)buffer[3];
+    } else {
+        length = (((unsigned char)buffer[0] & 0x7F) << 8);
+        length += (unsigned char)buffer[1];
     }
     return length;
 }
@@ -137,6 +107,21 @@ char *bitset_vector_advance(char *buffer, bitset_t *bitset, unsigned *offset) {
     return buffer + bitset->length * sizeof(bitset_word);
 }
 
+static inline char *bitset_vector_encode(bitset_vector_t *v, uintptr_t buf_offset, bitset_t *b, unsigned offset) {
+    size_t length_bytes = bitset_encoded_length_required_bytes(b->length);
+    size_t offset_bytes = bitset_encoded_length_required_bytes(offset);
+    bitset_vector_resize(v, v->length + length_bytes + offset_bytes + b->length * sizeof(bitset_word));
+    char *buffer = v->buffer + buf_offset;
+    bitset_encoded_length_bytes(buffer, offset);
+    buffer += offset_bytes;
+    bitset_encoded_length_bytes(buffer, b->length);
+    buffer += length_bytes;
+    if (b->length) {
+        memcpy(buffer, b->buffer, b->length * sizeof(bitset_word));
+    }
+    return buffer + b->length * sizeof(bitset_word);
+}
+
 void bitset_vector_push(bitset_vector_t *v, bitset_t *b, unsigned offset) {
     char *buffer = v->buffer;
     unsigned current_offset = 0;
@@ -148,23 +133,7 @@ void bitset_vector_push(bitset_vector_t *v, bitset_t *b, unsigned offset) {
             exit(1);
         }
     }
-
-    //Resize the vector to accommodate the bitset
-    unsigned relative_offset = offset - current_offset;
-    size_t length_bytes = bitset_encoded_length_required_bytes(b->length);
-    size_t offset_bytes = bitset_encoded_length_required_bytes(relative_offset);
-    bitset_vector_resize(v, v->length + length_bytes + offset_bytes + b->length * sizeof(bitset_word));
-
-    //Encode the offset and length
-    bitset_encoded_length_bytes(buffer, relative_offset);
-    buffer += offset_bytes;
-    bitset_encoded_length_bytes(buffer, b->length);
-    buffer += length_bytes;
-
-    //Copy the bitset
-    if (b->length) {
-        memcpy(buffer, b->buffer, b->length * sizeof(bitset_word));
-    }
+    bitset_vector_encode(v, buffer - v->buffer, b, offset - current_offset);
 }
 
 void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offset, unsigned start, unsigned end) {
@@ -187,17 +156,7 @@ void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offse
 
             //Copy the initial bitset from c
             offset = offset + current_offset - tail_offset;
-            size_t length_bytes = bitset_encoded_length_required_bytes(bitset.length);
-            size_t offset_bytes = bitset_encoded_length_required_bytes(offset);
-            bitset_vector_resize(v, v->length + length_bytes + offset_bytes + bitset.length * sizeof(bitset_word));
-            bitset_encoded_length_bytes(buffer, offset);
-            buffer += offset_bytes;
-            bitset_encoded_length_bytes(buffer, bitset.length);
-            buffer += length_bytes;
-            if (bitset.length) {
-                memcpy(buffer, bitset.buffer, bitset.length * sizeof(bitset_word));
-                buffer += bitset.length * sizeof(bitset_word);
-            }
+            buffer = bitset_vector_encode(v, buffer - v->buffer, &bitset, offset);
 
             //Look for a slice end point
             if (end != BITSET_VECTOR_END && c_end > c_start) {
@@ -212,8 +171,9 @@ void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offse
 
             //Concat the rest of the vector
             if (c_end > c_start) {
+                uintptr_t buf_offset = buffer - v->buffer;
                 bitset_vector_resize(v, v->length + (c_end - c_start));
-                memcpy(buffer, c_start, c_end - c_start);
+                memcpy(v->buffer + buf_offset, c_start, c_end - c_start);
             }
 
             break;
@@ -261,6 +221,23 @@ bitset_t *bitset_vector_merge(bitset_vector_t *i) {
     b = bitset_operation_exec(o);
     bitset_operation_free(o);
     return b;
+}
+
+static inline void bitset_vector_start_end(bitset_vector_t *v, unsigned *start, unsigned *end) {
+    if (!v->length) {
+        *start = 0;
+        *end = 0;
+        return;
+    }
+    char *buffer = v->buffer;
+    unsigned offset = 0;
+    bitset_t bitset;
+    buffer = bitset_vector_advance(buffer, &bitset, &offset);
+    *start = offset;
+    while (buffer < v->buffer + v->length) {
+        buffer = bitset_vector_advance(buffer, &bitset, &offset);
+    }
+    *end = offset;
 }
 
 bitset_vector_operation_t *bitset_vector_operation_new(bitset_vector_t *i) {
@@ -337,6 +314,10 @@ void bitset_vector_operation_add(bitset_vector_operation_t *o,
     step->is_operation = false;
     step->data.i = i;
     step->type = type;
+    unsigned start, end;
+    bitset_vector_start_end(i, &start, &end);
+    o->min = BITSET_MIN(o->min, start);
+    o->max = BITSET_MAX(o->max, end);
 }
 
 void bitset_vector_operation_add_nested(bitset_vector_operation_t *o,
@@ -361,6 +342,7 @@ void bitset_vector_operation_add_data(bitset_vector_operation_t *o,
 void bitset_vector_operation_resolve_data(bitset_vector_operation_t *o,
         bitset_vector_t *(*resolve_fn)(void *, void *), void *context) {
     if (o->length) {
+        unsigned start, end;
         for (unsigned j = 0; j < o->length; j++) {
             if (o->steps[j]->is_operation) {
                 bitset_vector_operation_resolve_data(o->steps[j]->data.o, resolve_fn, context);
@@ -368,8 +350,9 @@ void bitset_vector_operation_resolve_data(bitset_vector_operation_t *o,
                 bitset_vector_t *i = resolve_fn(o->steps[j]->userdata, context);
                 o->steps[j]->data.i = i;
                 if (i && i->length) {
-                    //o->min = BITSET_MIN(o->min, i->offsets[0]);
-                    //o->max = BITSET_MAX(o->max, i->offsets[i->length-1]);
+                    bitset_vector_start_end(i, &start, &end);
+                    o->min = BITSET_MIN(o->min, start);
+                    o->max = BITSET_MAX(o->max, end);
                 }
             }
         }
@@ -388,19 +371,29 @@ void bitset_vector_operation_free_data(bitset_vector_operation_t *o, void (*free
     }
 }
 
+static bitset_t *bitset_vector_encoded_bitset(char *buffer) {
+    bitset_t *bitset = bitset_new();
+    bitset->length = bitset_encoded_length(buffer);
+    buffer += bitset_encoded_length_size(buffer);
+    bitset->buffer = bitset_malloc(sizeof(bitset_word) * bitset->length);
+    if (!bitset->buffer) {
+        bitset_oom();
+    }
+    memcpy(bitset->buffer, buffer, sizeof(bitset_word) * bitset->length);
+    return bitset;
+}
+
 bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
-    return NULL;
-    /*
     if (!o->length) {
         return bitset_vector_new();
     } else if (o->length == 1 && !o->steps[0]->is_operation) {
         return bitset_vector_copy(o->steps[0]->data.i);
     }
 
-    bitset_vector_t *i, *step, *tmp;
-    bitset_t *b, *b2;
+    bitset_vector_t *v, *step, *tmp;
+    bitset_t *b, *b2, bitset;
     bitset_operation_t *op = NULL;
-    unsigned offset, count = 0;
+    unsigned offset;
 
     //Recursively flatten nested operations
     for (unsigned j = 0; j < o->length; j++) {
@@ -413,7 +406,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
     }
 
     //Prepare the result vector
-    i = bitset_vector_new();
+    v = bitset_vector_new();
 
     //Prepare hash buckets
     unsigned key, buckets = o->max - o->min + 1;
@@ -424,99 +417,106 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
     }
 
     //OR the first vector
+    char *buffer, *next;
     step = o->steps[0]->data.i;
     if (step) {
-        BITSET_VECTOR_FOREACH(step, b, offset) {
-            key = offset - o->min;
-            if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
-                op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
-                bitset_operation_add(op, b, o->steps[0]->type);
-            } else if (bucket[key]) {
-                op = bitset_operation_new((bitset_t *) bucket[key]);
-                bucket[key] = (void *) BITSET_TAG_POINTER(op);
-                bitset_operation_add(op, b, o->steps[0]->type);
-            } else {
-                bucket[key] = (void *) b;
-                count++;
-            }
+        buffer = step->buffer;
+        offset = 0;
+        while (buffer < step->buffer + step->length) {
+            next = bitset_vector_advance(buffer, &bitset, &offset);
+            bucket[offset - o->min] = buffer + bitset_encoded_length_required_bytes(offset);
+            buffer = next;
         }
     }
 
-    enum bitset_operation_type type;
-
     for (unsigned j = 1; j < o->length; j++) {
 
-        type = o->steps[j]->type;
+        enum bitset_operation_type type = o->steps[j]->type;
         step = o->steps[j]->data.i;
 
         //Create a bitset operation per vector offset
         if (type == BITSET_AND) {
+
             and_bucket = bitset_calloc(1, sizeof(void*) * buckets);
             if (!and_bucket) {
                 bitset_oom();
             }
-            count = 0;
             if (step) {
-                BITSET_VECTOR_FOREACH(step, b, offset) {
+                buffer = step->buffer;
+                offset = 0;
+                while (buffer < step->buffer + step->length) {
+                    next = bitset_vector_advance(buffer, &bitset, &offset);
                     key = offset - o->min;
                     if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
                         op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
                     } else if (bucket[key]) {
-                        b2 = (bitset_t *) bucket[key];
+                        b2 = bitset_vector_encoded_bitset(bucket[key]);
                         op = bitset_operation_new(b2);
                     }
                     if (op) {
-                        count++;
-                        bitset_operation_add(op, b, BITSET_AND);
+                        bitset_operation_add(op, bitset_copy(&bitset), BITSET_AND);
                         and_bucket[key] = (void *) BITSET_TAG_POINTER(op);
                         op = NULL;
                     }
+                    buffer = next;
                 }
             }
             bitset_malloc_free(bucket);
             bucket = and_bucket;
+
         } else if (step) {
-            BITSET_VECTOR_FOREACH(step, b, offset) {
+
+            buffer = step->buffer;
+            offset = 0;
+            while (buffer < step->buffer + step->length) {
+                next = bitset_vector_advance(buffer, &bitset, &offset);
                 key = offset - o->min;
                 if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
                     op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
-                    bitset_operation_add(op, b, type);
+                    bitset_operation_add(op, bitset_copy(&bitset), type);
                 } else if (bucket[key]) {
-                    op = bitset_operation_new((bitset_t *) bucket[key]);
+                    b2 = bitset_vector_encoded_bitset(bucket[key]);
+                    op = bitset_operation_new(b2);
                     bucket[key] = (void *) BITSET_TAG_POINTER(op);
-                    bitset_operation_add(op, b, type);
+                    bitset_operation_add(op, bitset_copy(&bitset), type);
                 } else {
-                    bucket[key] = (void *) b;
-                    count++;
+                    bucket[key] = buffer + bitset_encoded_length_required_bytes(offset);
                 }
+                buffer = next;
             }
         }
     }
 
     //Prepare the result vector
     offset = 0;
+    buffer = v->buffer;
+    size_t bitset_length, copy_length, offset_bytes;
     for (unsigned j = 0; j < buckets; j++) {
         if (BITSET_IS_TAGGED_POINTER(bucket[j])) {
             op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[j]);
             b = bitset_operation_exec(op);
             if (b->length) {
-                i->bitsets[offset] = b;
-                i->offsets[offset++] = o->min + j;
-            } else {
-                bitset_free(b);
+                buffer = bitset_vector_encode(v, buffer - v->buffer, b, o->min + j - offset);
+                offset = o->min + j;
+            }
+            //bitset_free(b);
+            for (size_t x = 0; x < op->length; x++) {
+                //bitset_free(op->steps[x]->data.bitset);
             }
             bitset_operation_free(op);
         } else if (bucket[j]) {
-            i->bitsets[offset] = bitset_copy((bitset_t *) bucket[j]);
-            i->offsets[offset++] = o->min + j;
-            count++;
+            offset_bytes = bitset_encoded_length_required_bytes(o->min + j - offset);
+            bitset_length = bitset_encoded_length(bucket[j]);
+            copy_length = bitset_encoded_length_required_bytes(bitset_length) + bitset_length * sizeof(bitset_word);
+            bitset_encoded_length_bytes(buffer, o->min + j - offset);
+            buffer += offset_bytes;
+            memcpy(buffer, bucket[j], copy_length);
+            buffer += copy_length;
         }
     }
-    i->length = offset;
 
     bitset_malloc_free(bucket);
 
-    return i;
-    */
+    return v;
 }
 

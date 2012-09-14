@@ -44,7 +44,18 @@ size_t bitset_length(bitset_t *bitset) {
 }
 
 bitset_t *bitset_copy(bitset_t *bitset) {
-    return bitset;
+    bitset_t *copy = bitset_malloc(sizeof(bitset_t));
+    if (!copy) {
+        bitset_oom();
+    }
+    size_t size;
+    BITSET_NEXT_POW2(size, bitset->length);
+    copy->buffer = bitset_malloc(sizeof(bitset_word) * size);
+    if (!copy->buffer) {
+        bitset_oom();
+    }
+    copy->length = bitset->length;
+    return copy;
 }
 
 bool bitset_get(const bitset_t *bitset, bitset_offset bit) {

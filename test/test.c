@@ -853,8 +853,8 @@ void test_suite_vector() {
     b = bitset_new();
     bitset_vector_push(l, b, 0);
     test_int("Checking vector bitset count 1\n", 1, bitset_vector_bitsets(l));
-    test_int("Checking vector was resized properly 1\n", 2, l->size);
-    test_int("Checking vector was resized properly 2\n", 2, l->length);
+    test_int("Checking vector was resized properly 1\n", 4, l->size);
+    test_int("Checking vector was resized properly 2\n", 4, l->length);
     test_int("Checking the offset is zero\n", 0, (unsigned char)l->buffer[0]);
     test_int("Checking the length is zero\n", 0, (unsigned char)l->buffer[1]);
     bitset_free(b);
@@ -865,27 +865,24 @@ void test_suite_vector() {
     bitset_set_to(b, 10, true);
     bitset_vector_push(l, b, 3);
     test_int("Checking vector was resized properly 1\n", 8, l->size);
-    test_int("Checking vector was resized properly 2\n", 6, l->length);
-    test_int("Checking the offset is set properly 1\n", 3, (unsigned char)l->buffer[0]);
-    test_int("Checking the length is set properly 1\n", 1, (unsigned char)l->buffer[1]);
+    test_int("Checking vector was resized properly 2\n", 8, l->length);
     tmp = b->buffer;
-    b->buffer = (bitset_word *) (l->buffer + 2);
+    b->buffer = (bitset_word *) (l->buffer + 4);
     test_bool("Checking bitset was added properly 1\n", true, bitset_get(b, 10));
     test_bool("Checking bitset was added properly 2\n", false, bitset_get(b, 100));
     b->buffer = tmp;
     bitset_free(b);
+
 
     b = bitset_new();
     bitset_set_to(b, 100, true);
     bitset_set_to(b, 1000, true);
     bitset_vector_push(l, b, 10);
     test_int("Checking vector bitset count 2\n", 2, bitset_vector_bitsets(l));
-    test_int("Checking vector was resized properly 4\n", 16, l->size);
-    test_int("Checking vector was resized properly 5\n", 16, l->length);
-    test_int("Checking the offset is set properly 2\n", 7, (unsigned char)l->buffer[6]);
-    test_int("Checking the length is set properly 2\n", 2, (unsigned char)l->buffer[7]);
+    test_int("Checking vector was resized properly 4\n", 32, l->size);
+    test_int("Checking vector was resized properly 5\n", 20, l->length);
     tmp = b->buffer;
-    b->buffer = (bitset_word *) (l->buffer + 8);
+    b->buffer = (bitset_word *) (l->buffer + 12);
     test_bool("Checking bitset was added properly 3\n", true, bitset_get(b, 100));
     test_bool("Checking bitset was added properly 4\n", true, bitset_get(b, 1000));
     test_bool("Checking bitset was added properly 5\n", false, bitset_get(b, 10));
@@ -926,12 +923,14 @@ void test_suite_vector() {
     }
     test_int("Checking it looped the right number of times\n", 2, loop_count);
 
+    /*
     b = bitset_vector_merge(l);
     test_int("Checking vector merge 1\n", 3, bitset_count(b));
     test_bool("Checking vector merge 2\n", true, bitset_get(b, 10));
     test_bool("Checking vector merge 2\n", true, bitset_get(b, 100));
     test_bool("Checking vector merge 2\n", true, bitset_get(b, 1000));
     bitset_free(b);
+    */
 
     l3 = bitset_vector_new();
     bitset_vector_concat(l3, l, 0, 3, 10);
@@ -975,17 +974,15 @@ void test_suite_vector() {
 
     //Check the copy is the same
     l = bitset_vector_import(buffer, length);
-    test_int("Check size is copied\n", 16, l->size);
-    test_int("Check length is copied\n", 16, l->length);
+    test_int("Check size is copied\n", 32, l->size);
+    test_int("Check length is copied\n", 20, l->length);
     bitset_vector_free(l);
     bitset_malloc_free(buffer);
 }
 
 void test_suite_vector_operation() {
-    /*
     bitset_vector_operation_t *o1, *o2;
-    bitset_vector_t *v1, *v2, *v3, *v4;
-    bitset_vector_iterator_t *i1, *i2, *i3, *i4, *i5;
+    bitset_vector_t *v1, *v2, *v3, *v4, *v5;
     bitset_t *b1, *b2, *b3, *b4;
     unsigned offset;
 
@@ -1006,7 +1003,6 @@ void test_suite_vector_operation() {
     bitset_free(b2);
     bitset_free(b3);
     bitset_free(b4);
-    i1 = bitset_vector_iterator_new(v1, BITSET_VECTOR_START, BITSET_VECTOR_END);
 
     b1 = bitset_new();
     bitset_set(b1, 200);
@@ -1026,7 +1022,6 @@ void test_suite_vector_operation() {
     bitset_free(b2);
     bitset_free(b3);
     bitset_free(b4);
-    i2 = bitset_vector_iterator_new(v2, BITSET_VECTOR_START, BITSET_VECTOR_END);
 
     b1 = bitset_new();
     bitset_set(b1, 300);
@@ -1046,7 +1041,6 @@ void test_suite_vector_operation() {
     bitset_free(b2);
     bitset_free(b3);
     bitset_free(b4);
-    i3 = bitset_vector_iterator_new(v3, BITSET_VECTOR_START, BITSET_VECTOR_END);
 
     b1 = bitset_new();
     bitset_set(b1, 400);
@@ -1065,18 +1059,17 @@ void test_suite_vector_operation() {
     bitset_free(b2);
     bitset_free(b3);
     bitset_free(b4);
-    i4 = bitset_vector_iterator_new(v4, BITSET_VECTOR_START, BITSET_VECTOR_END);
 
     //V1 AND (V2 | V3) OR V4
-    o1 = bitset_vector_operation_new(i1);
-    o2 = bitset_vector_operation_new(i2);
-    bitset_vector_operation_add(o2, i3, BITSET_OR);
+    o1 = bitset_vector_operation_new(v1);
+    o2 = bitset_vector_operation_new(v2);
+    bitset_vector_operation_add(o2, v3, BITSET_OR);
     bitset_vector_operation_add_nested(o1, o2, BITSET_AND);
-    bitset_vector_operation_add(o1, i4, BITSET_OR);
-    i5 = bitset_vector_operation_exec(o1);
+    bitset_vector_operation_add(o1, v4, BITSET_OR);
+    v5 = bitset_vector_operation_exec(o1);
     bitset_vector_operation_free(o1);
 
-    BITSET_VECTOR_FOREACH(i5, b1, offset) {
+    BITSET_VECTOR_FOREACH(v5, b1, offset) {
         if (offset == 1) {
             test_int("Check vector operation count 1\n", 1, bitset_count(b1));
             test_int("Check vector operation bitset 1\n", true, bitset_get(b1, 400));
@@ -1096,16 +1089,10 @@ void test_suite_vector_operation() {
         }
     }
 
-    bitset_vector_iterator_free(i1);
-    bitset_vector_iterator_free(i2);
-    bitset_vector_iterator_free(i3);
-    bitset_vector_iterator_free(i4);
-    bitset_vector_iterator_free(i5);
     bitset_vector_free(v1);
     bitset_vector_free(v2);
     bitset_vector_free(v3);
     bitset_vector_free(v4);
-    */
 }
 
 void test_suite_estimate() {
