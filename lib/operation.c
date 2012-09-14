@@ -6,7 +6,6 @@ bitset_operation_t *bitset_operation_new(bitset_t *bitset) {
         bitset_oom();
     }
     operation->length = 0;
-    operation->size = 1;
     operation->steps = bitset_malloc(sizeof(bitset_operation_step_t) * 2);
     if (!operation->steps) {
         bitset_oom();
@@ -37,10 +36,12 @@ static inline bitset_operation_step_t *bitset_operation_add_step(bitset_operatio
     if (!step) {
         bitset_oom();
     }
-    if (operation->length == operation->size) {
-        operation->size *= 2;
-        operation->steps = bitset_realloc(operation->steps,
-            sizeof(bitset_operation_step_t *) * operation->size);
+    if (operation->length % 2 == 0) {
+        if (!operation->length) {
+            operation->steps = bitset_malloc(sizeof(bitset_operation_step_t *) * 2);
+        } else {
+            operation->steps = bitset_realloc(operation->steps, sizeof(bitset_operation_step_t *) * operation->length * 2);
+        }
         if (!operation->steps) {
             bitset_oom();
         }

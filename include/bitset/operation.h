@@ -50,7 +50,6 @@ typedef struct bitset_operation_step_s {
 struct bitset_operation_s {
     bitset_operation_step_t **steps;
     size_t length;
-    size_t size;
 };
 
 /**
