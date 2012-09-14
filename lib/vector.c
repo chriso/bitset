@@ -9,6 +9,7 @@ bitset_vector_t *bitset_vector_new() {
     if (!v->buffer) {
         bitset_oom();
     }
+    v->tail_offset = 0;
     v->size = 1;
     v->length = 0;
     return v;
@@ -28,6 +29,7 @@ bitset_vector_t *bitset_vector_copy(bitset_vector_t *v) {
         }
         memcpy(c->buffer, v->buffer, v->length);
         c->length = c->size = v->length;
+        c->tail_offset = v->tail_offset;
     }
     return c;
 }
@@ -60,6 +62,12 @@ bitset_vector_t *bitset_vector_import(const char *buffer, size_t length) {
     if (length) {
         bitset_vector_resize(v, length);
         memcpy(v->buffer, buffer, length);
+        //Look for the tail offset
+        char *buffer = v->buffer;
+        bitset_t tmp;
+        while (buffer < v->buffer + v->length) {
+            buffer = bitset_vector_advance(buffer, &tmp, &v->tail_offset);
+        }
     }
     return v;
 }
@@ -123,30 +131,23 @@ static inline char *bitset_vector_encode(bitset_vector_t *v, uintptr_t buf_offse
 }
 
 void bitset_vector_push(bitset_vector_t *v, bitset_t *b, unsigned offset) {
-    char *buffer = v->buffer;
-    unsigned current_offset = 0;
-    bitset_t tmp;
-    while (buffer < v->buffer + v->length) {
-        buffer = bitset_vector_advance(buffer, &tmp, &current_offset);
-        if (current_offset >= offset) {
-            fprintf(stderr, "error: bitset vectors are append-only\n");
-            exit(1);
-        }
+    if (v->length && v->tail_offset >= offset) {
+        fprintf(stderr, "error: bitset vectors are append-only\n");
+        exit(1);
     }
-    bitset_vector_encode(v, buffer - v->buffer, b, offset - current_offset);
+    bitset_vector_encode(v, v->length, b, offset - v->tail_offset);
+    v->tail_offset = offset;
 }
 
 void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offset, unsigned start, unsigned end) {
-    char *buffer = v->buffer;
-    unsigned tail_offset = 0, current_offset = 0;
-    bitset_t bitset;
-    while (buffer < v->buffer + v->length) {
-        buffer = bitset_vector_advance(buffer, &bitset, &tail_offset);
-        if (tail_offset >= offset) {
-            fprintf(stderr, "error: bitset vectors are append-only\n");
-            exit(1);
-        }
+    if (v->length && v->tail_offset >= offset) {
+        fprintf(stderr, "error: bitset vectors are append-only\n");
+        exit(1);
     }
+
+    char *buffer = v->buffer;
+    unsigned current_offset = 0;
+    bitset_t bitset;
 
     char *c_buffer = c->buffer, *c_start, *c_end = c->buffer + c->length;
     while (c_buffer < c_end) {
@@ -155,8 +156,7 @@ void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offse
             c_start = c_buffer;
 
             //Copy the initial bitset from c
-            offset = offset + current_offset - tail_offset;
-            buffer = bitset_vector_encode(v, buffer - v->buffer, &bitset, offset);
+            buffer = bitset_vector_encode(v, v->length, &bitset, offset + current_offset - v->tail_offset);
 
             //Look for a slice end point
             if (end != BITSET_VECTOR_END && c_end > c_start) {
@@ -165,8 +165,11 @@ void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offse
                     if (c_end == c->buffer + c->length) {
                         break;
                     }
+                    v->tail_offset = current_offset + offset;
                     c_buffer = bitset_vector_advance(c_buffer, &bitset, &current_offset);
                 } while (current_offset < end);
+            } else {
+                v->tail_offset = c->tail_offset + offset;
             }
 
             //Concat the rest of the vector
@@ -467,6 +470,9 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
             for (size_t i = 0; i < buckets; i++) {
                 if (and_bucket[i] && BITSET_IS_TAGGED_POINTER(bucket[i])) {
                     op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
+                    for (size_t x = 0; x < op->length; x++) {
+                        bitset_free(op->steps[x]->data.bitset);
+                    }
                     bitset_operation_free(op);
                 }
             }

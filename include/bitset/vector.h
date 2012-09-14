@@ -37,6 +37,7 @@ typedef struct bitset_vector_s {
     char *buffer;
     size_t length;
     size_t size;
+    unsigned tail_offset;
 } bitset_vector_t;
 
 typedef struct bitset_vector_operation_s bitset_vector_operation_t;
