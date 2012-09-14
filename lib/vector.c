@@ -392,7 +392,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
 
     bitset_vector_t *v, *step, *tmp;
     bitset_t *b, *b2, bitset;
-    bitset_operation_t *op = NULL;
+    bitset_operation_t *op;
     unsigned offset;
 
     //Recursively flatten nested operations
@@ -424,7 +424,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
         offset = 0;
         while (buffer < step->buffer + step->length) {
             next = bitset_vector_advance(buffer, &bitset, &offset);
-            bucket[offset - o->min] = buffer + bitset_encoded_length_required_bytes(offset);
+            bucket[offset - o->min] = buffer + bitset_encoded_length_size(buffer);
             buffer = next;
         }
     }
@@ -447,16 +447,15 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
                 while (buffer < step->buffer + step->length) {
                     next = bitset_vector_advance(buffer, &bitset, &offset);
                     key = offset - o->min;
-                    if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
-                        op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
-                    } else if (bucket[key]) {
-                        b2 = bitset_vector_encoded_bitset(bucket[key]);
-                        op = bitset_operation_new(b2);
-                    }
-                    if (op) {
+                    if (bucket[key]) {
+                        if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
+                            op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
+                        } else {
+                            b2 = bitset_vector_encoded_bitset(bucket[key]);
+                            op = bitset_operation_new(b2);
+                        }
                         bitset_operation_add(op, bitset_copy(&bitset), BITSET_AND);
                         and_bucket[key] = (void *) BITSET_TAG_POINTER(op);
-                        op = NULL;
                     }
                     buffer = next;
                 }
@@ -480,7 +479,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
                     bucket[key] = (void *) BITSET_TAG_POINTER(op);
                     bitset_operation_add(op, bitset_copy(&bitset), type);
                 } else {
-                    bucket[key] = buffer + bitset_encoded_length_required_bytes(offset);
+                    bucket[key] = buffer + bitset_encoded_length_size(buffer);
                 }
                 buffer = next;
             }
