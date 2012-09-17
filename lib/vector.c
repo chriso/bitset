@@ -233,14 +233,9 @@ static inline void bitset_vector_start_end(bitset_vector_t *v, unsigned *start, 
         return;
     }
     char *buffer = v->buffer;
-    unsigned offset = 0;
     bitset_t bitset;
-    buffer = bitset_vector_advance(buffer, &bitset, &offset);
-    *start = offset;
-    while (buffer < v->buffer + v->length) {
-        buffer = bitset_vector_advance(buffer, &bitset, &offset);
-    }
-    *end = offset;
+    buffer = bitset_vector_advance(buffer, &bitset, start);
+    *end = v->tail_offset;
 }
 
 bitset_vector_operation_t *bitset_vector_operation_new(bitset_vector_t *i) {
