@@ -964,6 +964,7 @@ void test_suite_vector() {
             offset == 10 || offset == 14 || offset == 21);
     }
     test_int("Checking it looped the right number of times 4\n", 4, loop_count);
+    test_int("Checking tail offset\n", 21, l3->tail_offset);
     bitset_vector_free(l3);
 
     //Make a copy of the buffer
@@ -976,6 +977,7 @@ void test_suite_vector() {
     l = bitset_vector_import(buffer, length);
     test_int("Check size is copied\n", 32, l->size);
     test_int("Check length is copied\n", 20, l->length);
+    test_int("Check tail_offset is copied\n", 10, l->tail_offset);
     bitset_vector_free(l);
     bitset_malloc_free(buffer);
 }
