@@ -1098,6 +1098,7 @@ void test_suite_vector_operation() {
     bitset_vector_free(v2);
     bitset_vector_free(v3);
     bitset_vector_free(v4);
+    bitset_vector_free(v5);
 }
 
 void test_suite_estimate() {

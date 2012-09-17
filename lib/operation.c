@@ -6,10 +6,6 @@ bitset_operation_t *bitset_operation_new(bitset_t *bitset) {
         bitset_oom();
     }
     operation->length = 0;
-    operation->steps = bitset_malloc(sizeof(bitset_operation_step_t) * 2);
-    if (!operation->steps) {
-        bitset_oom();
-    }
     if (bitset) {
         bitset_operation_add(operation, bitset, BITSET_OR);
     }
@@ -248,7 +244,7 @@ static inline bitset_hash_t *bitset_operation_iter(bitset_operation_t *operation
         unsigned k = 0, j = 0;
         int last_k = -1, last_j = -1;
         while (1) {
-            if (last_j < (int)j) {
+            if (last_j < (int)j && j < and->length) {
                 if (BITSET_IS_FILL_WORD(and->buffer[j])) {
                     and_offset += BITSET_GET_LENGTH(and->buffer[j]);
                     position = BITSET_GET_POSITION(and->buffer[j]);
@@ -263,7 +259,7 @@ static inline bitset_hash_t *bitset_operation_iter(bitset_operation_t *operation
                 and_offset++;
                 last_j = j;
             }
-            if (last_k < (int)k) {
+            if (last_k < (int)k && k < bitset->length) {
                 if (BITSET_IS_FILL_WORD(bitset->buffer[k])) {
                     length = BITSET_GET_LENGTH(bitset->buffer[k]);
                     word_offset += length;
