@@ -132,8 +132,7 @@ static inline char *bitset_vector_encode(bitset_vector_t *v, uintptr_t buf_offse
 
 void bitset_vector_push(bitset_vector_t *v, bitset_t *b, unsigned offset) {
     if (v->length && v->tail_offset >= offset) {
-        fprintf(stderr, "error: bitset vectors are append-only\n");
-        exit(1);
+        BITSET_FATAL("bitset vectors are append-only");
     }
     bitset_vector_encode(v, v->length, b, offset - v->tail_offset);
     v->tail_offset = offset;
@@ -141,8 +140,7 @@ void bitset_vector_push(bitset_vector_t *v, bitset_t *b, unsigned offset) {
 
 void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offset, unsigned start, unsigned end) {
     if (v->length && v->tail_offset >= offset) {
-        fprintf(stderr, "error: bitset vectors are append-only\n");
-        exit(1);
+        BITSET_FATAL("bitset vectors are append-only");
     }
 
     char *buffer = v->buffer;

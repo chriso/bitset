@@ -230,8 +230,12 @@ void bitset_iterator_free(bitset_iterator_t *);
  * Custom out of memory behaviour.
  */
 
+#define BITSET_FATAL(msg) \
+    fprintf(stderr, "bitset error: " msg "\n"); \
+    exit(EXIT_FAILURE)
+
 #ifndef bitset_oom
-#  define bitset_oom() fprintf(stderr, "Out of memory\n"), exit(EXIT_FAILURE)
+#  define bitset_oom() BITSET_FATAL("out of memory")
 #endif
 
 #ifdef __cplusplus
