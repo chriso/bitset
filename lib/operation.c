@@ -22,7 +22,7 @@ void bitset_operation_free(bitset_operation_t *operation) {
             if (operation->steps[i]->is_operation) {
                 bitset_operation_free(operation->steps[i]->data.nested);
             } else {
-                bitset_free(operation->steps[i]->data.bitset);
+                bitset_malloc_free(operation->steps[i]->data.bitset.buffer);
             }
         }
         bitset_malloc_free(operation->steps[i]);
@@ -49,9 +49,9 @@ static inline bitset_operation_step_t *bitset_operation_add_step(bitset_operatio
     return operation->steps[operation->length++] = step;
 }
 
-void bitset_operation_add(bitset_operation_t *operation,
-        bitset_t *bitset, enum bitset_operation_type type) {
-    if (!bitset->length) {
+void bitset_operation_add_buffer(bitset_operation_t *operation,
+        bitset_word *buffer, size_t length, enum bitset_operation_type type) {
+    if (!length) {
         if (type == BITSET_AND && operation->length) {
             for (unsigned i = 0; i < operation->length; i++) {
                 bitset_malloc_free(operation->steps[i]);
@@ -63,8 +63,14 @@ void bitset_operation_add(bitset_operation_t *operation,
     bitset_operation_step_t *step = bitset_operation_add_step(operation);
     step->is_nested = false;
     step->is_operation = false;
-    step->data.bitset = bitset;
+    step->data.bitset.buffer = buffer;
+    step->data.bitset.length = length;
     step->type = type;
+}
+
+void bitset_operation_add(bitset_operation_t *operation,
+        bitset_t *bitset, enum bitset_operation_type type) {
+    bitset_operation_add_buffer(operation, bitset->buffer, bitset->length, type);
 }
 
 void bitset_operation_add_nested(bitset_operation_t *operation, bitset_operation_t *nested,
@@ -207,11 +213,13 @@ static inline bitset_hash_t *bitset_operation_iter(bitset_operation_t *operation
         if (operation->steps[i]->is_operation) {
             tmp = bitset_operation_exec(operation->steps[i]->data.nested);
             bitset_operation_free(operation->steps[i]->data.nested);
-            operation->steps[i]->data.bitset = tmp;
+            operation->steps[i]->data.bitset.buffer = tmp->buffer;
+            operation->steps[i]->data.bitset.length = tmp->length;
             operation->steps[i]->is_operation = false;
+            bitset_malloc_free(tmp);
         }
-        count += operation->steps[i]->data.bitset->length;
-        b_max = bitset_max(operation->steps[i]->data.bitset);
+        count += operation->steps[i]->data.bitset.length;
+        b_max = bitset_max(&operation->steps[i]->data.bitset);
         max = BITSET_MAX(max, b_max);
     }
     if (count <= 8) {
@@ -228,29 +236,91 @@ static inline bitset_hash_t *bitset_operation_iter(bitset_operation_t *operation
     }
     words = bitset_hash_new(size);
     size_t start_at = 1;
-    bitset = operation->steps[0]->data.bitset;
+    bitset = &operation->steps[0]->data.bitset;
     word_offset = 0;
 
-    //Populate the offset=>word hash (0 OR A)
-    for (size_t j = 0; j < bitset->length; j++) {
-        word = bitset->buffer[j];
-        if (BITSET_IS_FILL_WORD(word)) {
-            length = BITSET_GET_LENGTH(word);
-            word_offset += length;
-            position = BITSET_GET_POSITION(word);
-            if (!position) {
-                continue;
+    //Compute (0 OR (A AND B)) instead of the usual ((0 OR A) AND B)
+    if (operation->length >= 2 && operation->steps[1]->type == BITSET_AND) {
+        start_at = 2;
+        bitset_offset and_offset = 0;
+        bitset_word and_word = 0;
+        bitset_t *and = &operation->steps[1]->data.bitset;
+        unsigned k = 0, j = 0;
+        int last_k = -1, last_j = -1;
+        while (1) {
+            if (last_j < (int)j) {
+                if (BITSET_IS_FILL_WORD(and->buffer[j])) {
+                    and_offset += BITSET_GET_LENGTH(and->buffer[j]);
+                    position = BITSET_GET_POSITION(and->buffer[j]);
+                    if (!position) {
+                        j++;
+                        continue;
+                    }
+                    and_word = BITSET_CREATE_LITERAL(position - 1);
+                } else {
+                    and_word = and->buffer[j];
+                }
+                and_offset++;
+                last_j = j;
             }
-            word = BITSET_CREATE_LITERAL(position - 1);
+            if (last_k < (int)k) {
+                if (BITSET_IS_FILL_WORD(bitset->buffer[k])) {
+                    length = BITSET_GET_LENGTH(bitset->buffer[k]);
+                    word_offset += length;
+                    position = BITSET_GET_POSITION(bitset->buffer[k]);
+                    if (!position) {
+                        k++;
+                        continue;
+                    }
+                    word = BITSET_CREATE_LITERAL(position - 1);
+                } else {
+                    word = bitset->buffer[k];
+                }
+                word_offset++;
+                last_k = k;
+            }
+            if (and_offset < word_offset) {
+                if (j++ >= and->length) {
+                    break;
+                }
+            } else if (word_offset < and_offset) {
+                if (k++ >= bitset->length) {
+                    break;
+                }
+            } else {
+                word &= and_word;
+                if (word) {
+                    bitset_hash_insert(words, word_offset, word);
+                }
+                j++;
+                k++;
+                if (j >= and->length && k >= bitset->length) {
+                    break;
+                }
+            }
         }
-        word_offset++;
-        bitset_hash_insert(words, word_offset, word);
+    } else {
+        //Populate the offset=>word hash (0 OR A)
+        for (size_t j = 0; j < bitset->length; j++) {
+            word = bitset->buffer[j];
+            if (BITSET_IS_FILL_WORD(word)) {
+                length = BITSET_GET_LENGTH(word);
+                word_offset += length;
+                position = BITSET_GET_POSITION(word);
+                if (!position) {
+                    continue;
+                }
+                word = BITSET_CREATE_LITERAL(position - 1);
+            }
+            word_offset++;
+            bitset_hash_insert(words, word_offset, word);
+        }
     }
 
     //Apply the remaining steps in the operation
     for (size_t i = start_at; i < operation->length; i++) {
         step = operation->steps[i];
-        bitset = step->data.bitset;
+        bitset = &step->data.bitset;
         word_offset = 0;
         if (step->type == BITSET_AND) {
             and_words = bitset_hash_new(words->size);
@@ -345,7 +415,7 @@ bitset_t *bitset_operation_exec(bitset_operation_t *operation) {
     if (!operation->length) {
         return bitset_new();
     } else if (operation->length == 1 && !operation->steps[0]->is_operation) {
-        return bitset_copy(operation->steps[0]->data.bitset);
+        return bitset_copy(&operation->steps[0]->data.bitset);
     }
     bitset_hash_t *words = bitset_operation_iter(operation);
     bitset_hash_bucket_t *bucket;

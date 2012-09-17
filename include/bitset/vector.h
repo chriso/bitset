@@ -200,6 +200,12 @@ void bitset_vector_operation_resolve_data(bitset_vector_operation_t *,
 
 void bitset_vector_operation_free_data(bitset_vector_operation_t *, void (*)(void *data));
 
+/**
+ * Misc functions.
+ */
+
+void bitset_vector_init(bitset_vector_t *);
+
 #ifdef __cplusplus
 } //extern "C"
 #endif

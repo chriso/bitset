@@ -626,14 +626,14 @@ void test_suite_operation() {
     bitset_set_to(b3, 12, true);
     ops = bitset_operation_new(b1);
     test_int("Checking initial operation length is one\n", 1, ops->length);
-    test_bool("Checking primary bitset_t is added\n", true, bitset_get(ops->steps[0]->data.bitset, 10));
+    test_bool("Checking primary bitset_t is added\n", true, bitset_get(&ops->steps[0]->data.bitset, 10));
     bitset_operation_add(ops, b2, BITSET_OR);
     test_int("Checking op length increases\n", 2, ops->length);
     bitset_operation_add(ops, b3, BITSET_OR);
     test_int("Checking op length increases\n", 3, ops->length);
-    test_bool("Checking bitset was added correctly\n", true, bitset_get(ops->steps[1]->data.bitset, 20));
+    test_bool("Checking bitset was added correctly\n", true, bitset_get(&ops->steps[1]->data.bitset, 20));
     test_int("Checking op was added correctly\n", BITSET_OR, ops->steps[1]->type);
-    test_bool("Checking bitset was added correctly\n", true, bitset_get(ops->steps[2]->data.bitset, 12));
+    test_bool("Checking bitset was added correctly\n", true, bitset_get(&ops->steps[2]->data.bitset, 12));
     test_int("Checking op was added correctly\n", BITSET_OR, ops->steps[2]->type);
     test_ulong("Checking operation count 1\n", 3, bitset_operation_count(ops));
     bitset_operation_free(ops);

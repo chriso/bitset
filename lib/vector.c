@@ -57,16 +57,22 @@ size_t bitset_vector_length(bitset_vector_t *v) {
     return v->length;
 }
 
+void bitset_vector_init(bitset_vector_t *v) {
+    char *buffer = v->buffer;
+    bitset_t tmp;
+    v->tail_offset = 0;
+    while (buffer < v->buffer + v->length) {
+        buffer = bitset_vector_advance(buffer, &tmp, &v->tail_offset);
+    }
+}
+
 bitset_vector_t *bitset_vector_import(const char *buffer, size_t length) {
     bitset_vector_t *v = bitset_vector_new();
     if (length) {
         bitset_vector_resize(v, length);
-        memcpy(v->buffer, buffer, length);
-        //Look for the tail offset
-        char *buffer = v->buffer;
-        bitset_t tmp;
-        while (buffer < v->buffer + v->length) {
-            buffer = bitset_vector_advance(buffer, &tmp, &v->tail_offset);
+        if (buffer) {
+            memcpy(v->buffer, buffer, length);
+            bitset_vector_init(v);
         }
     }
     return v;
@@ -369,20 +375,6 @@ void bitset_vector_operation_free_data(bitset_vector_operation_t *o, void (*free
     }
 }
 
-static bitset_t *bitset_vector_encoded_bitset(char *buffer) {
-    bitset_t *bitset = bitset_new();
-    bitset->length = bitset_encoded_length(buffer);
-    buffer += bitset_encoded_length_size(buffer);
-    size_t size;
-    BITSET_NEXT_POW2(size, bitset->length);
-    bitset->buffer = bitset_malloc(sizeof(bitset_word) * size);
-    if (!bitset->buffer) {
-        bitset_oom();
-    }
-    memcpy(bitset->buffer, buffer, sizeof(bitset_word) * bitset->length);
-    return bitset;
-}
-
 bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
     if (!o->length) {
         return bitset_vector_new();
@@ -391,7 +383,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
     }
 
     bitset_vector_t *v, *step, *tmp;
-    bitset_t *b, *b2, bitset;
+    bitset_t *b, bitset;
     bitset_operation_t *op;
     unsigned offset;
 
@@ -417,7 +409,8 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
     }
 
     //OR the first vector
-    char *buffer, *next;
+    char *buffer, *next, *bitset_buffer;
+    size_t bitset_length;
     step = o->steps[0]->data.i;
     if (step) {
         buffer = step->buffer;
@@ -451,10 +444,13 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
                         if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
                             op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
                         } else {
-                            b2 = bitset_vector_encoded_bitset(bucket[key]);
-                            op = bitset_operation_new(b2);
+                            bitset_buffer = bucket[key];
+                            bitset_length = bitset_encoded_length(bitset_buffer);
+                            bitset_buffer += bitset_encoded_length_size(bitset_buffer);
+                            op = bitset_operation_new(NULL);
+                            bitset_operation_add_buffer(op, (bitset_word*)bitset_buffer, bitset_length, BITSET_OR);
                         }
-                        bitset_operation_add(op, bitset_copy(&bitset), BITSET_AND);
+                        bitset_operation_add_buffer(op, bitset.buffer, bitset.length, BITSET_AND);
                         and_bucket[key] = (void *) BITSET_TAG_POINTER(op);
                     }
                     buffer = next;
@@ -463,9 +459,6 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
             for (size_t i = 0; i < buckets; i++) {
                 if (and_bucket[i] && BITSET_IS_TAGGED_POINTER(bucket[i])) {
                     op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
-                    for (size_t x = 0; x < op->length; x++) {
-                        bitset_free(op->steps[x]->data.bitset);
-                    }
                     bitset_operation_free(op);
                 }
             }
@@ -481,12 +474,15 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
                 key = offset - o->min;
                 if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
                     op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
-                    bitset_operation_add(op, bitset_copy(&bitset), type);
+                    bitset_operation_add_buffer(op, bitset.buffer, bitset.length, type);
                 } else if (bucket[key]) {
-                    b2 = bitset_vector_encoded_bitset(bucket[key]);
-                    op = bitset_operation_new(b2);
+                    bitset_buffer = bucket[key];
+                    bitset_length = bitset_encoded_length(bitset_buffer);
+                    bitset_buffer += bitset_encoded_length_size(bitset_buffer);
+                    op = bitset_operation_new(NULL);
+                    bitset_operation_add_buffer(op, (bitset_word*)bitset_buffer, bitset_length, BITSET_OR);
                     bucket[key] = (void *) BITSET_TAG_POINTER(op);
-                    bitset_operation_add(op, bitset_copy(&bitset), type);
+                    bitset_operation_add_buffer(op, bitset.buffer, bitset.length, type);
                 } else {
                     bucket[key] = buffer + bitset_encoded_length_size(buffer);
                 }
@@ -498,7 +494,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
     //Prepare the result vector
     offset = 0;
     buffer = v->buffer;
-    size_t bitset_length, copy_length, offset_bytes;
+    size_t copy_length, offset_bytes;
     for (unsigned j = 0; j < buckets; j++) {
         if (BITSET_IS_TAGGED_POINTER(bucket[j])) {
             op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[j]);
@@ -508,9 +504,6 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
                 offset = o->min + j;
             }
             bitset_free(b);
-            for (size_t x = 0; x < op->length; x++) {
-                bitset_free(op->steps[x]->data.bitset);
-            }
             bitset_operation_free(op);
         } else if (bucket[j]) {
             offset_bytes = bitset_encoded_length_required_bytes(o->min + j - offset);
