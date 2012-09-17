@@ -312,7 +312,7 @@ void bitset_vector_operation_add(bitset_vector_operation_t *o,
     step->is_operation = false;
     step->data.i = i;
     step->type = type;
-    unsigned start, end;
+    unsigned start = 0, end = 0;
     bitset_vector_start_end(i, &start, &end);
     o->min = BITSET_MIN(o->min, start);
     o->max = BITSET_MAX(o->max, end);
@@ -342,7 +342,7 @@ void bitset_vector_operation_add_data(bitset_vector_operation_t *o,
 void bitset_vector_operation_resolve_data(bitset_vector_operation_t *o,
         bitset_vector_t *(*resolve_fn)(void *, void *), void *context) {
     if (o->length) {
-        unsigned start, end;
+        unsigned start = 0, end = 0;
         for (unsigned j = 0; j < o->length; j++) {
             if (o->steps[j]->is_operation) {
                 bitset_vector_operation_resolve_data(o->steps[j]->data.o, resolve_fn, context);
