@@ -458,7 +458,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *o) {
             }
             for (size_t i = 0; i < buckets; i++) {
                 if (and_bucket[i] && BITSET_IS_TAGGED_POINTER(bucket[i])) {
-                    op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
+                    op = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[i]);
                     bitset_operation_free(op);
                 }
             }
