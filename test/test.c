@@ -964,6 +964,23 @@ void test_suite_vector() {
     test_int("Checking tail offset\n", 21, l3->tail_offset);
     bitset_vector_free(l3);
 
+    l3 = bitset_vector_new();
+    bitset_vector_concat(l3, l, 100000, BITSET_VECTOR_START, BITSET_VECTOR_END);
+    bitset_vector_concat(l3, l, 200000, BITSET_VECTOR_START, BITSET_VECTOR_END);
+    bitset_vector_cardinality(l3, &raw, &unique);
+    test_int("Checking vector bitset count 3\n", 4, bitset_vector_bitsets(l3));
+    test_int("Checking vector bitset count 4\n", 6, raw);
+    test_int("Checking vector bitset count 5\n", 3, unique);
+    loop_count = 0;
+    BITSET_VECTOR_FOREACH(l3, b, offset) {
+        loop_count++;
+        test_bool("Checking foreach works 3\n", true, offset == 100003 ||
+            offset == 100010 || offset == 200003 || offset == 200010);
+    }
+    test_int("Checking it looped the right number of times 4\n", 4, loop_count);
+    test_int("Checking tail offset\n", 200010, l3->tail_offset);
+    bitset_vector_free(l3);
+
     //Make a copy of the buffer
     char *buffer = bitset_malloc(sizeof(char) * l->length);
     memcpy(buffer, l->buffer, l->length);

@@ -95,7 +95,7 @@ static inline void bitset_encoded_length_bytes(char *buffer, size_t length) {
 }
 
 static inline size_t bitset_encoded_length_size(const char *buffer) {
-    return (buffer[0] & 0x80) * 2 + 2;
+    return ((buffer[0] & 0x80) != 0) * 2 + 2;
 }
 
 static inline size_t bitset_encoded_length(const char *buffer) {
