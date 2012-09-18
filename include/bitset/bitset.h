@@ -215,7 +215,7 @@ bitset_iterator_t *bitset_iterator_new(const bitset_t *);
  */
 
 #define BITSET_FOREACH(iterator, offset) \
-    for (unsigned BITSET_TMPVAR(i, __LINE__) = 0; \
+    for (size_t BITSET_TMPVAR(i, __LINE__) = 0; \
         BITSET_TMPVAR(i, __LINE__) < iterator->length \
             ? (offset = iterator->offsets[BITSET_TMPVAR(i, __LINE__)]), 1 : 0; \
          BITSET_TMPVAR(i, __LINE__)++)

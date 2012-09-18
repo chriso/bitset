@@ -183,7 +183,7 @@ bool bitset_set_to(bitset_t *bitset, bitset_offset bit, bool value) {
         bitset_word word;
         bitset_offset fill_length;
         unsigned position;
-        for (unsigned i = 0; i < bitset->length; i++) {
+        for (size_t i = 0; i < bitset->length; i++) {
             word = bitset->buffer[i];
             if (BITSET_IS_FILL_WORD(word)) {
                 position = BITSET_GET_POSITION(word);
@@ -316,7 +316,9 @@ bitset_t *bitset_new_bits(bitset_offset *bits, size_t count) {
     bitset_resize(bitset, 1);
     bitset->buffer[0] = 0;
     for (i = 1; i < count; i++) {
-        if (bits[i] == last_bit) continue;
+        if (bits[i] == last_bit) {
+            continue;
+        }
         last_bit = bits[i];
         next_div = bits[i] / BITSET_LITERAL_LENGTH;
         next_rem = bits[i] % BITSET_LITERAL_LENGTH;
@@ -382,7 +384,7 @@ bitset_iterator_t *bitset_iterator_new(const bitset_t *bitset) {
     }
     bitset_offset offset = 0;
     unsigned position;
-    for (unsigned j = 0, k = 0; j < bitset->length; j++) {
+    for (size_t j = 0, k = 0; j < bitset->length; j++) {
         if (BITSET_IS_FILL_WORD(bitset->buffer[j])) {
             offset += BITSET_GET_LENGTH(bitset->buffer[j]);
             position = BITSET_GET_POSITION(bitset->buffer[j]);
@@ -391,7 +393,7 @@ bitset_iterator_t *bitset_iterator_new(const bitset_t *bitset) {
             }
             iterator->offsets[k++] = BITSET_LITERAL_LENGTH * offset + position - 1;
         } else {
-            for (unsigned x = BITSET_LITERAL_LENGTH; x--; ) {
+            for (size_t x = BITSET_LITERAL_LENGTH; x--; ) {
                 if (bitset->buffer[j] & (1 << x)) {
                     iterator->offsets[k++] = BITSET_LITERAL_LENGTH * offset
                         + BITSET_LITERAL_LENGTH - x - 1;

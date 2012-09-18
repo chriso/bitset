@@ -44,8 +44,8 @@ typedef struct bitset_vector_operation_s bitset_vector_operation_t;
 
 typedef struct bitset_vector_operation_step_s {
     union {
-        bitset_vector_t *i;
-        bitset_vector_operation_t *o;
+        bitset_vector_t *vector;
+        bitset_vector_operation_t *operation;
     } data;
     void *userdata;
     bool is_nested;

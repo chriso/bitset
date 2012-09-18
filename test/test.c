@@ -12,8 +12,8 @@
 
 void bitset_dump(bitset_t *b) {
     printf("\x1B[33mDumping bitset of size %u\x1B[0m\n", (unsigned)b->length);
-    for (unsigned i = 0; i < b->length; i++) {
-        printf("\x1B[36m%3d.\x1B[0m %-8x\n", i, b->buffer[i]);
+    for (size_t i = 0; i < b->length; i++) {
+        printf("\x1B[36m%3zu.\x1B[0m %-8x\n", i, b->buffer[i]);
     }
 }
 
@@ -35,7 +35,7 @@ TEST_DEFINE(hex, int, "%#x")
 bool test_bitset(char *title, bitset_t *b, unsigned length, uint32_t *expected) {
     bool mismatch = length != b->length;
     if (!mismatch) {
-        for (unsigned i = 0; i < length; i++) {
+        for (size_t i = 0; i < length; i++) {
             if (b->buffer[i] != expected[i]) {
                 mismatch = true;
                 break;
@@ -43,10 +43,10 @@ bool test_bitset(char *title, bitset_t *b, unsigned length, uint32_t *expected) 
         }
     }
     if (mismatch) {
-        unsigned length_max = BITSET_MAX(b->length, length);
+        size_t length_max = BITSET_MAX(b->length, length);
         printf("\x1B[31m%s\x1B[0m\n", title);
-        for (unsigned i = 0; i < length_max; i++) {
-            printf("  \x1B[36m%3d.\x1B[0m ", i);
+        for (size_t i = 0; i < length_max; i++) {
+            printf("  \x1B[36m%3zu.\x1B[0m ", i);
             if (i < b->length) {
                 printf("%-8x ", b->buffer[i]);
             } else {
@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
 
 void test_suite_get() {
     bitset_t *b = bitset_new();
-    for (unsigned i = 0; i < 32; i++)
+    for (size_t i = 0; i < 32; i++)
         test_bool("Testing initial bits are unset\n", false, bitset_get(b, i));
     bitset_free(b);
 
@@ -485,15 +485,14 @@ void test_suite_stress() {
     unsigned int max = 100000000, num = 1000;
     unsigned *bits = bitset_malloc(sizeof(unsigned) * num);
     srand(time(NULL));
-    for (unsigned i = 0; i < num; i++) {
+    for (size_t i = 0; i < num; i++) {
         bits[i] = rand() % max;
-        //bits[i] = i;
         bitset_set_to(b, bits[i], true);
     }
-    for (unsigned i = 0; i < num; i++) {
+    for (size_t i = 0; i < num; i++) {
         test_bool("Checking stress test bits were set", true, bitset_get(b, bits[i]));
     }
-    for (unsigned i = 0; i < 86400; i++) {
+    for (size_t i = 0; i < 86400; i++) {
         bitset_count(b);
     }
     bitset_malloc_free(bits);

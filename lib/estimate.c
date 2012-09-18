@@ -79,13 +79,13 @@ bitset_countn_t *bitset_countn_new(unsigned n, size_t size) {
     return counter;
 }
 
-void bitset_countn_add(bitset_countn_t *counter, bitset_t *b) {
+void bitset_countn_add(bitset_countn_t *counter, bitset_t *bitset) {
     bitset_offset offset = 0;
     bitset_word word, tmp;
     unsigned position;
     unsigned offset_mask = counter->size - 1;
-    for (size_t i = 0; i < b->length; i++) {
-        word = b->buffer[i];
+    for (size_t i = 0; i < bitset->length; i++) {
+        word = bitset->buffer[i];
         if (BITSET_IS_FILL_WORD(word)) {
             offset += BITSET_GET_LENGTH(word);
             position = BITSET_GET_POSITION(word);
@@ -94,7 +94,7 @@ void bitset_countn_add(bitset_countn_t *counter, bitset_t *b) {
             }
             word = BITSET_CREATE_LITERAL(position - 1);
         }
-        for (unsigned n = 0; n <= counter->n; n++) {
+        for (size_t n = 0; n <= counter->n; n++) {
             tmp = word & counter->words[n][offset & offset_mask];
             counter->words[n][offset & offset_mask] |= word;
             word = tmp;
@@ -123,7 +123,7 @@ unsigned *bitset_countn_count_all(bitset_countn_t *counter) {
     }
     bitset_word word;
     for (size_t offset = 0; offset < counter->size; offset++) {
-        for (unsigned n = 1; n <= counter->n; n++) {
+        for (size_t n = 1; n <= counter->n; n++) {
             word = counter->words[n-1][offset] & ~counter->words[n][offset];
             if (word) {
                 BITSET_POP_COUNT(counts[n-1], word);
@@ -154,9 +154,7 @@ unsigned *bitset_countn_count_mask(bitset_countn_t *counter, bitset_t *mask) {
             }
             mask_word = BITSET_CREATE_LITERAL(position - 1);
         }
-        for (unsigned n = 1; n <= counter->n; n++) {
-            mask_words[offset] |= mask_word;
-        }
+        mask_words[offset] |= mask_word;
         offset++;
         if (offset >= counter->size) {
             offset -= counter->size;
@@ -167,7 +165,7 @@ unsigned *bitset_countn_count_mask(bitset_countn_t *counter, bitset_t *mask) {
         bitset_oom();
     }
     for (size_t offset = 0; offset < counter->size; offset++) {
-        for (unsigned n = 1; n <= counter->n; n++) {
+        for (size_t n = 1; n <= counter->n; n++) {
             word = counter->words[n-1][offset] & ~counter->words[n][offset];
             word &= mask_words[offset];
             BITSET_POP_COUNT(counts[n-1], word);

@@ -49,7 +49,7 @@ void bitset_operation_add_buffer(bitset_operation_t *operation,
         bitset_word *buffer, size_t length, enum bitset_operation_type type) {
     if (!length) {
         if (type == BITSET_AND && operation->length) {
-            for (unsigned i = 0; i < operation->length; i++) {
+            for (size_t i = 0; i < operation->length; i++) {
                 bitset_malloc_free(operation->steps[i]);
             }
             operation->length = 0;
@@ -97,7 +97,7 @@ static inline bitset_hash_t *bitset_hash_new(size_t buckets) {
 
 static inline void bitset_hash_free(bitset_hash_t *hash) {
     bitset_hash_bucket_t *bucket, *tmp;
-    for (unsigned i = 0; i < hash->size; i++) {
+    for (size_t i = 0; i < hash->size; i++) {
         bucket = hash->buckets[i];
         if (BITSET_IS_TAGGED_POINTER(bucket)) {
             continue;
@@ -198,13 +198,16 @@ static inline bitset_word *bitset_hash_get(const bitset_hash_t *hash, bitset_off
 }
 
 static inline bitset_hash_t *bitset_operation_iter(bitset_operation_t *operation) {
-    bitset_offset word_offset, max = 0, b_max, length;
+    bitset_offset word_offset, max = 0, b_max, length, and_offset;
     bitset_operation_step_t *step;
-    bitset_word word = 0, *hashed;
-    unsigned position, count = 0;
-    size_t size;
+    bitset_word word = 0, *hashed, and_word;
+    unsigned position, count = 0, k, j;
+    int last_k, last_j;
+    size_t size, start_at;
     bitset_hash_t *words, *and_words = NULL;
-    bitset_t *tmp, *bitset;
+    bitset_t *tmp, *bitset, *and;
+
+    //Recursively flatten nested operations
     for (size_t i = 0; i < operation->length; i++) {
         if (operation->steps[i]->is_operation) {
             tmp = bitset_operation_exec(operation->steps[i]->data.nested);
@@ -218,6 +221,8 @@ static inline bitset_hash_t *bitset_operation_iter(bitset_operation_t *operation
         b_max = bitset_max(&operation->steps[i]->data.bitset);
         max = BITSET_MAX(max, b_max);
     }
+
+    //Work out the number of hash buckets to allocate
     if (count <= 8) {
         size = 16;
     } else if (count <= 8388608) {
@@ -231,18 +236,20 @@ static inline bitset_hash_t *bitset_operation_iter(bitset_operation_t *operation
         size = size <= 16 ? 16 : size > 16777216 ? 16777216 : size;
     }
     words = bitset_hash_new(size);
-    size_t start_at = 1;
+    start_at = 1;
     bitset = &operation->steps[0]->data.bitset;
     word_offset = 0;
 
     //Compute (0 OR (A AND B)) instead of the usual ((0 OR A) AND B)
     if (operation->length >= 2 && operation->steps[1]->type == BITSET_AND) {
         start_at = 2;
-        bitset_offset and_offset = 0;
-        bitset_word and_word = 0;
-        bitset_t *and = &operation->steps[1]->data.bitset;
-        unsigned k = 0, j = 0;
-        int last_k = -1, last_j = -1;
+        and_offset = 0;
+        and_word = 0;
+        and = &operation->steps[1]->data.bitset;
+        k = 0;
+        j = 0;
+        last_k = -1;
+        last_j = -1;
         while (1) {
             if (last_j < (int)j && j < and->length) {
                 if (BITSET_IS_FILL_WORD(and->buffer[j])) {
@@ -297,8 +304,8 @@ static inline bitset_hash_t *bitset_operation_iter(bitset_operation_t *operation
         }
     } else {
         //Populate the offset=>word hash (0 OR A)
-        for (size_t j = 0; j < bitset->length; j++) {
-            word = bitset->buffer[j];
+        for (size_t i = 0; i < bitset->length; i++) {
+            word = bitset->buffer[i];
             if (BITSET_IS_FILL_WORD(word)) {
                 length = BITSET_GET_LENGTH(word);
                 word_offset += length;
