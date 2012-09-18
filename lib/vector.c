@@ -23,7 +23,7 @@ void bitset_vector_free(bitset_vector_t *v) {
 bitset_vector_t *bitset_vector_copy(bitset_vector_t *v) {
     bitset_vector_t *c = bitset_vector_new();
     if (v->length) {
-        c->buffer = bitset_malloc(sizeof(char) * v->length);
+        c->buffer = bitset_realloc(c->buffer, sizeof(char) * v->length);
         if (!c->buffer) {
             bitset_oom();
         }
