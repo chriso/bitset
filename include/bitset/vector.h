@@ -19,10 +19,8 @@
  *
  * Offsets and lengths are encoded using the following format
  *
- *    |00xxxxxx| 6 bit length
- *    |01xxxxxx|xxxxxxxx| 14 bit length
- *    |10xxxxxx|xxxxxxxx|xxxxxxxx| 22 bit length
- *    |11xxxxxx|xxxxxxxx|xxxxxxxx|xxxxxxxx| 30 bit length
+ *    |0xxxxxxx|xxxxxxxx| 15 bit length
+ *    |1xxxxxxx|xxxxxxxx|xxxxxxxx|xxxxxxxx| 31 bit length
  */
 
 #ifdef __cplusplus
