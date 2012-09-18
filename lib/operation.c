@@ -140,6 +140,11 @@ static inline bool bitset_hash_insert(bitset_hash_t *hash, bitset_offset offset,
         hash->count++;
         return true;
     } else if (!bucket) {
+#if SIZEOF_VOID_P != BITSET_WORD_BYTES
+        hash->buckets[key] = (bitset_hash_bucket_t *) BITSET_UINT_IN_POINTER(offset);
+        hash->buffer[key] = word;
+        hash->count++;
+#else
         if (BITSET_UINT_CAN_TAG(offset)) {
             hash->buckets[key] = (bitset_hash_bucket_t *) BITSET_UINT_IN_POINTER(offset);
             hash->buffer[key] = word;
@@ -154,6 +159,7 @@ static inline bool bitset_hash_insert(bitset_hash_t *hash, bitset_offset offset,
             insert->next = NULL;
             hash->buckets[key] = insert;
         }
+#endif
         return true;
     }
     for (;;) {

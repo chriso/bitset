@@ -35,6 +35,7 @@ extern "C" {
  */
 
 #define bitset_word                    uint32_t
+#define BITSET_WORD_BYTES              4
 
 #define BITSET_WORD_LENGTH             (sizeof(bitset_word) * 8)
 #define BITSET_POSITION_LENGTH         BITSET_LOG2(BITSET_WORD_LENGTH)
