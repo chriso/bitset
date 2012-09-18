@@ -1,20 +1,13 @@
 ![Bitset](https://github.com/chriso/bitset/raw/master/bitset.png)
 
-(symbol in logo from the most excellent [helveticons](http://helveticons.ch))
+The bitset structure uses [word-aligned run-length encoding](https://github.com/chriso/bitset/blob/master/include/bitset/bitset.h#L17-35) to compress sets of unsigned integers. 64-bit offsets are supported for very sparse sets. Unlike most succinct data structures which are immutable and append-only, the included bitset structure is mutable after construction.
 
-## What's included
+The library includes a vector abstraction (vector of bitsets) which can be used to represent another dimension
+such as time. Bitsets are packed together [contiguously](https://github.com/chriso/bitset/blob/master/include/bitset/vector.h#L8-24) to improve cache locality.
 
-- A succint, compressed bitset structure
-- 64-bit offset support for very sparse bitsets
-- Mutable after construction (unlike most succint structures which are append-only)
-- Bitset operations such as get/set, population count, min/max (ffs/fls)
-- Complex bitwise operations between bitsets, e.g. `A & (B & ~C) | (D ^ E)`
-- Pack bitsets together efficiently using the included [vector
-  abstraction](https://github.com/chriso/bitset/blob/master/include/bitset/vector.h#L7-25)
-- Bitwise operations between one or more vectors, e.g. `V1 | (V2 & V3) => V4`
-- Probabilistic algorithms
+See the [headers](https://github.com/chriso/bitset/tree/master/include/bitset) for usage details.
 
-## Installing
+## Installation
 
 ```bash
 $ ./configure
@@ -24,17 +17,15 @@ $ sudo make install
 
 ## Tests
 
-Tests can be run with
+Tests and benchmarks can be run with
 
 ```bash
-$ make test
+$ make check
 ```
 
-Stress tests / benchmarks can be run with
+## Credits
 
-```bash
-$ make stress
-```
+The symbol in the logo comes from the [helveticons](http://helveticons.ch) library
 
 ## License
 
