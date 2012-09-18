@@ -923,14 +923,12 @@ void test_suite_vector() {
     }
     test_int("Checking it looped the right number of times\n", 2, loop_count);
 
-    /*
     b = bitset_vector_merge(l);
     test_int("Checking vector merge 1\n", 3, bitset_count(b));
     test_bool("Checking vector merge 2\n", true, bitset_get(b, 10));
     test_bool("Checking vector merge 2\n", true, bitset_get(b, 100));
     test_bool("Checking vector merge 2\n", true, bitset_get(b, 1000));
     bitset_free(b);
-    */
 
     l3 = bitset_vector_new();
     bitset_vector_concat(l3, l, 0, 3, 10);
