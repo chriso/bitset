@@ -35,6 +35,7 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memmove])
 AX_CC_MAXOPT
+AC_CHECK_SIZEOF([void *])
 
 version="ver"
 library_version="l_ver"
