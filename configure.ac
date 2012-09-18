@@ -12,6 +12,7 @@ AC_CONFIG_MACRO_DIR([m4])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AC_PROG_CC
+AC_CHECK_PROG(MAKE,gmake,gmake,make)
 AC_PROG_MAKE_SET
 AC_CANONICAL_HOST
 
@@ -35,6 +36,7 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memmove])
 AX_CC_MAXOPT
+AC_CHECK_SIZEOF([void *])
 
 version="ver"
 library_version="l_ver"

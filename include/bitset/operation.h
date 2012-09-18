@@ -39,7 +39,7 @@ typedef struct bitset_operation_s bitset_operation_t;
 
 typedef struct bitset_operation_step_s {
     union {
-        bitset_t *bitset;
+        bitset_t bitset;
         bitset_operation_t *nested;
     } data;
     bool is_nested;
@@ -50,7 +50,6 @@ typedef struct bitset_operation_step_s {
 struct bitset_operation_s {
     bitset_operation_step_t **steps;
     size_t length;
-    size_t size;
 };
 
 /**
@@ -70,6 +69,12 @@ void bitset_operation_free(bitset_operation_t *);
  */
 
 void bitset_operation_add(bitset_operation_t *, bitset_t *, enum bitset_operation_type);
+
+/**
+ * Add a bitset buffer to the operation.
+ */
+
+void bitset_operation_add_buffer(bitset_operation_t *, bitset_word *, size_t length, enum bitset_operation_type);
 
 /**
  * Add a nested operation.

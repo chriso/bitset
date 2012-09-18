@@ -1,6 +1,8 @@
 #ifndef BITSET_PROBABILISTIC_H
 #define BITSET_PROBABILISTIC_H
 
+#include <assert.h>
+
 #include "bitset/bitset.h"
 
 #ifdef __cplusplus

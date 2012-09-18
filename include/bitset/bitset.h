@@ -35,6 +35,7 @@ extern "C" {
  */
 
 #define bitset_word                    uint32_t
+#define BITSET_WORD_BYTES              4
 
 #define BITSET_WORD_LENGTH             (sizeof(bitset_word) * 8)
 #define BITSET_POSITION_LENGTH         BITSET_LOG2(BITSET_WORD_LENGTH)
@@ -98,8 +99,6 @@ extern "C" {
 typedef struct bitset_s {
     bitset_word *buffer;
     size_t length;
-    size_t size;
-    unsigned references;
 } bitset_t;
 
 typedef struct bitset_iterator_s {
@@ -217,9 +216,9 @@ bitset_iterator_t *bitset_iterator_new(const bitset_t *);
  */
 
 #define BITSET_FOREACH(iterator, offset) \
-    for (unsigned BITSET_TMPVAR(i, __LINE__) = 0; \
-         offset = iterator->length ? iterator->offsets[BITSET_TMPVAR(i, __LINE__)] : 0, \
-         BITSET_TMPVAR(i, __LINE__) < iterator->length; \
+    for (size_t BITSET_TMPVAR(i, __LINE__) = 0; \
+        BITSET_TMPVAR(i, __LINE__) < iterator->length \
+            ? (offset = iterator->offsets[BITSET_TMPVAR(i, __LINE__)]), 1 : 0; \
          BITSET_TMPVAR(i, __LINE__)++)
 
 /**
@@ -232,8 +231,12 @@ void bitset_iterator_free(bitset_iterator_t *);
  * Custom out of memory behaviour.
  */
 
+#define BITSET_FATAL(msg) \
+    fprintf(stderr, "bitset error: " msg "\n"); \
+    exit(EXIT_FAILURE)
+
 #ifndef bitset_oom
-#  define bitset_oom() fprintf(stderr, "Out of memory\n"), exit(EXIT_FAILURE)
+#  define bitset_oom() BITSET_FATAL("out of memory")
 #endif
 
 #ifdef __cplusplus

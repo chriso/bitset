@@ -37,24 +37,15 @@ typedef struct bitset_vector_s {
     char *buffer;
     size_t length;
     size_t size;
-    unsigned count;
-    char *tail;
     unsigned tail_offset;
 } bitset_vector_t;
-
-typedef struct bitset_vector_iterator_s {
-    bitset_t **bitsets;
-    unsigned *offsets;
-    size_t length;
-    size_t size;
-} bitset_vector_iterator_t;
 
 typedef struct bitset_vector_operation_s bitset_vector_operation_t;
 
 typedef struct bitset_vector_operation_step_s {
     union {
-        bitset_vector_iterator_t *i;
-        bitset_vector_operation_t *o;
+        bitset_vector_t *vector;
+        bitset_vector_operation_t *operation;
     } data;
     void *userdata;
     bool is_nested;
@@ -82,7 +73,7 @@ bitset_vector_t *bitset_vector_new();
  * Create a new bitset vector based on an existing buffer.
  */
 
-bitset_vector_t *bitset_vector_new_buffer(const char *, size_t);
+bitset_vector_t *bitset_vector_import(const char *, size_t);
 
 /**
  * Free the specified vector.
@@ -97,6 +88,12 @@ void bitset_vector_free(bitset_vector_t *);
 bitset_vector_t *bitset_vector_copy(bitset_vector_t *);
 
 /**
+ * Get the vector buffer.
+ */
+
+char *bitset_vector_buffer(bitset_vector_t *);
+
+/**
  * Get the byte length of the vector buffer.
  */
 
@@ -106,7 +103,7 @@ size_t bitset_vector_length(bitset_vector_t *);
  * Get the number of bitsets in the vector.
  */
 
-unsigned bitset_vector_count(bitset_vector_t *);
+unsigned bitset_vector_bitsets(bitset_vector_t *);
 
 /**
  * Push a bitset on to the end of the vector.
@@ -121,73 +118,50 @@ void bitset_vector_push(bitset_vector_t *, bitset_t *, unsigned);
 void bitset_vector_resize(bitset_vector_t *, size_t);
 
 /**
- * Create a new bitset vector iterator over the range [start,end).
- */
-
-bitset_vector_iterator_t *bitset_vector_iterator_new(bitset_vector_t *, unsigned, unsigned);
-
-/**
  * Iterate over all bitsets.
  */
 
-#define BITSET_VECTOR_FOREACH(iterator, bitset, offset) \
-    for (unsigned BITSET_TMPVAR(i, __LINE__) = 0; \
-         (BITSET_TMPVAR(i, __LINE__) < iterator->length \
-            ? (offset = iterator->offsets[BITSET_TMPVAR(i, __LINE__)], \
-               bitset = iterator->bitsets[BITSET_TMPVAR(i, __LINE__)], 1) : 0); \
-         BITSET_TMPVAR(i, __LINE__)++)
+#define BITSET_VECTOR_FOREACH(vector, bitset, offset) \
+    bitset_t BITSET_TMPVAR(tmp, __LINE__); \
+    bitset = &BITSET_TMPVAR(tmp, __LINE__); \
+    offset = 0; \
+    char *BITSET_TMPVAR(buffer, __LINE__) = vector->buffer; \
+    while (BITSET_TMPVAR(buffer, __LINE__) < (vector->buffer + vector->length) \
+        ? (BITSET_TMPVAR(buffer, __LINE__) = bitset_vector_advance(BITSET_TMPVAR(buffer, __LINE__), \
+            bitset, &offset), 1) : 0)
+
+char *bitset_vector_advance(char *buffer, bitset_t *, unsigned *);
 
 /**
- * Concatenate an iterator to another at the specified offset.
+ * Concatenate an vector to another at the specified offset. The vector can optionally be
+ * sliced by start and end before being concatted. Pass BITSET_VECTOR_START and
+ * BITSET_VECTOR_END to both parameters to concat the entire vector.
  */
 
-void bitset_vector_iterator_concat(bitset_vector_iterator_t *, bitset_vector_iterator_t *, unsigned);
+void bitset_vector_concat(bitset_vector_t *, bitset_vector_t *, unsigned offset,
+    unsigned start, unsigned end);
 
 /**
- * Count bits in each bitset.
+ * Get a raw and unique count for set items in the vector.
  */
 
-void bitset_vector_iterator_count(bitset_vector_iterator_t *, unsigned *, unsigned *);
-
-/**
- * Compact the iterator into a vector.
- */
-
-bitset_vector_t *bitset_vector_iterator_compact(bitset_vector_iterator_t *);
+void bitset_vector_cardinality(bitset_vector_t *, unsigned *, unsigned *);
 
 /**
  * Merge (bitwise OR) each vector bitset.
  */
 
-bitset_t *bitset_vector_iterator_merge(bitset_vector_iterator_t *);
-
-/**
- * Free the vector iterator.
- */
-
-void bitset_vector_iterator_free(bitset_vector_iterator_t *);
-
-/**
- * Create an empty iterator
- */
-
-bitset_vector_iterator_t *bitset_vector_iterator_new_empty();
-
-/**
- * Create a copy of the iterator.
- */
-
-bitset_vector_iterator_t *bitset_vector_iterator_copy(bitset_vector_iterator_t *);
+bitset_t *bitset_vector_merge(bitset_vector_t *);
 
 /**
  * Create a new vector operation.
  */
 
-bitset_vector_operation_t *bitset_vector_operation_new(bitset_vector_iterator_t *);
+bitset_vector_operation_t *bitset_vector_operation_new(bitset_vector_t *);
 
 /**
- * Free the specified vector operation. By default iterator operands will not be
- * freed. Use the second function before calling free() to free iterators.
+ * Free the specified vector operation. By default vector operands will not be
+ * freed. Use the second function before calling free() to free vectors.
  */
 
 void bitset_vector_operation_free(bitset_vector_operation_t *);
@@ -198,7 +172,7 @@ void bitset_vector_operation_free_operands(bitset_vector_operation_t *);
  */
 
 void bitset_vector_operation_add(bitset_vector_operation_t *,
-    bitset_vector_iterator_t *, enum bitset_operation_type);
+    bitset_vector_t *, enum bitset_operation_type);
 
 /**
  * Add a nested operation.
@@ -211,20 +185,26 @@ void bitset_vector_operation_add_nested(bitset_vector_operation_t *,
  * Execute the operation and return the result.
  */
 
-bitset_vector_iterator_t *bitset_vector_operation_exec(bitset_vector_operation_t *);
+bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *);
 
 /**
  * Provide a way to associate user data with each step and use the data to lazily
- * lookup vector iterators.
+ * lookup vectors.
  */
 
 void bitset_vector_operation_add_data(bitset_vector_operation_t *,
     void *data, enum bitset_operation_type);
 
 void bitset_vector_operation_resolve_data(bitset_vector_operation_t *,
-        bitset_vector_iterator_t *(*)(void *data, void *context), void *context);
+        bitset_vector_t *(*)(void *data, void *context), void *context);
 
 void bitset_vector_operation_free_data(bitset_vector_operation_t *, void (*)(void *data));
+
+/**
+ * Misc functions.
+ */
+
+void bitset_vector_init(bitset_vector_t *);
 
 #ifdef __cplusplus
 } //extern "C"

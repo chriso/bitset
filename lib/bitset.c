@@ -7,19 +7,11 @@ bitset_t *bitset_new() {
         bitset_oom();
     }
     bitset->length = 0;
-    bitset->buffer = bitset_malloc(sizeof(bitset_word));
-    if (!bitset->buffer) {
-        bitset_oom();
-    }
-    bitset->size = 1;
-    bitset->references = 1;
+    bitset->buffer = NULL;
     return bitset;
 }
 
 void bitset_free(bitset_t *bitset) {
-    if (--bitset->references) {
-        return;
-    }
     if (bitset->length) {
         bitset_malloc_free(bitset->buffer);
     }
@@ -27,16 +19,18 @@ void bitset_free(bitset_t *bitset) {
 }
 
 void bitset_resize(bitset_t *bitset, size_t length) {
-    size_t next_size = bitset->size;
-    while (next_size <= length) {
-        next_size *= 2;
-    }
-    if (next_size > bitset->size) {
-        bitset->buffer = bitset_realloc(bitset->buffer, sizeof(bitset_word) * next_size);
-        if (!bitset->buffer) {
-            bitset_oom();
+    size_t current_size, next_size;
+    BITSET_NEXT_POW2(next_size, length);
+    if (!bitset->length) {
+        bitset->buffer = bitset_malloc(sizeof(bitset_word) * next_size);
+    } else {
+        BITSET_NEXT_POW2(current_size, bitset->length);
+        if (next_size > current_size) {
+            bitset->buffer = bitset_realloc(bitset->buffer, sizeof(bitset_word) * next_size);
         }
-        bitset->size = next_size;
+    }
+    if (!bitset->buffer) {
+        bitset_oom();
     }
     bitset->length = length;
 }
@@ -50,8 +44,21 @@ size_t bitset_length(bitset_t *bitset) {
 }
 
 bitset_t *bitset_copy(bitset_t *bitset) {
-    bitset->references++;
-    return bitset;
+    bitset_t *copy = bitset_calloc(1, sizeof(bitset_t));
+    if (!copy) {
+        bitset_oom();
+    }
+    if (bitset->length) {
+        size_t size;
+        BITSET_NEXT_POW2(size, bitset->length);
+        copy->buffer = bitset_malloc(sizeof(bitset_word) * size);
+        if (!copy->buffer) {
+            bitset_oom();
+        }
+        memcpy(copy->buffer, bitset->buffer, bitset->length * sizeof(bitset_word));
+        copy->length = bitset->length;
+    }
+    return copy;
 }
 
 bool bitset_get(const bitset_t *bitset, bitset_offset bit) {
@@ -176,7 +183,7 @@ bool bitset_set_to(bitset_t *bitset, bitset_offset bit, bool value) {
         bitset_word word;
         bitset_offset fill_length;
         unsigned position;
-        for (unsigned i = 0; i < bitset->length; i++) {
+        for (size_t i = 0; i < bitset->length; i++) {
             word = bitset->buffer[i];
             if (BITSET_IS_FILL_WORD(word)) {
                 position = BITSET_GET_POSITION(word);
@@ -285,8 +292,7 @@ bitset_t *bitset_new_buffer(const char *buffer, size_t length) {
         bitset_oom();
     }
     memcpy(bitset->buffer, buffer, length * sizeof(char));
-    bitset->length = bitset->size = length / sizeof(bitset_word);
-    bitset->references = 1;
+    bitset->length = length / sizeof(bitset_word);
     return bitset;
 }
 
@@ -310,7 +316,9 @@ bitset_t *bitset_new_bits(bitset_offset *bits, size_t count) {
     bitset_resize(bitset, 1);
     bitset->buffer[0] = 0;
     for (i = 1; i < count; i++) {
-        if (bits[i] == last_bit) continue;
+        if (bits[i] == last_bit) {
+            continue;
+        }
         last_bit = bits[i];
         next_div = bits[i] / BITSET_LITERAL_LENGTH;
         next_rem = bits[i] % BITSET_LITERAL_LENGTH;
@@ -376,7 +384,7 @@ bitset_iterator_t *bitset_iterator_new(const bitset_t *bitset) {
     }
     bitset_offset offset = 0;
     unsigned position;
-    for (unsigned j = 0, k = 0; j < bitset->length; j++) {
+    for (size_t j = 0, k = 0; j < bitset->length; j++) {
         if (BITSET_IS_FILL_WORD(bitset->buffer[j])) {
             offset += BITSET_GET_LENGTH(bitset->buffer[j]);
             position = BITSET_GET_POSITION(bitset->buffer[j]);
@@ -385,7 +393,7 @@ bitset_iterator_t *bitset_iterator_new(const bitset_t *bitset) {
             }
             iterator->offsets[k++] = BITSET_LITERAL_LENGTH * offset + position - 1;
         } else {
-            for (unsigned x = BITSET_LITERAL_LENGTH; x--; ) {
+            for (size_t x = BITSET_LITERAL_LENGTH; x--; ) {
                 if (bitset->buffer[j] & (1 << x)) {
                     iterator->offsets[k++] = BITSET_LITERAL_LENGTH * offset
                         + BITSET_LITERAL_LENGTH - x - 1;
