@@ -85,23 +85,18 @@ void stress_vector(unsigned bitsets, unsigned bits, unsigned max) {
     }
     ucount = bitset_operation_count(o);
 
-    //Popcnt bitsets using an iterator
-    /*
-    bitset_vector_iterator_t *iter = bitset_vector_iterator_new(vector,
-        BITSET_VECTOR_START, BITSET_VECTOR_END);
-    start = (float) clock();
+    //Popcnt all bitsets
     unsigned raw, unique;
-    bitset_vector_iterator_count(iter, &raw, &unique);
+    start = (float) clock();
+    bitset_vector_cardinality(vector, &raw, &unique);
     end = ((float) clock() - start) / CLOCKS_PER_SEC;
     printf("Counted %u unique bits (%u expected) from "
         "%u (%u expected) bits using an iterator in %.2fs\n", unique, ucount, raw, count, end);
     for (i = 0; i < bitsets; i++) {
         bitset_free(b[i]);
     }
-    bitset_vector_iterator_free(iter);
     bitset_vector_free(vector);
     bitset_operation_free(o);
-    */
     bitset_malloc_free(b);
     bitset_malloc_free(offsets);
 }
@@ -187,7 +182,7 @@ int main(int argc, char **argv) {
     printf("\nCreating 100k bitsets with 10M total bits between 1->10M\n");
     stress_exec(100000, 100, 10000000);
 
-    printf("\nStress testing vector with 100k bitsets\n");
+    printf("\nStress testing vector with 100k bitsets and 10M bits\n");
     stress_vector(100000, 100, 10000000);
 
     printf("\nCreating 1M bitsets with 100M total bits between 1->100M\n");
