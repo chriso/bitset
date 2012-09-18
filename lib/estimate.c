@@ -59,6 +59,7 @@ bitset_countn_t *bitset_countn_new(unsigned n, size_t size) {
     if (!counter) {
         bitset_oom();
     }
+    assert(n);
     counter->n = n;
     size = (size_t)(size / BITSET_LITERAL_LENGTH) + 1;
     size_t pow2;

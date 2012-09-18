@@ -149,11 +149,10 @@ void bitset_vector_concat(bitset_vector_t *v, bitset_vector_t *c, unsigned offse
         BITSET_FATAL("bitset vectors are append-only");
     }
 
-    char *buffer = v->buffer;
     unsigned current_offset = 0;
     bitset_t bitset;
 
-    char *c_buffer = c->buffer, *c_start, *c_end = c->buffer + c->length;
+    char *buffer, *c_buffer = c->buffer, *c_start, *c_end = c->buffer + c->length;
     while (c_buffer < c_end) {
         c_buffer = bitset_vector_advance(c_buffer, &bitset, &current_offset);
         if (current_offset >= start && (!end || current_offset < end)) {
@@ -236,9 +235,8 @@ static inline void bitset_vector_start_end(bitset_vector_t *v, unsigned *start, 
         *end = 0;
         return;
     }
-    char *buffer = v->buffer;
     bitset_t bitset;
-    buffer = bitset_vector_advance(buffer, &bitset, start);
+    bitset_vector_advance(v->buffer, &bitset, start);
     *end = v->tail_offset;
 }
 
