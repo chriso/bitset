@@ -1,6 +1,6 @@
 ![Bitset](https://github.com/chriso/bitset/raw/master/bitset.png)
 
-The bitset structure uses [word-aligned run-length encoding](https://github.com/chriso/bitset/blob/master/include/bitset/bitset.h#L17-35) to compress sets of unsigned integers. 64-bit offsets are supported for very sparse sets. Unlike most succinct data structures which are immutable and append-only, the included bitset structure is mutable after construction.
+The bitset structure uses [word-aligned run-length encoding](https://github.com/chriso/bitset/blob/master/include/bitset/bitset.h#L17-34) to compress sets of unsigned integers. 64-bit offsets are supported for very sparse sets. Unlike most succinct data structures which are immutable and append-only, the included bitset structure is mutable after construction.
 
 The library includes a vector abstraction (vector of bitsets) which can be used to represent another dimension
 such as time. Bitsets are packed together [contiguously](https://github.com/chriso/bitset/blob/master/include/bitset/vector.h#L8-24) to improve cache locality.

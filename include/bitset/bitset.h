@@ -29,7 +29,6 @@ extern "C" {
  *
  * X = Uncompressed bits
  * L = represents the length of the span of clean words
- * C = the colour of the span (all 1's or 0's)
  * P = if the word proceeding the span contains only 1 bit, this 5-bit length
  *     stores the position of the bit so that the next literal can be omitted
  */
