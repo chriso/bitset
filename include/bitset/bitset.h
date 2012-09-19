@@ -133,7 +133,7 @@ void bitset_resize(bitset_t *, size_t);
  * Get the byte length of the bitset buffer.
  */
 
-size_t bitset_length(bitset_t *);
+size_t bitset_length(const bitset_t *);
 
 /**
  * Create a new bitset from an existing buffer.
@@ -160,7 +160,7 @@ bitset_t *bitset_new_bits(bitset_offset *, size_t);
  * Create a copy of the specified bitset.
  */
 
-bitset_t *bitset_copy(bitset_t *);
+bitset_t *bitset_copy(const bitset_t *);
 
 /**
  * Check whether a bit is set.

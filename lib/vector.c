@@ -20,7 +20,7 @@ void bitset_vector_free(bitset_vector_t *vector) {
     bitset_malloc_free(vector);
 }
 
-bitset_vector_t *bitset_vector_copy(bitset_vector_t *vector) {
+bitset_vector_t *bitset_vector_copy(const bitset_vector_t *vector) {
     bitset_vector_t *copy = bitset_vector_new();
     if (vector->length) {
         copy->buffer = bitset_realloc(copy->buffer, sizeof(char) * vector->length);
@@ -49,11 +49,11 @@ void bitset_vector_resize(bitset_vector_t *vector, size_t length) {
     vector->length = length;
 }
 
-char *bitset_vector_export(bitset_vector_t *vector) {
+char *bitset_vector_export(const bitset_vector_t *vector) {
     return vector->buffer;
 }
 
-size_t bitset_vector_length(bitset_vector_t *vector) {
+size_t bitset_vector_length(const bitset_vector_t *vector) {
     return vector->length;
 }
 
@@ -121,7 +121,7 @@ char *bitset_vector_advance(char *buffer, bitset_t *bitset, unsigned *offset) {
     return buffer + bitset->length * sizeof(bitset_word);
 }
 
-static inline char *bitset_vector_encode(bitset_vector_t *vector, bitset_t *bitset, unsigned offset) {
+static inline char *bitset_vector_encode(bitset_vector_t *vector, const bitset_t *bitset, unsigned offset) {
     size_t length_bytes = bitset_encoded_length_required_bytes(bitset->length);
     size_t offset_bytes = bitset_encoded_length_required_bytes(offset);
     size_t current_length = vector->length;
@@ -137,7 +137,7 @@ static inline char *bitset_vector_encode(bitset_vector_t *vector, bitset_t *bits
     return buffer + bitset->length * sizeof(bitset_word);
 }
 
-void bitset_vector_push(bitset_vector_t *vector, bitset_t *bitset, unsigned offset) {
+void bitset_vector_push(bitset_vector_t *vector, const bitset_t *bitset, unsigned offset) {
     if (vector->length && vector->tail_offset >= offset) {
         BITSET_FATAL("bitset vectors are append-only");
     }
@@ -145,7 +145,7 @@ void bitset_vector_push(bitset_vector_t *vector, bitset_t *bitset, unsigned offs
     vector->tail_offset = offset;
 }
 
-void bitset_vector_concat(bitset_vector_t *vector, bitset_vector_t *next, unsigned offset, unsigned start, unsigned end) {
+void bitset_vector_concat(bitset_vector_t *vector, const bitset_vector_t *next, unsigned offset, unsigned start, unsigned end) {
     if (vector->length && vector->tail_offset >= offset) {
         BITSET_FATAL("bitset vectors are append-only");
     }
@@ -188,7 +188,7 @@ void bitset_vector_concat(bitset_vector_t *vector, bitset_vector_t *next, unsign
     }
 }
 
-unsigned bitset_vector_bitsets(bitset_vector_t *vector) {
+unsigned bitset_vector_bitsets(const bitset_vector_t *vector) {
     unsigned count = 0, offset;
     bitset_t *bitset;
     BITSET_VECTOR_FOREACH(vector, bitset, offset) {
@@ -197,7 +197,7 @@ unsigned bitset_vector_bitsets(bitset_vector_t *vector) {
     return count;
 }
 
-void bitset_vector_cardinality(bitset_vector_t *vector, unsigned *raw, unsigned *unique) {
+void bitset_vector_cardinality(const bitset_vector_t *vector, unsigned *raw, unsigned *unique) {
     unsigned offset;
     bitset_t *bitset;
     *raw = 0;
@@ -218,7 +218,7 @@ void bitset_vector_cardinality(bitset_vector_t *vector, unsigned *raw, unsigned 
     }
 }
 
-bitset_t *bitset_vector_merge(bitset_vector_t *vector) {
+bitset_t *bitset_vector_merge(const bitset_vector_t *vector) {
     unsigned offset;
     bitset_t *bitset;
     bitset_operation_t *operation = bitset_operation_new(NULL);

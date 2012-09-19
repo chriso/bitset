@@ -39,11 +39,11 @@ void bitset_clear(bitset_t *bitset) {
     bitset->length = 0;
 }
 
-size_t bitset_length(bitset_t *bitset) {
+size_t bitset_length(const bitset_t *bitset) {
     return bitset->length * sizeof(bitset_word);
 }
 
-bitset_t *bitset_copy(bitset_t *bitset) {
+bitset_t *bitset_copy(const bitset_t *bitset) {
     bitset_t *copy = bitset_calloc(1, sizeof(bitset_t));
     if (!copy) {
         bitset_oom();

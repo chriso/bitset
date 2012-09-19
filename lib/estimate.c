@@ -17,7 +17,7 @@ bitset_linear_t *bitset_linear_new(size_t size) {
     return counter;
 }
 
-void bitset_linear_add(bitset_linear_t *counter, bitset_t *bitset) {
+void bitset_linear_add(bitset_linear_t *counter, const bitset_t *bitset) {
     bitset_offset offset = 0;
     bitset_word word, mask, tmp;
     unsigned position;
@@ -45,7 +45,7 @@ void bitset_linear_add(bitset_linear_t *counter, bitset_t *bitset) {
     }
 }
 
-unsigned bitset_linear_count(bitset_linear_t *counter) {
+unsigned bitset_linear_count(const bitset_linear_t *counter) {
     return counter->count;
 }
 
@@ -79,7 +79,7 @@ bitset_countn_t *bitset_countn_new(unsigned n, size_t size) {
     return counter;
 }
 
-void bitset_countn_add(bitset_countn_t *counter, bitset_t *bitset) {
+void bitset_countn_add(bitset_countn_t *counter, const bitset_t *bitset) {
     bitset_offset offset = 0;
     bitset_word word, tmp;
     unsigned position;
@@ -103,7 +103,7 @@ void bitset_countn_add(bitset_countn_t *counter, bitset_t *bitset) {
     }
 }
 
-unsigned bitset_countn_count(bitset_countn_t *counter) {
+unsigned bitset_countn_count(const bitset_countn_t *counter) {
     unsigned count = 0, nth = counter->n - 1, last = counter->n;
     bitset_word word;
     //Find bits that occur in the Nth bitset, but not the N+1th bitset
@@ -116,7 +116,7 @@ unsigned bitset_countn_count(bitset_countn_t *counter) {
     return count;
 }
 
-unsigned *bitset_countn_count_all(bitset_countn_t *counter) {
+unsigned *bitset_countn_count_all(const bitset_countn_t *counter) {
     unsigned *counts = bitset_calloc(1, sizeof(unsigned) * counter->n);
     if (!counts) {
         bitset_oom();
@@ -133,7 +133,7 @@ unsigned *bitset_countn_count_all(bitset_countn_t *counter) {
     return counts;
 }
 
-unsigned *bitset_countn_count_mask(bitset_countn_t *counter, bitset_t *mask) {
+unsigned *bitset_countn_count_mask(const bitset_countn_t *counter, const bitset_t *mask) {
     bitset_word *mask_words = bitset_calloc(1, counter->size * sizeof(bitset_word));
     if (!mask_words) {
         bitset_oom();

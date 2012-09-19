@@ -83,31 +83,31 @@ void bitset_vector_free(bitset_vector_t *);
  * Copy a vector.
  */
 
-bitset_vector_t *bitset_vector_copy(bitset_vector_t *);
+bitset_vector_t *bitset_vector_copy(const bitset_vector_t *);
 
 /**
  * Get the vector buffer.
  */
 
-char *bitset_vector_buffer(bitset_vector_t *);
+char *bitset_vector_export(const bitset_vector_t *);
 
 /**
  * Get the byte length of the vector buffer.
  */
 
-size_t bitset_vector_length(bitset_vector_t *);
+size_t bitset_vector_length(const bitset_vector_t *);
 
 /**
  * Get the number of bitsets in the vector.
  */
 
-unsigned bitset_vector_bitsets(bitset_vector_t *);
+unsigned bitset_vector_bitsets(const bitset_vector_t *);
 
 /**
  * Push a bitset on to the end of the vector.
  */
 
-void bitset_vector_push(bitset_vector_t *, bitset_t *, unsigned);
+void bitset_vector_push(bitset_vector_t *, const bitset_t *, unsigned);
 
 /**
  * Resize the vector buffer.
@@ -136,20 +136,20 @@ char *bitset_vector_advance(char *buffer, bitset_t *, unsigned *);
  * BITSET_VECTOR_END to both parameters to concat the entire vector.
  */
 
-void bitset_vector_concat(bitset_vector_t *, bitset_vector_t *, unsigned offset,
+void bitset_vector_concat(bitset_vector_t *, const bitset_vector_t *, unsigned offset,
     unsigned start, unsigned end);
 
 /**
  * Get a raw and unique count for set items in the vector.
  */
 
-void bitset_vector_cardinality(bitset_vector_t *, unsigned *, unsigned *);
+void bitset_vector_cardinality(const bitset_vector_t *, unsigned *, unsigned *);
 
 /**
  * Merge (bitwise OR) each vector bitset.
  */
 
-bitset_t *bitset_vector_merge(bitset_vector_t *);
+bitset_t *bitset_vector_merge(const bitset_vector_t *);
 
 /**
  * Create a new vector operation.
