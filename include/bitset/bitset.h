@@ -33,7 +33,7 @@ extern "C" {
  *     stores the position of the bit so that the next literal can be omitted
  */
 
-#define bitset_word                    uint32_t
+typedef                                uint32_t bitset_word;
 #define BITSET_WORD_BYTES              4
 
 #define BITSET_WORD_LENGTH             (sizeof(bitset_word) * 8)
@@ -80,15 +80,15 @@ extern "C" {
 #define P5 0x01010101
 
 /**
- * 64-bit offsets are supported.
+ * 64-bit offsets are supported using -DBITSET_64BIT_OFFSETS.
  */
 
 #ifndef BITSET_64BIT_OFFSETS
-#  define bitset_offset uint32_t
-#  define bitset_format "%u"
+typedef uint32_t bitset_offset;
+#define bitset_format "%u"
 #else
-#  define bitset_offset uint64_t
-#  define bitset_format "%llu"
+typedef uint64_t bitset_offset;
+#define bitset_format "%llu"
 #endif
 
 /**
