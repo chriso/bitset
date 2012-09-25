@@ -175,6 +175,10 @@ unsigned *bitset_countn_count_mask(const bitset_countn_t *counter, const bitset_
     return counts;
 }
 
+void bitset_countn_count_free(unsigned *counts) {
+    bitset_malloc_free(counts);
+}
+
 void bitset_countn_free(bitset_countn_t *counter) {
     for (size_t i = 0; i <= counter->n; i++) {
         bitset_malloc_free(counter->words[i]);

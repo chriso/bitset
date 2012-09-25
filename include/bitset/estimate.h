@@ -85,6 +85,12 @@ unsigned *bitset_countn_count_all(const bitset_countn_t *);
 unsigned *bitset_countn_count_mask(const bitset_countn_t *, const bitset_t *);
 
 /**
+ * Free the result of a count_all or count_mask.
+ */
+
+void bitset_countn_count_free(unsigned *);
+
+/**
  * Free the counter.
  */
 
