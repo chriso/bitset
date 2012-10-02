@@ -25,7 +25,7 @@ $ make check
 
 ## Credits
 
-The symbol in the logo comes from the [helveticons](http://helveticons.ch) library
+The symbol in the logo is from the [helveticons](http://helveticons.ch) library
 
 ## License
 
