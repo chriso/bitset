@@ -1,14 +1,9 @@
 #ifndef BITSET_BITSET_H_
 #define BITSET_BITSET_H_
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
-#include <limits.h>
-
-#include "malloc.h"
 
 #ifdef __cplusplus
 extern "C" {

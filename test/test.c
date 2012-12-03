@@ -1,14 +1,12 @@
-#include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <stdio.h>
 #include <time.h>
 #include <string.h>
 
-#include "bitset/operation.h"
-#include "bitset/estimate.h"
-#include "bitset/vector.h"
 #include "test.h"
+
+#include "bitset/malloc.h"
+#include "bitset/vector.h"
 
 void bitset_dump(bitset_t *b) {
     printf("\x1B[33mDumping bitset of size %u\x1B[0m\n", (unsigned)b->length);

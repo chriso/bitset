@@ -1,3 +1,8 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+
+#include "bitset/malloc.h"
 #include "bitset/estimate.h"
 
 bitset_linear_t *bitset_linear_new(size_t size) {

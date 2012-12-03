@@ -1,6 +1,11 @@
 #ifndef TEST_H_
 #define TEST_H_
 
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "bitset/bitset.h"
+
 void test_suite_macros();
 void test_suite_get();
 void test_suite_set();

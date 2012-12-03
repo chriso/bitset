@@ -1,3 +1,7 @@
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "bitset/malloc.h"
 #include "bitset/operation.h"
 
 bitset_operation_t *bitset_operation_new(bitset_t *bitset) {

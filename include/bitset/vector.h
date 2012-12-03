@@ -1,7 +1,6 @@
 #ifndef BITSET_VECTOR_H_
 #define BITSET_VECTOR_H_
 
-#include "bitset/bitset.h"
 #include "bitset/operation.h"
 #include "bitset/estimate.h"
 

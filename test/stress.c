@@ -1,13 +1,8 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <time.h>
-#include <assert.h>
 
-#include "bitset/operation.h"
+#include "bitset/malloc.h"
 #include "bitset/vector.h"
-#include "bitset/estimate.h"
 
 /**
  * Bundle a PRNG to get around dists with a tiny RAND_MAX.

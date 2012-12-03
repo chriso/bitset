@@ -1,8 +1,6 @@
 #ifndef BITSET_MALLOC_H_
 #define BITSET_MALLOC_H_
 
-#include <stdlib.h>
-
 #ifdef HAVE_CONFIG_H
 #  include "config.h"
 #endif
@@ -14,6 +12,7 @@
 #  include <jemalloc/jemalloc.h>
 #  define BITSET_MALLOC_PREFIX prefix_jemalloc
 #else
+#  include <stdlib.h>
 #  define BITSET_MALLOC_PREFIX
 #  if defined(LINUX)
 #    include <malloc.h> //for mallopt()

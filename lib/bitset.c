@@ -1,4 +1,8 @@
-#include "bitset/bitset.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "bitset/malloc.h"
 #include "bitset/operation.h"
 
 bitset_t *bitset_new() {

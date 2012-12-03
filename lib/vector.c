@@ -1,3 +1,9 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <limits.h>
+
+#include "bitset/malloc.h"
 #include "bitset/vector.h"
 
 bitset_vector_t *bitset_vector_new() {
