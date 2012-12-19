@@ -64,7 +64,7 @@ struct bitset_vector_operation_s {
  * Create a new bitset vector.
  */
 
-bitset_vector_t *bitset_vector_new();
+bitset_vector_t *bitset_vector_new(void);
 
 /**
  * Create a new bitset vector based on an existing buffer.

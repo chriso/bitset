@@ -104,7 +104,7 @@ typedef struct bitset_iterator_s {
  * Create a new bitset.
  */
 
-bitset_t *bitset_new();
+bitset_t *bitset_new(void);
 
 /**
  * Clear the specified bitset.
