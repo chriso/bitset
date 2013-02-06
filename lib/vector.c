@@ -350,9 +350,11 @@ void bitset_vector_operation_add_data(bitset_vector_operation_t *operation,
 
 void bitset_vector_operation_resolve_data(bitset_vector_operation_t *operation,
         bitset_vector_t *(*resolve_fn)(void *, void *), void *context) {
+    unsigned start, end;
     if (operation->length) {
-        unsigned start = 0, end = 0;
         for (size_t j = 0; j < operation->length; j++) {
+            start = 0;
+            end = 0;
             if (operation->steps[j]->is_operation) {
                 bitset_vector_operation_resolve_data(operation->steps[j]->data.operation, resolve_fn, context);
             } else if (operation->steps[j]->userdata) {
@@ -418,6 +420,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *operati
 
     //OR the first vector
     vector = operation->steps[0]->data.vector;
+
     buffer = vector->buffer;
     offset = 0;
     while (buffer < vector->buffer + vector->length) {
