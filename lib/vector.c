@@ -176,8 +176,8 @@ void bitset_vector_concat(bitset_vector_t *vector, const bitset_vector_t *next, 
                     if (c_end == next->buffer + next->length) {
                         break;
                     }
-                    vector->tail_offset = current_offset + offset;
                     c_buffer = bitset_vector_advance(c_buffer, &bitset, &current_offset);
+                    vector->tail_offset = current_offset + offset;
                 } while (current_offset < end);
             } else {
                 vector->tail_offset = next->tail_offset + offset;
