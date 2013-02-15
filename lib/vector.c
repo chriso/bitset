@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
+#include <assert.h>
 
 #include "bitset/malloc.h"
 #include "bitset/vector.h"
@@ -425,6 +426,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *operati
     offset = 0;
     while (buffer < vector->buffer + vector->length) {
         next = bitset_vector_advance(buffer, &bitset, &offset);
+        assert(offset >= operation->min && offset <= operation->max);
         bucket[offset - operation->min] = buffer + bitset_encoded_length_size(buffer);
         buffer = next;
     }
@@ -445,6 +447,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *operati
                 offset = 0;
                 while (buffer < vector->buffer + vector->length) {
                     next = bitset_vector_advance(buffer, &bitset, &offset);
+                    assert(offset >= operation->min && offset <= operation->max);
                     key = offset - operation->min;
                     if (bucket[key]) {
                         if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
@@ -477,6 +480,7 @@ bitset_vector_t *bitset_vector_operation_exec(bitset_vector_operation_t *operati
             offset = 0;
             while (buffer < vector->buffer + vector->length) {
                 next = bitset_vector_advance(buffer, &bitset, &offset);
+                assert(offset >= operation->min && offset <= operation->max);
                 key = offset - operation->min;
                 if (BITSET_IS_TAGGED_POINTER(bucket[key])) {
                     nested = (bitset_operation_t *) BITSET_UNTAG_POINTER(bucket[key]);
