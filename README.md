@@ -29,5 +29,5 @@ The symbol in the logo is from the [helveticons](http://helveticons.ch) library
 
 ## License
 
-**LGPL** - Copyright (c) 2012 Chris O'Hara <cohara87@gmail.com>
+**LGPL** - Copyright (c) 2013 Chris O'Hara <cohara87@gmail.com>
 
