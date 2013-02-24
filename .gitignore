@@ -22,6 +22,7 @@ Makefile
 /ltmain.sh
 /stamp-h*
 /m4/l*.m4
+test-driver
 
 test/stress
 test/test
