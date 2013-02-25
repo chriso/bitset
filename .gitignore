@@ -26,6 +26,8 @@ test-driver
 
 test/stress
 test/test
+test/*.log
+test/*.trs
 
 bitset-*.tar.gz
 bitset.pc
