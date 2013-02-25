@@ -35,8 +35,29 @@ AC_TYPE_UINT32_T
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memmove])
-AX_CC_MAXOPT
 AC_CHECK_SIZEOF([void *])
+
+AC_ARG_ENABLE(optimisation,
+  [AC_HELP_STRING(
+    [--enable-optimisation],
+    [Enable compile time optimisation flags @<:@default=yes@:>@]
+  )],
+  [enable_optimiser="$enableval"],
+  [enable_optimiser="yes"]
+)
+
+if test "${enable_optimiser}" = "yes" ; then
+  AX_CC_MAXOPT
+  CFLAGS="${CFLAGS} -DNDEBUG"
+fi
+
+AC_ARG_ENABLE(debug,
+  [AC_HELP_STRING(
+    [--enable-debug],
+    [Build with debug flags @<:@default=no@:>@]
+  )],
+  [test x"$enableval" = "xyes" && CFLAGS="-DDEBUG -O0 -g"]
+)
 
 version="ver"
 library_version="l_ver"
