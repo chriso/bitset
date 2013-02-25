@@ -23,6 +23,13 @@ Tests and benchmarks can be run with
 $ make check
 ```
 
+There's also a stress test available:
+
+```bash
+$ cd test
+$ make stress && ./stress
+```
+
 ## Credits
 
 The symbol in the logo is from the [helveticons](http://helveticons.ch) library
