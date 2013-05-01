@@ -286,7 +286,10 @@ void bitset_vector_operation_free_operands(bitset_vector_operation_t *operation)
                     bitset_vector_operation_free_operands(operation->steps[i]->data.operation);
                 }
             } else {
-                bitset_vector_free(operation->steps[i]->data.vector);
+                if (operation->steps[i]->data.vector) {
+                    bitset_vector_free(operation->steps[i]->data.vector);
+                }
+                operation->steps[i]->data.vector = NULL;
             }
         }
     }
